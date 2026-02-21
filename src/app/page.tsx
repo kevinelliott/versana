@@ -5,6 +5,7 @@ import Workspace from "@/components/workspace/Workspace";
 import ConceptIdeation from "@/components/workspace/ConceptIdeation";
 import PlanningOutlining from "@/components/workspace/PlanningOutlining";
 import { PhaseProvider, usePhase } from "@/context/PhaseContext";
+import { WorkspaceProvider } from "@/context/WorkspaceContext";
 
 function MainContent() {
   const { activePhase } = usePhase();
@@ -34,8 +35,10 @@ function MainContent() {
 
 export default function Home() {
   return (
-    <PhaseProvider>
-      <MainContent />
-    </PhaseProvider>
+    <WorkspaceProvider>
+      <PhaseProvider>
+        <MainContent />
+      </PhaseProvider>
+    </WorkspaceProvider>
   );
 }
