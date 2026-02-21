@@ -8,7 +8,7 @@ export default function TopBar() {
             <div className={styles.leftSection}>
                 <div className={styles.logo}>
                     <BookOpen size={20} className={styles.logoIcon} />
-                    <span className={styles.logoText}>MythosOS</span>
+                    <span className={styles.logoText}>Versana</span>
                 </div>
             </div>
 
