@@ -1,20 +1,21 @@
 .container {
-    width: 100%;
-    max-width: 800px;
+    padding: 2rem;
+    max-width: 1200px;
     margin: 0 auto;
-    padding: 3rem 2rem;
+    color: var(--text-primary);
     display: flex;
     flex-direction: column;
-    gap: 2.5rem;
+    gap: 3rem;
 }
 
 .header {
-    text-align: center;
+    border-bottom: 1px solid var(--border-light);
+    padding-bottom: 1.5rem;
 }
 
 .title {
+    font-family: var(--font-serif);
     font-size: 2rem;
-    font-weight: 600;
     color: var(--text-primary);
     margin-bottom: 0.5rem;
 }
@@ -24,112 +25,163 @@
     font-size: 1rem;
 }
 
-.inputSection {
-    background: var(--bg-secondary);
-    padding: 1.5rem;
-    border-radius: 12px;
+/* AI Seed Generator */
+.seedSection {
+    background: var(--bg-primary);
     border: 1px solid var(--border-light);
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
 }
 
-.promptBox {
+.sectionTitle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    color: var(--text-primary);
+}
+
+.icon {
+    color: var(--accent-terracotta);
+}
+
+.formGroup {
     display: flex;
     gap: 1rem;
+    margin-bottom: 2rem;
 }
 
 .input {
-    flex: 1;
-    padding: 1rem 1.25rem;
-    font-size: 1rem;
-    background: var(--bg-primary);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
+    flex-grow: 1;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-light);
+    border-radius: 6px;
+    background: var(--bg-secondary);
     color: var(--text-primary);
-    font-family: inherit;
-    outline: none;
+    font-size: 1rem;
+    transition: border-color 0.2s;
 }
 
 .input:focus {
-    border-color: var(--accent-primary);
-    box-shadow: 0 0 0 1px var(--accent-primary);
+    outline: none;
+    border-color: var(--accent-blue);
 }
 
-.generateBtn {
+.btnPrimary {
+    background: var(--accent-terracotta);
+    color: white;
+    border: none;
+    padding: 0 1.5rem;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.2s;
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    background-color: var(--text-primary);
-    color: var(--bg-primary);
-    border: none;
-    padding: 0 1.5rem;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: opacity 0.2s;
 }
 
-.generateBtn:hover {
+.btnPrimary:hover:not(:disabled) {
     opacity: 0.9;
 }
 
-.suggestionsGrid {
+.btnPrimary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.resultsGrid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 1.5rem;
 }
 
-.card {
-    padding: 1.5rem;
-    border-radius: 10px;
+.conceptCard {
+    background: var(--bg-secondary);
     border: 1px solid var(--border-light);
-    background: var(--bg-primary);
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    transition: all 0.2s;
+    padding: 1.5rem;
+    border-radius: 8px;
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
 }
 
-.card:hover {
-    border-color: var(--border-color);
-    box-shadow: var(--shadow-md);
+.conceptCard:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.04);
+    border-color: var(--accent-blue);
 }
 
-.cardTag {
-    font-size: 0.75rem;
+.conceptTitle {
+    font-size: 1.1rem;
     font-weight: 600;
-    color: var(--accent-primary);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.card h3 {
-    font-size: 1.25rem;
+    margin-bottom: 0.75rem;
     color: var(--text-primary);
 }
 
-.card p {
+.conceptDesc {
     font-size: 0.9rem;
     color: var(--text-secondary);
     line-height: 1.5;
-    flex: 1;
 }
 
-.selectBtn {
+/* What-If Engine */
+.whatIfSection {
+    background: var(--bg-primary);
+    border: 1px dashed var(--border-light);
+    border-radius: 12px;
+    padding: 2rem;
+}
+
+.chatContainer {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    width: 100%;
-    padding: 0.75rem;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 1rem;
+}
+
+.message {
+    padding: 1rem;
+    border-radius: 8px;
+    max-width: 85%;
+    line-height: 1.5;
+}
+
+.aiMessage {
+    background: #f4f7f6;
+    border: 1px solid #e2e8e6;
+    align-self: flex-start;
+    color: var(--text-primary);
+}
+
+.userMessage {
     background: var(--bg-secondary);
     border: 1px solid var(--border-light);
-    border-radius: 6px;
-    font-weight: 500;
+    align-self: flex-end;
     color: var(--text-primary);
-    cursor: pointer;
-    transition: all 0.2s;
 }
 
-.selectBtn:hover {
+.qaForm {
+    display: flex;
+    gap: 1rem;
+}
+
+.sendBtn {
     background: var(--text-primary);
     color: var(--bg-primary);
+    border: none;
+    padding: 0 1.5rem;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.sendBtn:hover:not(:disabled) {
+    transform: translateY(-1px);
 }
