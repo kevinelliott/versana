@@ -1,0 +1,19 @@
+/* ProseMirror / TipTap default required CSS */
+.ProseMirror {
+    outline: none;
+    min-height: 50vh;
+}
+
+.ProseMirror p.is-editor-empty:first-child::before {
+    color: var(--text-secondary);
+    content: attr(data-placeholder);
+    float: left;
+    height: 0;
+    pointer-events: none;
+}
+
+.hide-lore-tags span[data-lore-tag] {
+    border-bottom: none !important;
+    background-color: transparent !important;
+    color: inherit !important;
+}
