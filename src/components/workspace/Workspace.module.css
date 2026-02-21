@@ -1,0 +1,106 @@
+.workspace {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    padding: 2rem;
+    height: 100%;
+    overflow-y: auto;
+    position: relative;
+}
+
+.editorContainer {
+    width: 100%;
+    max-width: 768px;
+    /* Classic optimal reading width */
+    display: flex;
+    flex-direction: column;
+}
+
+.toolbar {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 2rem;
+}
+
+.toolBtn {
+    background: transparent;
+    border: 1px solid var(--border-light);
+    color: var(--text-secondary);
+    padding: 0.3rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    cursor: pointer;
+}
+
+.documentHeader {
+    margin-bottom: 2rem;
+}
+
+.documentTitle {
+    font-family: var(--font-serif);
+    font-size: 2.5rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    outline: none;
+    border: none;
+    background: transparent;
+}
+
+.editorArea {
+    font-family: var(--font-serif);
+    font-size: 1.15rem;
+    line-height: 1.8;
+    color: var(--text-primary);
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.paragraph {
+    margin: 0;
+    outline: none;
+}
+
+/* SMART LORE TAGS */
+.loreTag {
+    cursor: pointer;
+    position: relative;
+    border-bottom: 2px dotted transparent;
+    transition: all 0.2s;
+}
+
+.loreTag.character {
+    border-bottom-color: var(--accent-blue);
+}
+
+.loreTag.lore {
+    border-bottom-color: var(--accent-purple);
+}
+
+.loreTag.place {
+    border-bottom-color: var(--accent-green);
+}
+
+.loreTag.plot {
+    border-bottom-color: var(--accent-gold);
+}
+
+.loreTag:hover.character {
+    background-color: var(--tag-blue-bg);
+    color: var(--tag-blue-text);
+}
+
+.loreTag:hover.lore {
+    background-color: var(--tag-purple-bg);
+    color: var(--tag-purple-text);
+}
+
+.loreTag:hover.place {
+    background-color: var(--tag-green-bg);
+    color: var(--tag-green-text);
+}
+
+.loreTag:hover.plot {
+    background-color: var(--tag-gold-bg);
+    color: var(--tag-gold-text);
+}

@@ -1,0 +1,24 @@
+.appContainer {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    background-color: var(--bg-primary);
+}
+
+.mainLayout {
+    display: flex;
+    flex: 1;
+    height: calc(100vh - var(--topbar-height));
+    position: relative;
+}
+
+.workspaceArea {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    position: relative;
+    background-color: var(--bg-primary);
+}

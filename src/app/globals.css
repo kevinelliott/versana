@@ -1,12 +1,77 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Colors - Light Theme (Notion/Scrivener inspired) */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f7f7f5;
+  --bg-tertiary: #efefe9;
+  
+  --text-primary: #37352f;
+  --text-secondary: #787774;
+  --text-muted: #9f9e99;
+  
+  --border-light: #e6e6e6;
+  --border-color: #d3d3d3;
+  
+  --accent-primary: #527A7A; /* Refined Sage */
+  --accent-hover: #405F5F;
+  --accent-purple: #9065B0; /* Subtle writerly purple */
+  --accent-blue: #337EA9; 
+  --accent-green: #448361;
+  --accent-gold: #D99C3D;
+  --accent-red: #D44C47;
+
+  /* Tag colors (Glassmorphism inspired but subtle) */
+  --tag-blue-bg: rgba(51, 126, 169, 0.1);
+  --tag-blue-text: #337EA9;
+  --tag-green-bg: rgba(68, 131, 97, 0.1);
+  --tag-green-text: #448361;
+  --tag-purple-bg: rgba(144, 101, 176, 0.1);
+  --tag-purple-text: #9065B0;
+  --tag-gold-bg: rgba(217, 156, 61, 0.1);
+  --tag-gold-text: #CB8112;
+
+  --sidebar-width: 260px;
+  --right-sidebar-width: 320px;
+  --topbar-height: 52px;
+
+  /* Typography */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif;
+  --font-serif: "Georgia", "Times New Roman", serif; /* For the writing workspace */
+  
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-float: 0 12px 24px -6px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0,0,0,0.05);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    /* Colors - Dark Theme */
+    --bg-primary: #191919;
+    --bg-secondary: #202020;
+    --bg-tertiary: #2f2f2f;
+    
+    --text-primary: #rgba(255, 255, 255, 0.9);
+    --text-secondary: rgba(255, 255, 255, 0.5);
+    --text-muted: rgba(255, 255, 255, 0.3);
+    
+    --border-light: #2a2a2a;
+    --border-color: #333333;
+    
+    --accent-primary: #6B9A9A;
+    --accent-hover: #82B3B3;
+    
+    --shadow-float: 0 12px 24px -6px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255,255,255,0.1);
+
+    --tag-blue-bg: rgba(51, 126, 169, 0.2);
+    --tag-blue-text: #5EB1EF;
+    --tag-green-bg: rgba(68, 131, 97, 0.2);
+    --tag-green-text: #69C996;
+    --tag-purple-bg: rgba(144, 101, 176, 0.2);
+    --tag-purple-text: #B885E0;
+    --tag-gold-bg: rgba(217, 156, 61, 0.2);
+    --tag-gold-text: #F8B953;
   }
 }
 
@@ -14,12 +79,13 @@ html,
 body {
   max-width: 100vw;
   overflow-x: hidden;
+  height: 100%;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  color: var(--text-primary);
+  background: var(--bg-primary);
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -35,8 +101,44 @@ a {
   text-decoration: none;
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
+button {
+  font-family: inherit;
+}
+
+/* Base utility classes for layout */
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.items-center { align-items: center; }
+.justify-center { justify-content: center; }
+.justify-between { justify-content: space-between; }
+.gap-1 { gap: 0.25rem; }
+.gap-2 { gap: 0.5rem; }
+.gap-3 { gap: 0.75rem; }
+.gap-4 { gap: 1rem; }
+.w-full { width: 100%; }
+.h-full { height: 100%; }
+
+/* Glassmorphism subtle */
+.glass-panel {
+  background: var(--bg-primary);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-float);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
 }
