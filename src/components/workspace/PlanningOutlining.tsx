@@ -44,10 +44,11 @@ const initialData: BoardData = {
 };
 
 export default function PlanningOutlining() {
-    const { activeWorkspace, setActiveWorkspace } = useWorkspace();
+    const { activeWorkspace, setActiveWorkspace, chapters, setChapters, currentChapterId, setCurrentChapterId } = useWorkspace();
     const [board, setBoard] = useState<BoardData>(initialData);
     const [isBrowser, setIsBrowser] = useState(false);
     const [activeTab, setActiveTab] = useState<string>('kanban');
+    const [isSaving, setIsSaving] = useState(false);
 
     // react-beautiful-dnd requires us to ensure we are rendering client-side only
     // to prevent hydration mismatches
@@ -82,6 +83,59 @@ export default function PlanningOutlining() {
 
         if (!destination) return;
         if (destination.droppableId === source.droppableId && destination.index === source.index) return;
+
+        // Check if dragged to a chapter
+        if (destination.droppableId.startsWith('chapter-')) {
+            const chapterId = destination.droppableId.split('chapter-')[1];
+            const startColumn = board.columns[source.droppableId];
+            const card = board.cards[draggableId];
+
+            // Remove from Kanban
+            const newStartCardIds = Array.from(startColumn.cardIds);
+            newStartCardIds.splice(source.index, 1);
+            const newStart = { ...startColumn, cardIds: newStartCardIds };
+
+            const newBoard = {
+                ...board,
+                columns: { ...board.columns, [newStart.id]: newStart }
+            };
+
+            setBoard(newBoard);
+            saveBoard(newBoard);
+
+            // Fetch current chapter and append beat context
+            const assignBeatToChapter = async () => {
+                setIsSaving(true);
+                try {
+                    const res = await fetch(`/api/chapters/${chapterId}`);
+                    const data = await res.json();
+
+                    const newBeatText = `[Beat Assigned from Outline]: ${card.title} - ${card.description}`;
+
+                    // Simple text append if it's empty, otherwise string manipulate
+                    let updatedContent = data.content || {};
+                    if (!updatedContent.content) updatedContent = { type: 'doc', content: [] };
+
+                    updatedContent.content.push({
+                        type: 'paragraph',
+                        content: [{ type: 'text', text: newBeatText }]
+                    });
+
+                    await fetch(`/api/chapters/${chapterId}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ content: updatedContent })
+                    });
+                } catch (e) {
+                    console.error("Failed to assign beat to chapter:", e);
+                } finally {
+                    setIsSaving(false);
+                }
+            };
+
+            assignBeatToChapter();
+            return;
+        }
 
         const startColumn = board.columns[source.droppableId];
         const finishColumn = board.columns[destination.droppableId];
@@ -202,67 +256,95 @@ export default function PlanningOutlining() {
             </div>
 
             <DragDropContext onDragEnd={onDragEnd}>
-                <div className={styles.boardScroll}>
-                    {board.columnOrder.map((columnId) => {
-                        const column = board.columns[columnId];
-                        const cards = column.cardIds.map(cardId => board.cards[cardId]);
-
-                        return (
-                            <div key={column.id} className={styles.column}>
-                                <div className={styles.columnHeader}>
-                                    <h3 className={styles.columnTitle}>{column.title}</h3>
-                                    <span className={styles.columnBadge}>{cards.length} beats</span>
-                                </div>
-
-                                <Droppable droppableId={column.id}>
-                                    {(provided) => (
+                <div style={{ display: 'flex', flexGrow: 1, minHeight: 0 }}>
+                    {/* Chapter Sidebar */}
+                    <div className={styles.chapterSidebar}>
+                        <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between' }}>
+                            Manuscript
+                            {isSaving && <LayoutList size={14} className="spin" />}
+                        </div>
+                        <div style={{ overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                            {chapters.map((chapter) => (
+                                <Droppable key={chapter.id} droppableId={`chapter-${chapter.id}`}>
+                                    {(provided, snapshot) => (
                                         <div
-                                            className={styles.cardList}
                                             ref={provided.innerRef}
                                             {...provided.droppableProps}
+                                            className={`${styles.chapterItem} ${currentChapterId === chapter.id ? styles.chapterItemActive : ''} ${snapshot.isDraggingOver ? styles.chapterItemDraggingOver : ''}`}
+                                            onClick={() => setCurrentChapterId(chapter.id)}
                                         >
-                                            {cards.map((card, index) => (
-                                                <Draggable key={card.id} draggableId={card.id} index={index}>
-                                                    {(provided, snapshot) => (
-                                                        <div
-                                                            className={`${styles.card} ${snapshot.isDragging ? styles.cardDragging : ''}`}
-                                                            ref={provided.innerRef}
-                                                            {...provided.draggableProps}
-                                                            {...provided.dragHandleProps}
-                                                        >
-                                                            <h4 className={styles.cardTitle}>{card.title}</h4>
-                                                            <p className={styles.cardDesc}>{card.description}</p>
-
-                                                            <div className={styles.cardFooter}>
-                                                                <div style={{ display: 'flex', gap: '4px' }}>
-                                                                    {card.tags.map(tag => (
-                                                                        <span key={tag} className={`${styles.tag} ${styles[`tag${tag}`]}`}>
-                                                                            {tag}
-                                                                        </span>
-                                                                    ))}
-                                                                </div>
-                                                                <div className={styles.iconGrp}>
-                                                                    <LayoutList size={14} />
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </Draggable>
-                                            ))}
-                                            {provided.placeholder}
+                                            <div className={styles.chapterItemTitle}>{chapter.title}</div>
+                                            <div style={{ fontSize: '0.8rem', opacity: 0.7 }}>Drag beats here</div>
+                                            <div style={{ display: 'none' }}>{provided.placeholder}</div>
                                         </div>
                                     )}
                                 </Droppable>
+                            ))}
+                        </div>
+                    </div>
 
-                                <button
-                                    className={styles.addBtn}
-                                    onClick={() => handleAddBeat(column.id)}
-                                >
-                                    <Plus size={16} /> Add Beat
-                                </button>
-                            </div>
-                        );
-                    })}
+                    <div className={styles.boardScroll} style={{ paddingLeft: '1.5rem' }}>
+                        {board.columnOrder.map((columnId) => {
+                            const column = board.columns[columnId];
+                            const cards = column.cardIds.map(cardId => board.cards[cardId]);
+
+                            return (
+                                <div key={column.id} className={styles.column}>
+                                    <div className={styles.columnHeader}>
+                                        <h3 className={styles.columnTitle}>{column.title}</h3>
+                                        <span className={styles.columnBadge}>{cards.length} beats</span>
+                                    </div>
+
+                                    <Droppable droppableId={column.id}>
+                                        {(provided) => (
+                                            <div
+                                                className={styles.cardList}
+                                                ref={provided.innerRef}
+                                                {...provided.droppableProps}
+                                            >
+                                                {cards.map((card, index) => (
+                                                    <Draggable key={card.id} draggableId={card.id} index={index}>
+                                                        {(provided, snapshot) => (
+                                                            <div
+                                                                className={`${styles.card} ${snapshot.isDragging ? styles.cardDragging : ''}`}
+                                                                ref={provided.innerRef}
+                                                                {...provided.draggableProps}
+                                                                {...provided.dragHandleProps}
+                                                            >
+                                                                <h4 className={styles.cardTitle}>{card.title}</h4>
+                                                                <p className={styles.cardDesc}>{card.description}</p>
+
+                                                                <div className={styles.cardFooter}>
+                                                                    <div style={{ display: 'flex', gap: '4px' }}>
+                                                                        {card.tags.map(tag => (
+                                                                            <span key={tag} className={`${styles.tag} ${styles[`tag${tag}`]}`}>
+                                                                                {tag}
+                                                                            </span>
+                                                                        ))}
+                                                                    </div>
+                                                                    <div className={styles.iconGrp}>
+                                                                        <LayoutList size={14} />
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </Draggable>
+                                                ))}
+                                                {provided.placeholder}
+                                            </div>
+                                        )}
+                                    </Droppable>
+
+                                    <button
+                                        className={styles.addBtn}
+                                        onClick={() => handleAddBeat(column.id)}
+                                    >
+                                        <Plus size={16} /> Add Beat
+                                    </button>
+                                </div>
+                            );
+                        })}
+                    </div>
                 </div>
             </DragDropContext>
         </div>

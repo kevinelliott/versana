@@ -3,6 +3,7 @@ import TopBar from './TopBar';
 import LeftSidebar from './LeftSidebar';
 import RightSidebar from './RightSidebar';
 import PhaseAssistantOrb from './PhaseAssistantOrb';
+import OnboardingModal from './OnboardingModal';
 import styles from './AppLayout.module.css';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -16,6 +17,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 </main>
                 <RightSidebar />
                 <PhaseAssistantOrb />
+                <OnboardingModal />
             </div>
         </div>
     );

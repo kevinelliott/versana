@@ -15,7 +15,7 @@ import './editor/editor.css'; // We'll need a tiny bit of CSS for TipTap
 
 
 export default function Workspace() {
-    const { activeWorkspace, isPreviewing, setIsPreviewing, previewContent, setPreviewContent, setSelectedText } = useWorkspace();
+    const { activeWorkspace, isPreviewing, setIsPreviewing, previewContent, setPreviewContent, setSelectedText, chapters, setChapters, currentChapterId, setCurrentChapterId } = useWorkspace();
     const [hoverState, setHoverState] = useState<{
         entity: any | null;
         x: number;
@@ -34,8 +34,6 @@ export default function Workspace() {
     const [isSaving, setIsSaving] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
 
-    const [chapters, setChapters] = useState<any[]>([]);
-    const [currentChapterId, setCurrentChapterId] = useState<string | null>(null);
     const [chapterTitle, setChapterTitle] = useState('');
     const [loreDatabase, setLoreDatabase] = useState<any[]>([]);
 
@@ -69,35 +67,6 @@ export default function Workspace() {
     useEffect(() => {
         if (!activeWorkspace) return;
 
-        const loadChapters = async () => {
-            setIsLoading(true);
-            try {
-                const res = await fetch(`/api/chapters?workspaceId=${activeWorkspace.id}`);
-                const data = await res.json();
-
-                // For demonstration, if no chapters exist, provide mock ones, but in reality 
-                // the workspace creation would initialize Chapter 1. Let's create one if empty.
-                if (data.length === 0) {
-                    const createRes = await fetch('/api/chapters', {
-                        method: 'POST',
-                        body: JSON.stringify({ workspaceId: activeWorkspace.id, title: 'Chapter 1', orderIndex: 0 })
-                    });
-                    const newChapter = await createRes.json();
-                    setChapters([newChapter]);
-                    setCurrentChapterId(newChapter.id);
-                } else {
-                    setChapters(data);
-                    if (!currentChapterId) {
-                        setCurrentChapterId(data[data.length - 1].id);
-                    }
-                }
-            } catch (err) {
-                console.error("Failed to load chapters:", err);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
         const loadLore = async () => {
             try {
                 const res = await fetch(`/api/lore?workspaceId=${activeWorkspace.id}`);
@@ -108,9 +77,12 @@ export default function Workspace() {
             }
         };
 
-        loadChapters();
+        if (chapters.length > 0) {
+            setIsLoading(false);
+        }
+
         loadLore();
-    }, [activeWorkspace]);
+    }, [activeWorkspace, chapters]);
 
     // Switch Chapter and Load Content
     useEffect(() => {

@@ -10,9 +10,10 @@ const PHASE_TIPS: Record<string, string> = {
     '2': "You're Outlining. Drag cards around the Save the Cat beat board. Try mapping character alliances in the Relationship Web.",
     '3': "Research Phase. When you find a good article via the World-Wide Web search, hit 'Save to Lore Bible' to persist it to your Context Matrix.",
     '4': "You're Drafting! Highlight any text to bring up the Editorial Co-pilot for rewrites, or open the Draft & Preview pane to review AI generated scenes.",
-    '5': "Formatting Phase. Adjust your trim size and fonts, and generate AI chapter ornamentation before exporting your ePub.",
-    '6': "Cover Design. Versana will read your manuscript to generate an optimal Nano Banana Pro image prompt!",
-    '7': "Publishing Prep. Let's extract your BISAC codes and generate your Amazon Blurb based on your final story.",
+    '5': "Deep Edits. Run a full manuscript scan to detect plot holes, character inconsistencies, and pacing issues before moving to Layout.",
+    '6': "Formatting Phase. Adjust your trim size and fonts, and generate AI chapter ornamentation before exporting your ePub.",
+    '7': "Cover Design. Versana will read your manuscript to generate an optimal Nano Banana Pro image prompt!",
+    '8': "Publishing Prep. Let's extract your BISAC codes and generate your Amazon Blurb based on your final story.",
 };
 
 export default function PhaseAssistantOrb() {

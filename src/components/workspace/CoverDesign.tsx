@@ -85,7 +85,7 @@ export default function CoverDesign() {
     return (
         <div className={styles.container}>
             <div className={styles.header}>
-                <h1 className={styles.title}>Phase 6: Cover Design</h1>
+                <h1 className={styles.title}>Phase 7: Cover Design</h1>
                 <p className={styles.subtitle}>Translate lore into prompts and generate your book cover.</p>
             </div>
 

@@ -86,7 +86,7 @@ export default function PublishPrep() {
     return (
         <div className={styles.container}>
             <div className={styles.header}>
-                <h1 className={styles.title}>Phase 7: Publishing & Marketing Prep</h1>
+                <h1 className={styles.title}>Phase 8: Publishing & Marketing Prep</h1>
                 <p className={styles.subtitle}>Generate optimized blurbs, extract metadata, and export your final manuscript.</p>
             </div>
 

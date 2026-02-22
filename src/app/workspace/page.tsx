@@ -8,6 +8,7 @@ import ResearchAssistant from '@/components/workspace/ResearchAssistant';
 import BookLayout from '@/components/workspace/BookLayout';
 import CoverDesign from '@/components/workspace/CoverDesign';
 import PublishPrep from '@/components/workspace/PublishPrep';
+import DeepEdits from '@/components/workspace/DeepEdits';
 import { PhaseProvider, usePhase } from "@/context/PhaseContext";
 import { WorkspaceProvider } from "@/context/WorkspaceContext";
 
@@ -29,12 +30,15 @@ function MainContent() {
       CurrentView = <Workspace />;
       break;
     case '5':
-      CurrentView = <BookLayout />;
+      CurrentView = <DeepEdits />;
       break;
     case '6':
-      CurrentView = <CoverDesign />;
+      CurrentView = <BookLayout />;
       break;
     case '7':
+      CurrentView = <CoverDesign />;
+      break;
+    case '8':
       CurrentView = <PublishPrep />;
       break;
     default:

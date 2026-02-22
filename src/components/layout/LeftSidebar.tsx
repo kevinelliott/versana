@@ -4,7 +4,7 @@ import React from 'react';
 import {
     Lightbulb, Shield, Map, Type,
     LayoutTemplate, Image as ImageIcon,
-    Rocket, LibraryBig
+    Rocket, LibraryBig, CheckSquare
 } from 'lucide-react';
 import styles from './LeftSidebar.module.css';
 import { usePhase } from '@/context/PhaseContext';
@@ -14,9 +14,10 @@ const PHASES = [
     { id: '2', icon: Shield, label: 'Planning & Outlining' },
     { id: '3', icon: Map, label: 'Research Assistant' },
     { id: '4', icon: Type, label: 'Drafting & Writing' },
-    { id: '5', icon: LayoutTemplate, label: 'Layout & Formatting' },
-    { id: '6', icon: ImageIcon, label: 'Cover Design' },
-    { id: '7', icon: Rocket, label: 'Publishing Prep' },
+    { id: '5', icon: CheckSquare, label: 'Revisions & Deep Edits' },
+    { id: '6', icon: LayoutTemplate, label: 'Layout & Formatting' },
+    { id: '7', icon: ImageIcon, label: 'Cover Design' },
+    { id: '8', icon: Rocket, label: 'Publishing Prep' },
 ];
 
 export default function LeftSidebar() {

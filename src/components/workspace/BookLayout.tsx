@@ -52,7 +52,7 @@ export default function BookLayout() {
     return (
         <div className={styles.container}>
             <div className={styles.header}>
-                <h1 className={styles.title}>Phase 5: Book Layout & Formatting</h1>
+                <h1 className={styles.title}>Phase 6: Book Layout & Formatting</h1>
                 <p className={styles.subtitle}>Configure Auto-Typesetting and generate chapter ornamentations.</p>
             </div>
 
