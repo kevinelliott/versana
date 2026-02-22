@@ -5,6 +5,7 @@ import Workspace from "@/components/workspace/Workspace";
 import ConceptIdeation from "@/components/workspace/ConceptIdeation";
 import PlanningOutlining from "@/components/workspace/PlanningOutlining";
 import ResearchAssistant from '@/components/workspace/ResearchAssistant';
+import BookLayout from '@/components/workspace/BookLayout';
 import { PhaseProvider, usePhase } from "@/context/PhaseContext";
 import { WorkspaceProvider } from "@/context/WorkspaceContext";
 
@@ -24,6 +25,9 @@ function MainContent() {
       break;
     case '4':
       CurrentView = <Workspace />;
+      break;
+    case '5':
+      CurrentView = <BookLayout />;
       break;
     default:
       CurrentView = (

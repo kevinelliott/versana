@@ -1,0 +1,228 @@
+.container {
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    color: var(--text-primary);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.header {
+    margin-bottom: 2rem;
+    flex-shrink: 0;
+}
+
+.title {
+    font-family: var(--font-serif);
+    font-size: 2rem;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.subtitle {
+    color: var(--text-secondary);
+    font-size: 1rem;
+}
+
+.layoutGrid {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: 3rem;
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+/* Left Sidebar Controls */
+.controlsPanel {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    overflow-y: auto;
+    padding-right: 1rem;
+}
+
+.controlSection {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.sectionTitle {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-primary);
+}
+
+.formGroup {
+    margin-bottom: 1.25rem;
+}
+
+.label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.select,
+.input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border-light);
+    border-radius: 6px;
+    background: var(--bg-secondary);
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.select:focus,
+.input:focus {
+    border-color: var(--accent-blue);
+}
+
+.toggleRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.toggleRow:last-child {
+    border-bottom: none;
+}
+
+.toggleLabel {
+    font-size: 0.9rem;
+    color: var(--text-primary);
+}
+
+.toggleBtn {
+    width: 44px;
+    height: 24px;
+    background: var(--text-primary);
+    border-radius: 12px;
+    position: relative;
+    cursor: pointer;
+    border: none;
+}
+
+.toggleBtn::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 20px;
+    height: 20px;
+    background: var(--bg-primary);
+    border-radius: 50%;
+}
+
+.toggleBtnOff {
+    background: #cbd5e1;
+}
+
+.toggleBtnOff::after {
+    left: 2px;
+    right: auto;
+}
+
+.actionBtn {
+    width: 100%;
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    border: none;
+    padding: 0.75rem;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.actionBtn:hover {
+    background: #e2e8f0;
+}
+
+/* Right Preview Panel */
+.previewPanel {
+    background: #f0f0f0;
+    /* Darker background to simulate desk */
+    border-radius: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow-y: auto;
+    padding: 3rem;
+    border: 1px solid var(--border-light);
+}
+
+.bookPage {
+    background: #fffafa;
+    /* Paper color */
+    width: 100%;
+    max-width: 600px;
+    /* Book page width */
+    min-height: 800px;
+    box-shadow: -10px 0 20px rgba(0, 0, 0, 0.05), inset 2px 0 5px rgba(0, 0, 0, 0.02);
+    padding: 4rem;
+    color: #1a1a1a;
+    /* True black for print */
+    border-radius: 2px 8px 8px 2px;
+    font-family: "Garamond", "Times New Roman", serif;
+    /* Print font */
+    line-height: 1.6;
+}
+
+.chapterTitle {
+    font-size: 2.5rem;
+    text-align: center;
+    margin-bottom: 3rem;
+    font-weight: normal;
+    letter-spacing: 0.05em;
+}
+
+.dropCap {
+    float: left;
+    font-size: 4rem;
+    line-height: 3.5rem;
+    padding-top: 4px;
+    padding-right: 8px;
+    padding-left: 3px;
+    font-family: inherit;
+    font-weight: bold;
+}
+
+.sceneBreak {
+    text-align: center;
+    margin: 2rem 0;
+    font-size: 1.5rem;
+    color: #666;
+    letter-spacing: 0.5em;
+}
+
+.pageText {
+    font-size: 1.1rem;
+    margin-bottom: 1.5rem;
+    text-indent: 1.5rem;
+    text-align: justify;
+}
+
+.pageTextNoIndent {
+    font-size: 1.1rem;
+    margin-bottom: 1.5rem;
+    text-align: justify;
+}
