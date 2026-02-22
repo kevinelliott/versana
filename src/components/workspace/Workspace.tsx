@@ -4,6 +4,7 @@ import React, { useState, MouseEvent, useEffect, useCallback } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
+import { Sparkles, Wand2, MessageSquare, Scissors, Eye, Zap, Wind } from 'lucide-react';
 import { LoreTag } from './editor/LoreTagExtension';
 import HoverCard from './HoverCard';
 import styles from './Workspace.module.css';
@@ -194,23 +195,70 @@ export default function Workspace() {
 
     return (
         <div className={styles.workspace} onClick={hoverState.visible ? handleEntityLeave : undefined}>
-            <div className={`${styles.editorContainer} ${hideTags ? 'hide-lore-tags' : ''}`}>
-                <div className={styles.toolbar}>
-                    <button
-                        className={styles.toolBtn}
-                        onClick={() => setHideTags(!hideTags)}
-                    >
-                        {hideTags ? 'Show Tags' : 'Hide Tags'}
+            {/* Left/Center: Editor Area */}
+            <div className={styles.editorMain}>
+                <div className={`${styles.editorContainer} ${hideTags ? 'hide-lore-tags' : ''}`}>
+                    <div className={styles.toolbar}>
+                        <button
+                            className={styles.toolBtn}
+                            onClick={() => setHideTags(!hideTags)}
+                        >
+                            {hideTags ? 'Show Tags' : 'Hide Tags'}
+                        </button>
+                    </div>
+
+                    <div className={styles.documentHeader}>
+                        <h1 className={styles.documentTitle} contentEditable suppressContentEditableWarning>
+                            Chapter 4: The Winter Siege
+                        </h1>
+                    </div>
+
+                    <EditorContent editor={editor} />
+                </div>
+            </div>
+
+            {/* Right: Phase 4 Tools Sidebar */}
+            <div className={styles.sidebar}>
+                {/* Beat-to-Scene Generator */}
+                <div className={styles.toolPanel}>
+                    <h3 className={styles.panelTitle}>
+                        <Sparkles size={18} color="var(--tag-purple-text)" /> Beat-to-Scene Draft
+                    </h3>
+                    <p className={styles.panelDesc}>
+                        Paste your outline beats here. Versana will generate a prose draft using your Context Matrix.
+                    </p>
+                    <textarea
+                        className={styles.beatBox}
+                        placeholder="- Aris takes cover behind the transport.&#10;- Mira overrides the door lock.&#10;- The Hegemony mechs break through."
+                    />
+                    <button className={styles.actionBtn}>
+                        <Wand2 size={16} /> Generate Scene
                     </button>
                 </div>
 
-                <div className={styles.documentHeader}>
-                    <h1 className={styles.documentTitle} contentEditable suppressContentEditableWarning>
-                        Chapter 4: The Winter Siege
-                    </h1>
+                {/* Editorial Co-Pilot */}
+                <div className={styles.toolPanel}>
+                    <h3 className={styles.panelTitle}>
+                        <Zap size={18} color="var(--accent-blue)" /> Editorial Co-Pilot
+                    </h3>
+                    <p className={styles.panelDesc}>
+                        Highlight text in the editor, then select an operation to instantly rewrite it.
+                    </p>
+                    <div className={styles.pilotGrid}>
+                        <button className={styles.pilotBtn}>
+                            <Eye size={16} color="var(--text-secondary)" /> Expand Desc.
+                        </button>
+                        <button className={styles.pilotBtn}>
+                            <MessageSquare size={16} color="var(--text-secondary)" /> Add Dialogue
+                        </button>
+                        <button className={styles.pilotBtn}>
+                            <Wind size={16} color="var(--text-secondary)" /> Inc. Tension
+                        </button>
+                        <button className={styles.pilotBtn}>
+                            <Scissors size={16} color="var(--text-secondary)" /> Show, Don't Tell
+                        </button>
+                    </div>
                 </div>
-
-                <EditorContent editor={editor} />
             </div>
 
             <HoverCard

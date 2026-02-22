@@ -1,16 +1,21 @@
 .workspace {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-    padding: 2rem;
+    position: relative;
+    padding: 2rem 4rem;
     height: 100%;
-    overflow-y: auto;
+    margin: 0 auto;
+    display: flex;
+    gap: 3rem;
+}
+
+.editorMain {
+    flex-grow: 1;
+    max-width: 800px;
     position: relative;
 }
 
 .editorContainer {
-    width: 100%;
-    max-width: 768px;
+    position: relative;
+    max-width: 100%;
     /* Classic optimal reading width */
     display: flex;
     flex-direction: column;
@@ -19,88 +24,177 @@
 .toolbar {
     display: flex;
     justify-content: flex-end;
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
 }
 
 .toolBtn {
     background: transparent;
     border: 1px solid var(--border-light);
     color: var(--text-secondary);
-    padding: 0.3rem 0.6rem;
+    padding: 0.4rem 0.8rem;
     border-radius: 4px;
-    font-size: 0.75rem;
+    font-size: 0.8rem;
     cursor: pointer;
+    transition: all 0.2s;
+}
+
+.toolBtn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
 }
 
 .documentHeader {
     margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-light);
 }
 
 .documentTitle {
     font-family: var(--font-serif);
     font-size: 2.5rem;
-    font-weight: 500;
     color: var(--text-primary);
     outline: none;
-    border: none;
-    background: transparent;
+    font-weight: 500;
+}
+
+.documentTitle:empty:before {
+    content: "Untitled Chapter";
+    color: var(--text-secondary);
 }
 
 .editorArea {
-    font-family: var(--font-serif);
-    font-size: 1.15rem;
+    min-height: 500px;
+    outline: none;
+    font-size: 1.1rem;
     line-height: 1.8;
     color: var(--text-primary);
+}
+
+/* TipTap Editor Styling */
+.editorArea p {
+    margin-bottom: 1.5em;
+    /* Traditional manuscript spacing */
+}
+
+/* Smart Lore Tags */
+.loreTag {
+    border-bottom: 2px dashed var(--accent-blue);
+    cursor: pointer;
+    transition: all 0.2s;
+    border-radius: 3px;
+    padding: 0 2px;
+}
+
+.loreTagCharacter {
+    color: var(--tag-blue-text);
+    background-color: var(--tag-blue-bg);
+}
+
+.loreTagPlot {
+    color: var(--tag-green-text);
+    background-color: var(--tag-green-bg);
+}
+
+.sidebar {
+    width: 350px;
+    flex-shrink: 0;
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+    height: 100%;
+    padding-top: 1rem;
 }
 
-.paragraph {
-    margin: 0;
+.toolPanel {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+}
+
+.panelTitle {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.panelDesc {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-bottom: 1.5rem;
+}
+
+.beatBox {
+    width: 100%;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    padding: 0.75rem;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    min-height: 100px;
+    resize: vertical;
     outline: none;
+    margin-bottom: 1rem;
+    font-family: var(--font-sans);
 }
 
-/* SMART LORE TAGS */
-.loreTag {
+.actionBtn {
+    width: 100%;
+    background: var(--text-primary);
+    color: var(--bg-primary);
+    border: none;
+    padding: 0.75rem;
+    border-radius: 6px;
+    font-weight: 500;
     cursor: pointer;
-    position: relative;
-    border-bottom: 2px dotted transparent;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.actionBtn:hover {
+    opacity: 0.9;
+}
+
+.pilotGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+
+.pilotBtn {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+    color: var(--text-primary);
+    padding: 0.75rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
     transition: all 0.2s;
 }
 
-.loreTag.character {
-    border-bottom-color: var(--accent-blue);
+.pilotBtn:hover {
+    background: var(--bg-hover);
+    border-color: #cbd5e1;
 }
 
-.loreTag.lore {
-    border-bottom-color: var(--accent-purple);
-}
-
-.loreTag.place {
-    border-bottom-color: var(--accent-green);
-}
-
-.loreTag.plot {
-    border-bottom-color: var(--accent-gold);
-}
-
-.loreTag:hover.character {
-    background-color: var(--tag-blue-bg);
-    color: var(--tag-blue-text);
-}
-
-.loreTag:hover.lore {
-    background-color: var(--tag-purple-bg);
-    color: var(--tag-purple-text);
-}
-
-.loreTag:hover.place {
-    background-color: var(--tag-green-bg);
-    color: var(--tag-green-text);
-}
-
-.loreTag:hover.plot {
-    background-color: var(--tag-gold-bg);
-    color: var(--tag-gold-text);
+/* Hide tags toggle state */
+.hide-lore-tags .loreTag {
+    background-color: transparent !important;
+    border-bottom-color: transparent !important;
+    color: inherit !important;
 }
