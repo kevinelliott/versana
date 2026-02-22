@@ -1,50 +1,137 @@
 .container {
-    width: 100%;
-    height: 100%;
     padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    color: var(--text-primary);
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    height: 100vh;
 }
 
 .header {
-    margin-bottom: 1rem;
+    margin-bottom: 2rem;
+    flex-shrink: 0;
 }
 
-.title {
-    font-size: 1.5rem;
-    font-weight: 600;
+.tabNav {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+    border-bottom: 1px solid var(--border-light);
+    padding-bottom: 0.5rem;
+}
+
+.tabBtn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.tabBtn:hover {
+    background: var(--bg-hover);
     color: var(--text-primary);
 }
 
-.board {
-    display: flex;
-    gap: 1.5rem;
-    flex: 1;
-    overflow-x: auto;
-    padding-bottom: 1rem;
-}
-
-.column {
-    width: 300px;
-    min-width: 300px;
-    background: var(--bg-secondary);
-    border-radius: 8px;
-    padding: 1rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
+.tabActive {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     border: 1px solid var(--border-light);
 }
 
-.colHeader {
-    font-weight: 600;
+.title {
+    font-family: var(--font-serif);
+    font-size: 2rem;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.subtitle {
     color: var(--text-secondary);
-    font-size: 0.9rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid var(--border-color);
+    font-size: 1rem;
+}
+
+.boardScroll {
+    display: flex;
+    gap: 1.5rem;
+    overflow-x: auto;
+    padding-bottom: 1rem;
+    flex-grow: 1;
+    align-items: flex-start;
+}
+
+/* Custom Scrollbar for the Board */
+.boardScroll::-webkit-scrollbar {
+    height: 8px;
+}
+
+.boardScroll::-webkit-scrollbar-track {
+    background: var(--bg-hover);
+    border-radius: 4px;
+}
+
+.boardScroll::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+.boardScroll::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+.column {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    width: 320px;
+    min-width: 320px;
+    display: flex;
+    flex-direction: column;
+    max-height: 100%;
+}
+
+.columnHeader {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(250, 249, 246, 0.5);
+    border-radius: 8px 8px 0 0;
+}
+
+.columnTitle {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+}
+
+.columnBadge {
+    background: var(--bg-hover);
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    padding: 2px 6px;
+    border-radius: 12px;
+    font-weight: 500;
+}
+
+.cardList {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    overflow-y: auto;
+    flex-grow: 1;
+    min-height: 100px;
 }
 
 .card {
@@ -52,24 +139,100 @@
     border: 1px solid var(--border-light);
     border-radius: 6px;
     padding: 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     cursor: grab;
-    box-shadow: var(--shadow-sm);
-    transition: box-shadow 0.2s;
+    transition: box-shadow 0.2s, border-color 0.2s;
 }
 
 .card:hover {
-    box-shadow: var(--shadow-md);
-    border-color: var(--border-color);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    border-color: #cbd5e1;
 }
 
-.card h4 {
-    font-size: 0.95rem;
+.card:active {
+    cursor: grabbing;
+}
+
+.cardDragging {
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    border-color: var(--accent-blue);
+    transform: rotate(2deg);
+}
+
+.cardTitle {
+    font-weight: 500;
+    font-size: 0.9rem;
     color: var(--text-primary);
     margin-bottom: 0.5rem;
 }
 
-.card p {
-    font-size: 0.85rem;
+.cardDesc {
+    font-size: 0.8rem;
     color: var(--text-secondary);
     line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.cardFooter {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px dashed var(--border-light);
+}
+
+.tag {
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.tagCharacter {
+    background: var(--tag-blue-bg);
+    color: var(--tag-blue-text);
+}
+
+.tagPlot {
+    background: var(--tag-green-bg);
+    color: var(--tag-green-text);
+}
+
+.tagSetting {
+    background: var(--tag-gold-bg);
+    color: var(--tag-gold-text);
+}
+
+.iconGrp {
+    display: flex;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+}
+
+.addBtn {
+    width: 100%;
+    padding: 0.75rem;
+    background: transparent;
+    border: none;
+    border-top: 1px solid var(--border-light);
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: background 0.2s, color 0.2s;
+    border-radius: 0 0 8px 8px;
+}
+
+.addBtn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
 }
