@@ -126,3 +126,19 @@ These tools exist in an entirely separate module of the application (`/tools`). 
 3. **Admin Cost Tracking**: End-to-end test of the LLM API calls to ensure token usage is correctly intercepted, calculated, and saved to the Admin dashboard per workspace.
 4. **Marketing Virality**: Verify programmatic SEO page rendering and the functioning of the "Hosted Mini-Site" shareable links.
 5. **Phase Continuity**: Validate that the Proactive AI Phase Assistant correctly reads the state of Phase N and provides relevant tips for moving to Phase N+1.
+
+## Current UX & Workflow Appraisal (New User Perspective)
+
+When walking through Versana as a first-time user writing a novel, the flow reveals immense power but several points of friction that need addressing to make the "Phase" system feel truly robust and intuitive:
+
+### Identified Challenges & Friction Points:
+1. **The Center Canvas Confusion**: Currently, clicking through Phases 1-3 changes the tools in the right sidebar, but the center canvas remains stubbornly focused on the *Manuscript Editor (Chapter 1)*. If a user is in "Phase 1: Concept & Ideation," they shouldn't be staring at Chapter 1. The center pane needs to dynamically swap out its view based on the phase (e.g., center pane becomes a corkboard in Phase 2, a web of nodes in Phase 3, and only becomes the Manuscript in Phase 4).
+2. **Beat-to-Chapter Translation**: The Kanban Beat Board in Phase 2 is fantastic for outlining, but there is no clear bridge connecting those abstract beats to the concrete Chapters in Phase 4. A user is left manually transcribing or guessing which beats belong to which chapter. 
+3. **Lore Bible Interoperability**: The Lore Bible (Context Matrix) feels slightly siloed. While the "Smart Lore Tags" appearing in the text are magical, the user lacks manual control to drag-and-drop a lore entry directly from the sidebar into the text to explicitly say "Write about *this* here."
+4. **Publishing Abruptness**: The leap from "Writing" straight to "Phase 6 & 7 (Cover & Publishing)" feels abrupt. There needs to be a dedicated "Phase 5: Revision & Editing" that leverages AI to highlight plot holes, check pacing consistency across the *entire* book, and refine prose before typesetting.
+
+### Improvement Roadmap for Next Iteration:
+- **Major Update**: Refactor the main `Workspace.tsx` grid. The center column should listen to `activePhase` and render `<ConceptBoard />`, `<Outliner />`, `<Editor />`, or `<Typesetter />` accordingly, rather than always rendering the Tiptap editor.
+- **Major Update**: Implement a "Drag Beat to Chapter" feature. Allow users to drag a card from the Beat Board directly onto a Chapter in the left sidebar to assign it, auto-populating the AI's "Context" for that specific chapter.
+- **UI Polish**: Add a dedicated "Phase 5: Deep Edit" workflow focused entirely on manuscript analysis (global pacing readouts, character arc consistency checks).
+- **Onboarding**: Add a guided tutorial overlay that explains *why* the Context Matrix is better than ChatGPT (e.g. "Versana actually remembers what you wrote in Chapter 1 while you write Chapter 20").
