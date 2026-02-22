@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/server';
 
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
         const { id } = await params;
         if (!id) return NextResponse.json({ error: 'Missing workspace ID' }, { status: 400 });
@@ -10,7 +10,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
         const body = await req.json();
         const { board_state } = body;
 
-        let supabase = createClient();
+        let supabase = await createClient();
         let { data: { user } } = await supabase.auth.getUser();
 
         // Local dev bypass

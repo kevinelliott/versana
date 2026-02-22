@@ -77,7 +77,7 @@ export async function GET(req: Request) {
             headers.set('Content-Type', 'application/epub+zip');
             headers.set('Content-Disposition', `attachment; filename="${fallbackTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.epub"`);
 
-            return new Response(buffer, { status: 200, headers });
+            return new Response(buffer as unknown as BodyInit, { status: 200, headers });
         } else if (format === 'docx') {
             const docChildren: any[] = [];
 
@@ -118,7 +118,7 @@ export async function GET(req: Request) {
             headers.set('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
             headers.set('Content-Disposition', `attachment; filename="${fallbackTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_manuscript.docx"`);
 
-            return new Response(buffer, { status: 200, headers });
+            return new Response(buffer as unknown as BodyInit, { status: 200, headers });
         }
 
         return new Response('Unsupported format', { status: 400 });
