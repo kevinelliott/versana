@@ -1,0 +1,250 @@
+.container {
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    color: var(--text-primary);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.header {
+    margin-bottom: 2rem;
+    flex-shrink: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.titleBox {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.title {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.subtitle {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
+.badge {
+    background: var(--tag-purple-bg);
+    color: var(--tag-purple-text);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+    flex-grow: 1;
+    overflow-y: auto;
+    padding-bottom: 2rem;
+}
+
+.column {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+/* Stats Row */
+.statsRow {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+}
+
+.statCard {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.statLabel {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.statValue {
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.statTrend {
+    font-size: 0.85rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.trendUp {
+    color: var(--tag-green-text);
+}
+
+.trendDown {
+    color: var(--text-secondary);
+}
+
+/* Data Tables */
+.card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.cardHeader {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--bg-secondary);
+}
+
+.cardTitle {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.th {
+    text-align: left;
+    padding: 1rem 1.5rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid var(--border-light);
+    background: var(--bg-primary);
+}
+
+.td {
+    padding: 1rem 1.5rem;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-light);
+}
+
+.tr:last-child .td {
+    border-bottom: none;
+}
+
+.tr:hover .td {
+    background: var(--bg-secondary);
+}
+
+.userRow {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--accent-blue);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.userName {
+    font-weight: 500;
+    display: block;
+}
+
+.userEmail {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.tierBadge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.tierHobby {
+    background: #e2e8f0;
+    color: #475569;
+}
+
+.tierPro {
+    background: var(--tag-blue-bg);
+    color: var(--tag-blue-text);
+}
+
+.tierMaster {
+    background: var(--tag-gold-bg);
+    color: var(--tag-gold-text);
+}
+
+/* Cost Breakdown List */
+.costList {
+    padding: 1rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.costItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.costModel {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+.costAmount {
+    font-family: monospace;
+    font-size: 1rem;
+    color: var(--text-primary);
+}
