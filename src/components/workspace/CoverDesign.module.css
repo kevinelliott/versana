@@ -1,0 +1,254 @@
+.container {
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    color: var(--text-primary);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.header {
+    margin-bottom: 2rem;
+    flex-shrink: 0;
+}
+
+.title {
+    font-family: var(--font-serif);
+    font-size: 2rem;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.subtitle {
+    color: var(--text-secondary);
+    font-size: 1rem;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: 400px 1fr;
+    gap: 3rem;
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+/* Left Sidebar: Prompt Engine */
+.promptPanel {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    overflow-y: auto;
+    padding-right: 1rem;
+}
+
+.card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.cardTitle {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-primary);
+}
+
+.cardDesc {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+}
+
+.textarea {
+    width: 100%;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    padding: 0.75rem;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    min-height: 120px;
+    resize: vertical;
+    outline: none;
+    margin-bottom: 1rem;
+    font-family: var(--font-sans);
+    line-height: 1.5;
+}
+
+.textarea:focus {
+    border-color: var(--accent-blue);
+}
+
+.inputGroup {
+    margin-bottom: 1rem;
+}
+
+.inputLabel {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.inputField {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border-light);
+    border-radius: 6px;
+    background: var(--bg-secondary);
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    outline: none;
+}
+
+.buttonPrimary {
+    width: 100%;
+    background: var(--text-primary);
+    color: var(--bg-primary);
+    border: none;
+    padding: 0.75rem;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.buttonPrimary:hover {
+    opacity: 0.9;
+}
+
+.buttonSecondary {
+    width: 100%;
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    border: none;
+    padding: 0.75rem;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.buttonSecondary:hover {
+    background: #e2e8f0;
+}
+
+/* Right Panel: Canvas Preview */
+.canvasPanel {
+    background: #111;
+    /* Dark background to make cover pop */
+    border-radius: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid var(--border-light);
+}
+
+.coverArt {
+    width: 100%;
+    max-width: 450px;
+    aspect-ratio: 2 / 3;
+    /* Standard book cover ratio 6x9 */
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 3rem 2rem;
+    border-radius: 4px;
+}
+
+.coverOverlay {
+    position: absolute;
+    inset: 0;
+    background: url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop') center/cover;
+    opacity: 0.4;
+    mix-blend-mode: overlay;
+    z-index: 1;
+}
+
+.coverContent {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    justify-content: space-between;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.coverAuthor {
+    font-family: var(--font-sans);
+    letter-spacing: 0.3em;
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.coverTitle {
+    font-family: var(--font-serif);
+    font-size: 4rem;
+    line-height: 1.1;
+    font-weight: 400;
+    text-transform: uppercase;
+    text-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    margin: auto 0;
+}
+
+.coverSubtitle {
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    letter-spacing: 0.1em;
+    font-style: italic;
+    opacity: 0.8;
+}
+
+.controlsOverlay {
+    position: absolute;
+    bottom: 2rem;
+    right: 2rem;
+    display: flex;
+    gap: 1rem;
+    z-index: 10;
+}
+
+.iconBtn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.iconBtn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.05);
+}
