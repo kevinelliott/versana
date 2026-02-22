@@ -4,6 +4,7 @@ import epub from 'epub-gen-memory';
 import { Document, Packer, Paragraph, TextRun } from "docx";
 import { generateHTML } from '@tiptap/html';
 import StarterKit from '@tiptap/starter-kit';
+import { LoreTag } from '@/components/workspace/editor/LoreTagExtension';
 
 export async function GET(req: Request) {
     try {
@@ -57,7 +58,7 @@ export async function GET(req: Request) {
             const epubChapters = chapters.map((ch: any, index: number) => {
                 let htmlContent = '<p></p>';
                 if (ch.content) {
-                    htmlContent = generateHTML(ch.content, [StarterKit]);
+                    htmlContent = generateHTML(ch.content, [StarterKit, LoreTag]);
                 }
                 return {
                     title: ch.title || `Chapter ${index + 1}`,
