@@ -28,13 +28,13 @@ export default function MarketingPage() {
                 <section className={styles.heroSection}>
                     <div className={styles.heroContent}>
                         <div className={styles.badge}>
-                            <Sparkles size={14} /> Built for Novelists, Not Coders.
+                            <Sparkles size={14} /> Overcome Writer's Block Forever.
                         </div>
                         <h1 className={styles.heroTitle}>
-                            An AI Co-Writer That Actually Remembers Your <em>Story Bible</em>.
+                            Your Co-Author That <em>Never Sleeps</em>.
                         </h1>
                         <p className={styles.heroSubtitle}>
-                            Tired of standard chatbots forgetting your main character's eye color by chapter three? Versana automatically builds a flawless, persistent memory of your entire universe as you write.
+                            From Idea to Published in Record Time. Standard chatbots forget your main character's name by chapter three—Versana automatically builds a flawless, persistent memory of your entire universe as you write.
                         </p>
                         <div className={styles.heroActions}>
                             <Link href="/workspace" className={styles.ctaButtonPrimaryLarge}>
@@ -89,25 +89,25 @@ export default function MarketingPage() {
                 {/* Tools Section */}
                 <section id="tools" className={styles.toolsSection}>
                     <div className={styles.sectionHeader}>
-                        <h2 className={styles.sectionTitle}>From Blank Page to Published Book</h2>
-                        <p className={styles.sectionSubtitle}>We replaced your 15 different writing apps with one beautifully streamlined studio.</p>
+                        <h2 className={styles.sectionTitle}>From Idea to Published</h2>
+                        <p className={styles.sectionSubtitle}>We replaced your 15 different writing apps with one beautifully streamlined studio designed specifically to get your book across the finish line.</p>
                     </div>
 
                     <div className={styles.featureGrid}>
                         <div className={styles.featureCard}>
                             <div className={styles.featureIcon}><Brain size={24} /></div>
                             <h3>The Ideation Engine</h3>
-                            <p>Overcome writer's block. Our AI acts as a sounding board, asking you tough "What If" questions to pressure-test your premise before you outline.</p>
+                            <p>Overcome writer's block. Our AI acts as a sounding board, asking you tough "What If" questions to pressure-test your premise before you outline. Generate conflict out of thin air.</p>
                         </div>
                         <div className={styles.featureCard}>
                             <div className={styles.featureIcon}><PenTool size={24} /></div>
                             <h3>Smart Lore Editor</h3>
-                            <p>Write freely. When you type a character's name, Versana subtly underlines it. Hover over it to instantly view their bio, without breaking your flow.</p>
+                            <p>Write freely. When you type a character's name, Versana subtly underlines it. Hover over it to instantly view their bio, without breaking your flow. Your Co-Author handles the details.</p>
                         </div>
                         <div className={styles.featureCard}>
                             <div className={styles.featureIcon}><LayoutTemplate size={24} /></div>
-                            <h3>Auto-Formatting</h3>
-                            <p>Stop fighting Microsoft Word margins. When your draft is done, Versana generates a beautifully typeset, Vellum-quality ePub ready for Amazon KDP.</p>
+                            <h3>Instant Typesetting</h3>
+                            <p>Stop fighting Microsoft Word margins. When your draft is done, Versana generates a beautifully typeset, Vellum-quality ePub ready for Amazon KDP in literal seconds.</p>
                         </div>
                     </div>
 

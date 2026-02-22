@@ -2,6 +2,7 @@ import React from 'react';
 import TopBar from './TopBar';
 import LeftSidebar from './LeftSidebar';
 import RightSidebar from './RightSidebar';
+import PhaseAssistantOrb from './PhaseAssistantOrb';
 import styles from './AppLayout.module.css';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -14,6 +15,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     {children}
                 </main>
                 <RightSidebar />
+                <PhaseAssistantOrb />
             </div>
         </div>
     );

@@ -10,6 +10,45 @@ export default function BookLayout() {
     const [dropCapEnabled, setDropCapEnabled] = useState(true);
     const [ornamentEnabled, setOrnamentEnabled] = useState(true);
 
+    const [generatedOrnamentUrl, setGeneratedOrnamentUrl] = useState<string | null>(null);
+    const [generatedDropCapUrl, setGeneratedDropCapUrl] = useState<string | null>(null);
+    const [isGenerating, setIsGenerating] = useState(false);
+
+    const handleGenerateAssets = async () => {
+        setIsGenerating(true);
+        try {
+            if (ornamentEnabled) {
+                const res = await fetch('/api/ai/generate-asset', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        prompt: "A beautiful, minimalist, highly stylized sci-fi scene break ornament, sharp black vector on white background, symmetrical, centered, thin lines.",
+                        type: "Scene Break Icon"
+                    })
+                });
+                const data = await res.json();
+                if (data.url) setGeneratedOrnamentUrl(data.url);
+            }
+
+            if (dropCapEnabled) {
+                const res = await fetch('/api/ai/generate-asset', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        prompt: "An incredibly ornate, illuminated manuscript style capital letter 'T', sci-fi theme, silver and neon blue, highly detailed, black background, readable.",
+                        type: "Drop Cap Letter"
+                    })
+                });
+                const data = await res.json();
+                if (data.url) setGeneratedDropCapUrl(data.url);
+            }
+        } catch (e) {
+            console.error("Failed to generate assets", e);
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
     return (
         <div className={styles.container}>
             <div className={styles.header}>
@@ -63,6 +102,32 @@ export default function BookLayout() {
 
                     <div className={styles.controlSection}>
                         <h3 className={styles.sectionTitle}>
+                            <Sparkles size={18} color="var(--tag-purple-text)" /> AI Front & Back Matter
+                        </h3>
+                        <p className={styles.label} style={{ marginBottom: '1rem', lineHeight: 1.5 }}>
+                            Let Versana auto-generate standard book publishing pages using your Context Matrix.
+                        </p>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem' }}>
+                                <input type="checkbox" defaultChecked /> Copyright Page
+                            </label>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem' }}>
+                                <input type="checkbox" defaultChecked /> Dedication
+                            </label>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem' }}>
+                                <input type="checkbox" /> Acknowledgments
+                            </label>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem' }}>
+                                <input type="checkbox" defaultChecked /> About the Author
+                            </label>
+                        </div>
+                        <button className={styles.actionBtn}>
+                            Generate Selected Matter
+                        </button>
+                    </div>
+
+                    <div className={styles.controlSection}>
+                        <h3 className={styles.sectionTitle}>
                             <Sparkles size={18} color="var(--tag-purple-text)" /> AI Ornamentation
                         </h3>
 
@@ -82,8 +147,31 @@ export default function BookLayout() {
                             />
                         </div>
 
-                        <button className={styles.actionBtn} style={{ background: 'var(--text-primary)', color: 'var(--bg-primary)' }}>
-                            <ImageIcon size={16} /> Generate Assets (Nano Banana Pro)
+                        <button
+                            className={styles.actionBtn}
+                            style={{ background: 'var(--text-primary)', color: 'var(--bg-primary)', opacity: isGenerating ? 0.7 : 1 }}
+                            onClick={handleGenerateAssets}
+                            disabled={isGenerating}
+                        >
+                            <ImageIcon size={16} /> {isGenerating ? 'Generating via Nano Banana Pro...' : 'Generate Assets (Nano Banana Pro)'}
+                        </button>
+                    </div>
+
+                    <div className={styles.controlSection}>
+                        <h3 className={styles.sectionTitle}>
+                            <ImageIcon size={18} /> Inline Illustrations
+                        </h3>
+                        <p className={styles.label} style={{ marginBottom: '1rem', lineHeight: 1.5 }}>
+                            Generate map inserts, sketches, or symbol pages to place *between* chapters.
+                        </p>
+                        <select className={styles.select} style={{ marginBottom: '0.75rem' }}>
+                            <option value="map">Fantasy Map Insert</option>
+                            <option value="sketch">Character Sketch (Graphite)</option>
+                            <option value="symbol">Faction Symbol / Crest</option>
+                            <option value="tech">Technical Diagram</option>
+                        </select>
+                        <button className={styles.actionBtn}>
+                            Generate Full-Page Insert
                         </button>
                     </div>
 
@@ -114,7 +202,11 @@ export default function BookLayout() {
                         </div>
 
                         <p className={styles.pageTextNoIndent}>
-                            {dropCapEnabled && <span className={styles.dropCap}>T</span>}
+                            {dropCapEnabled && (
+                                generatedDropCapUrl
+                                    ? <img src={generatedDropCapUrl} alt="Drop Cap" style={{ float: 'left', height: '4rem', marginRight: '0.75rem', marginTop: '0.2rem', borderRadius: '4px' }} />
+                                    : <span className={styles.dropCap}>T</span>
+                            )}
                             {dropCapEnabled ? "he " : "The "}snow fell heavy over the battlements of the old fort. Captain Aris tightened his grip on the plasma rifle, his breath pluming in the frigid air. The Rebellion could not afford to lose this vantage point. If the Hegemony breached the wall, the entire sector would fall within the week.
                         </p>
 
@@ -126,7 +218,11 @@ export default function BookLayout() {
                             Aris cursed softly. They had been outmaneuvered. The intelligence reports had promised a skeletal garrison, not a full battalion of shock troops. He signaled the rest of his squad to hold position.
                         </p>
 
-                        {ornamentEnabled && <div className={styles.sceneBreak}>***</div>}
+                        {ornamentEnabled && (
+                            generatedOrnamentUrl
+                                ? <div style={{ textAlign: 'center', margin: '2rem 0' }}><img src={generatedOrnamentUrl} alt="Scene Break Ornament" style={{ height: '40px', objectFit: 'contain' }} /></div>
+                                : <div className={styles.sceneBreak}>***</div>
+                        )}
 
                         <p className={styles.pageTextNoIndent}>
                             The first explosion rattled the foundation of the fort. Dust fell from the ancient stone ceiling, coating Aris's armor in a fine, gray powder. The sound was deafening, a concussive wave that vibrated through their boots. The siege had begun.

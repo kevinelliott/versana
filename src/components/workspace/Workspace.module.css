@@ -9,8 +9,92 @@
 
 .editorMain {
     flex-grow: 1;
-    max-width: 800px;
+    max-width: 1000px;
+    /* Allow wider for split pane */
     position: relative;
+    display: flex;
+    gap: 2rem;
+    transition: all 0.3s;
+}
+
+.chapterSidebar {
+    width: 280px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    border-right: 1px solid var(--border-light);
+    padding-right: 1.5rem;
+    height: 100%;
+}
+
+.chapterSidebarHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.chapterSidebarTitle {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.addChapterBtn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.addChapterBtn:hover {
+    color: var(--text-primary);
+}
+
+.chapterList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.chapterItem {
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+    user-select: none;
+}
+
+.chapterItem:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.chapterItemActive {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.chapterItemIcon {
+    opacity: 0.5;
+}
+
+.chapterItemActive .chapterItemIcon {
+    opacity: 1;
+    color: var(--accent-blue);
 }
 
 .editorContainer {
@@ -93,6 +177,115 @@
 .loreTagPlot {
     color: var(--tag-green-text);
     background-color: var(--tag-green-bg);
+}
+
+/* Split Pane & History */
+.previewPane {
+    flex: 1;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.previewHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.previewTitle {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--accent-blue);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.previewContent {
+    font-size: 1rem;
+    line-height: 1.8;
+    color: var(--text-secondary);
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+.previewActions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.historyPanel {
+    position: absolute;
+    top: 4rem;
+    right: 0;
+    width: 300px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.historyHeader {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-light);
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.historyList {
+    max-height: 300px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.historyItem {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-light);
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.historyItem:hover {
+    background: var(--bg-hover);
+}
+
+.historyTime {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.25rem;
+}
+
+.historyDesc {
+    font-size: 0.9rem;
+    color: var(--text-primary);
 }
 
 .sidebar {

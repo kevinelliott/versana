@@ -5,12 +5,12 @@ import styles from './HoverCard.module.css';
 interface EntityData {
     id: string;
     name: string;
-    type: 'character' | 'place' | 'lore' | 'plot';
+    type: 'character' | 'place' | 'lore' | 'plot' | 'rule' | string;
     synopsis: string;
-    firstAppearance: string;
-    mentions: number;
+    firstAppearance?: string;
+    mentions?: number;
     status?: string;
-    associated: string[];
+    associated?: string[];
 }
 
 interface HoverCardProps {
@@ -23,18 +23,35 @@ interface HoverCardProps {
 
 export default function HoverCard({ entity, x, y, visible, onClose }: HoverCardProps) {
     const [isRendered, setIsRendered] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editedSynopsis, setEditedSynopsis] = useState(entity?.synopsis || '');
+    const [isSaving, setIsSaving] = useState(false);
     const cardRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        if (visible) {
+        if (visible && entity) {
             setIsRendered(true);
+            setEditedSynopsis(entity.synopsis || ''); // Reset draft when opened
         } else {
-            const timer = setTimeout(() => setIsRendered(false), 200);
+            const timer = setTimeout(() => {
+                setIsRendered(false);
+                setIsEditing(false); // Reset editing mode on close
+            }, 200);
             return () => clearTimeout(timer);
         }
-    }, [visible]);
+    }, [visible, entity?.synopsis]);
 
-    if (!isRendered) return null;
+    const handleSave = async () => {
+        if (!entity) return;
+        setIsSaving(true);
+        // Simulate DB Sync & Vector Embedding Update 
+        await new Promise(resolve => setTimeout(resolve, 600));
+        entity.synopsis = editedSynopsis;
+        setIsSaving(false);
+        setIsEditing(false);
+    };
+
+    if (!isRendered || !entity) return null;
 
     return (
         <div
@@ -54,40 +71,69 @@ export default function HoverCard({ entity, x, y, visible, onClose }: HoverCardP
             </div>
 
             <div className={styles.synopsis}>
-                {entity.synopsis}
+                {isEditing ? (
+                    <textarea
+                        className={styles.quickEditArea}
+                        value={editedSynopsis}
+                        onChange={(e) => setEditedSynopsis(e.target.value)}
+                        placeholder="Add synopsis details..."
+                        autoFocus
+                    />
+                ) : (
+                    entity.synopsis || <span style={{ color: 'var(--text-secondary)', fontStyle: 'italic' }}>No synopsis available. Click Quick Edit to add one.</span>
+                )}
             </div>
 
             <div className={styles.stats}>
-                <div className={styles.statRow}>
-                    <span>First Appearance:</span>
-                    <span>{entity.firstAppearance}</span>
-                </div>
-                <div className={styles.statRow}>
-                    <span>Total Mentions:</span>
-                    <span>{entity.mentions}</span>
-                </div>
+                {entity.firstAppearance && (
+                    <div className={styles.statRow}>
+                        <span>First Appearance:</span>
+                        <span>{entity.firstAppearance}</span>
+                    </div>
+                )}
+                {entity.mentions !== undefined && (
+                    <div className={styles.statRow}>
+                        <span>Total Mentions:</span>
+                        <span>{entity.mentions}</span>
+                    </div>
+                )}
                 {entity.status && (
                     <div className={styles.statRow}>
                         <span>Status:</span>
                         <span>{entity.status}</span>
                     </div>
                 )}
-                <div className={styles.statRow}>
-                    <span>Linked to:</span>
-                    <span>{entity.associated.join(', ')}</span>
-                </div>
+                {entity.associated && entity.associated.length > 0 && (
+                    <div className={styles.statRow}>
+                        <span>Linked to:</span>
+                        <span>{entity.associated.join(', ')}</span>
+                    </div>
+                )}
             </div>
 
             <div className={styles.actions}>
-                <button className={styles.actionBtn}>
-                    <BookOpen size={14} /> Open file
-                </button>
-                <button className={styles.actionBtn}>
-                    <Edit2 size={14} /> Quick Edit
-                </button>
-                <button className={styles.actionBtn}>
-                    <MessageSquare size={14} /> Ask AI
-                </button>
+                {isEditing ? (
+                    <>
+                        <button className={styles.saveBtnActive} onClick={handleSave} disabled={isSaving}>
+                            <Edit2 size={14} /> {isSaving ? "Syncing..." : "Save to Vector DB"}
+                        </button>
+                        <button className={styles.actionBtn} onClick={() => setIsEditing(false)}>
+                            Cancel
+                        </button>
+                    </>
+                ) : (
+                    <>
+                        <button className={styles.actionBtn}>
+                            <BookOpen size={14} /> Open file
+                        </button>
+                        <button className={styles.actionBtn} onClick={() => setIsEditing(true)}>
+                            <Edit2 size={14} /> Quick Edit
+                        </button>
+                        <button className={styles.actionBtn}>
+                            <MessageSquare size={14} /> Ask AI
+                        </button>
+                    </>
+                )}
             </div>
         </div>
     );

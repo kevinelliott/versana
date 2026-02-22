@@ -1,0 +1,69 @@
+.container {
+    padding: 1rem;
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-light);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.empty {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-style: italic;
+    text-align: center;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.title {
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.legend {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.legendItem {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.box {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+}
+
+.visualizer {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    height: 60px;
+    margin-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-light);
+    overflow-x: auto;
+}
+
+.bar {
+    width: 12px;
+    min-width: 12px;
+    border-radius: 2px 2px 0 0;
+    transition: height 0.3s ease, background 0.3s ease;
+    cursor: pointer;
+}
+
+.bar:hover {
+    filter: brightness(1.2);
+}

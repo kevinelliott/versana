@@ -41,41 +41,47 @@ export default function FeaturesPage() {
                         <p className={styles.sectionSubtitle}>Everything you need to plan, draft, and publish a best-seller, completely integrated.</p>
                     </div>
 
-                    <div className={styles.featureGrid} style={{ maxWidth: '1200px', margin: '0 auto' }}>
-                        <div className={styles.featureCard}>
-                            <div className={styles.featureIcon}><Brain size={24} /></div>
-                            <h3>Phase 1: Concept & Ideation</h3>
-                            <p>Generate genre-specific hooks with the Seed Generator, then pressure test your premise in our interactive "What-If" chat engine.</p>
+                    <div className={styles.bentoGrid}>
+                        {/* Phase 4: The Core Editor - Large */}
+                        <div className={`${styles.bentoCard} ${styles.bentoLarge}`}>
+                            <div className={styles.bentoIconWrapper}><PenTool size={24} /></div>
+                            <h3 className={styles.bentoTitle}>Phase 4: Chapter Drafting</h3>
+                            <p className={styles.bentoDesc}>Distraction-free environment with Smart Lore Tags. See character bios dynamically load as you type their names. Instantly generate scenes from your beats and use the AI Editorial Co-Pilot to refine your prose.</p>
                         </div>
 
-                        <div className={styles.featureCard}>
-                            <div className={styles.featureIcon}><Map size={24} /></div>
-                            <h3>Phase 2: Planning & Outlining</h3>
-                            <p>Map your beats on a visual Kanban board formatted to Save the Cat. Build visual Relationship Node Webs to track character alliances.</p>
+                        {/* Phase 2: Planning - Wide */}
+                        <div className={`${styles.bentoCard} ${styles.bentoWide}`}>
+                            <div className={styles.bentoIconWrapper}><Map size={24} /></div>
+                            <h3 className={styles.bentoTitle}>Phase 2: Planning & Outlining</h3>
+                            <p className={styles.bentoDesc}>Map your beats on a visual Kanban board formatted to Save the Cat. Build visual Relationship Node Webs to track character alliances.</p>
                         </div>
 
-                        <div className={styles.featureCard}>
-                            <div className={styles.featureIcon}><Shield size={24} /></div>
-                            <h3>Phase 3: Deep Research</h3>
-                            <p>An integrated fact-checker that cross-references your magic systems and geography against known physics and logic constraints.</p>
+                        {/* Phase 5: Formatting - Tall */}
+                        <div className={`${styles.bentoCard} ${styles.bentoTall}`}>
+                            <div className={styles.bentoIconWrapper}><LayoutTemplate size={24} /></div>
+                            <h3 className={styles.bentoTitle}>Phase 5: Book Formatting</h3>
+                            <p className={styles.bentoDesc}>Skip the expensive Vellum subscription. Auto-typeset your manuscript instantly with beautiful Drop Caps, dynamic margins, and completely automated Front and Back matter generation.</p>
                         </div>
 
-                        <div className={styles.featureCard}>
-                            <div className={styles.featureIcon}><PenTool size={24} /></div>
-                            <h3>Phase 4: Chapter Drafting</h3>
-                            <p>Distraction-free environment with Smart Lore Tags. See character bios dynamically load as you type their names.</p>
+                        {/* Phase 1: Ideation */}
+                        <div className={styles.bentoCard}>
+                            <div className={styles.bentoIconWrapper}><Brain size={24} /></div>
+                            <h3 className={styles.bentoTitle}>Phase 1: Concept & Ideation</h3>
+                            <p className={styles.bentoDesc}>Generate genre-specific hooks with the Seed Generator, then pressure test your premise in our interactive "What-If" chat engine.</p>
                         </div>
 
-                        <div className={styles.featureCard}>
-                            <div className={styles.featureIcon}><LayoutTemplate size={24} /></div>
-                            <h3>Phase 5: Book Formatting</h3>
-                            <p>Skip the expensive Vellum subscription. Auto-typeset your manuscript instantly with beautiful Drop Caps and Headers.</p>
+                        {/* Phase 3: Research */}
+                        <div className={styles.bentoCard}>
+                            <div className={styles.bentoIconWrapper}><Shield size={24} /></div>
+                            <h3 className={styles.bentoTitle}>Phase 3: Deep Research</h3>
+                            <p className={styles.bentoDesc}>An integrated fact-checker that cross-references your magic systems and geography against known physics and logic constraints.</p>
                         </div>
 
-                        <div className={styles.featureCard}>
-                            <div className={styles.featureIcon}><Sparkles size={24} /></div>
-                            <h3>Phase 6: Cover Design</h3>
-                            <p>We read your entire book and automatically extract the themes into a prompt for our Nano Banana Pro image generation engine.</p>
+                        {/* Phase 6: Cover Design */}
+                        <div className={styles.bentoCard}>
+                            <div className={styles.bentoIconWrapper}><Sparkles size={24} /></div>
+                            <h3 className={styles.bentoTitle}>Phase 6: Cover Design</h3>
+                            <p className={styles.bentoDesc}>We read your entire book and automatically extract the themes into a prompt for our Nano Banana Pro image generation engine.</p>
                         </div>
                     </div>
                 </section>

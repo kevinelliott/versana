@@ -1,0 +1,128 @@
+# Versana Platform Architecture & Strategy
+
+Versana is the ultimate AI-driven SaaS platform designed to be a co-writer, researcher, and project manager for authors. Unlike standard AI chatbots, it is built on a **Dynamic RAG (Retrieval-Augmented Generation) Architecture**, acting as a permanent "Story Bible" with perfect memory via the **Context Matrix**. 
+
+## Proposed Architecture & Tech Stack
+
+### Frontend & Core
+- **Framework**: Next.js (App Router) for robust full-stack capabilities, server components, and API routes.
+- **Styling**: Vanilla CSS. The design language is "Scrivener meets Notion" (clean, minimalist, soft off-whites, crisp dark text, refined subtle borders). No neon "AI-glow."
+- **Text Editor**: **TipTap / ProseMirror**. Essential for building the "Smart Lore Tags" without lagging the UI. We will build custom Nodes/Marks for entity matching.
+
+### Backend & Databases
+- **API Layer**: Next.js Serverless API routes orchestrating the AI logic.
+- **Relational Database**: Supabase (PostgreSQL) for user authentication, billing (Stripe Integration), workspace and project metadata, and standard document saving. We will support **Multiple Workspaces** so each writing project can live in isolation with completely siloed data.
+- **Vector Database (AI Memory)**: **Supabase pgvector**. This powers the "Context Matrix." Paragraphs and Lore Bible entries are converted into embeddings and stored natively in Supabase for instant retrieval, avoiding the need for a separate third-party vendor like Pinecone.
+
+### AI Models
+- **Writing/Reasoning**: Anthropic Claude 3.5 Sonnet (for creative writing, nuance) or OpenAI GPT-4o.
+- **Fast Tasks (NER/Keywords)**: GPT-4o-mini or Claude Haiku (to minimize latency on hover-cards and background tagging).
+- **Image Generation**: **Nano Banana Pro via Gemini 3.1 Pro** for Chapter Ornamentation, lore thumbnails, and Cover Design.
+
+---
+
+## Application Zones
+
+### 1. The Marketing Site
+A public-facing funnel designed to convert visitors gracefully and achieve massive organic reach. It must aggressively target both casual "always wanted to write" dreamers and serious professional authors.
+- **Landing Page**: A stunning, high-converting entrance. Needs compelling sections emphasizing "Why Versana?" (e.g., "Overcome Writer's Block Forever," "Your Co-Author that Never Sleeps," "From Idea to Published in Record Time"). Soft typography, interactive scrolling visualizations showing how the Context Matrix prevents AI hallucinations.
+- **Viral & SEO Engine**: Programmatic SEO generation (e.g., dynamic pages for "How to write a [Genre] novel"). Built-in viral loops emphasizing "Created with Versana" on free-tier exports.
+- **Features Page**: Deep breakdown of the Multi-Phase mode, Context Matrix, and Smart Lore Tags. MUST include animated bento grids with motion to visually explain complex AI features simply.
+- **Pricing Page**: Clear tier outlines (e.g. Hobbyist, Pro Author, Master). Feature lists should avoid overly technical jargon (e.g. use "Infinite Story Memory" instead of "pgvector storage") to speak directly to writers. Include a dedicated Pricing FAQ section.
+
+### 2. The Admin App
+A separate restricted zone (`/admin`) for platform administrators. Needs to be sophisticated and highly actionable.
+- **User Insights & Churn Risk**: Monitor active users, subscription states, and flag users at risk of churning based on inactivity.
+- **Granular Cost Analytics**: Direct API integration to track LLM and Image generation costs *per user* and *per workspace*. Visualized via interactive charts to calculate profit margins against subscription tiers.
+
+### 3. Subscription Gating System
+All AI features, standalone tools, and project phases will be shielded by middleware checking the user's Stripe subscription status.
+- **Tier 1 (Free / Hobbyist)**: 
+  - Access to Phase 1 & 4 only. Basic writing editor.
+  - Strict monthly AI word limits.
+  - No vector persistence (Context Matrix is session-only).
+  - Versana watermark on all exports and generated assets.
+- **Tier 2 (Pro Author)**: 
+  - Full access to Phases 1-5 & 7.
+  - Persistent Context Matrix memory (Supabase pgvector).
+  - Supports up to 3 Active Workspaces (Projects).
+  - Unlocks Standalone Market Research and Asset tools.
+  - Expanded AI word/token limits per month.
+- **Tier 3 (Master)**: 
+  - Unlimited Workspaces.
+  - Unlocked Phase 6 (Cover Design) and high-tier Nano Banana Pro image generation capabilities.
+  - Fully automated Auto-Typesetting pipelines and Hosted Mini-Sites (custom domains).
+  - Uncapped or highly elevated API usage pools.
+
+### 4. Core Systems & UX Architecture
+- **Workspaces Dashboard**: Top-level UI to manage isolated writing projects, ensuring Lore and Context from one book does not bleed into another.
+- **The Context Matrix / Lore Bible Dashboard**: A Wikipedia-style database. Every new character, place, or rule is automatically vectorized and saved to Supabase pgvector within the specific workspace.
+- **Smart Lore Tags**: Debounced NER (Named Entity Recognition) matching. Hovering shows a pre-fetched Glassmorphism card.
+- **Unified Contextual Right Sidebar**: To prevent dashboard clutter and space inefficiency, the right sidebar consolidates global tools and phase-specific tools:
+  - **Upper Half (Global)**: The Context Matrix toggles (to enforce context on generators) and the Proactive AI Phase Assistant. Sections use collapsible accordions.
+  - **Lower Half (Phase-Aware)**: A dynamic tool dispatcher that mounts tools ONLY relevant to the `Active Phase`. For example, "Beat-to-Scene" generators only appear in Phase 4, while "Fact Checker" overlays only appear in Phase 3.
+- **The Expansion Engine**: Algorithms to deconstruct a short story and inject sub-plots to stretch it into a book, novel, or n-book series.
+
+---
+
+## The Core Pipeline (Project Impacting Phases)
+These phases act sequentially on the active Workspace. Using tools here directly alters the book's Context Matrix, outlines, or manuscript.
+
+### 5. Phase 1: Concept & Ideation
+- **Seed Generator**: Input trope/genre -> output 5-10 high-level concepts for the *current project*.
+- **What-If Engine**: AI pushes boundaries by asking the author challenging narrative questions about the premise.
+
+### 6. Phase 2: Planning & Outlining
+- **Framework Integration**: Kanban-style beat boards formatted to Save the Cat, Snowflake Method, etc.
+- **Character Lab & Relationship Web**: Interactive character chats + a dynamic visual node graph of character alliances and rivalries within the story.
+- **Interactive Plot Timeline**: Drag-and-drop chronological timeline with AI gap-detection.
+- **World & Places Builder**: UI to map economies, political systems, and geographic relationships.
+
+### 7. Phase 3: Research Assistant
+- **World-Wide Web Engine**: Connected to real-time search to provide accurate historical/architectural details mapped to the setting.
+- **Fact-Checker & Logic Auditor**: AI reviews the outline against known physics/history.
+- **Research Repository & Asset Generation**: Research doesn't just disappear. Findings are saved as "Lore Cards" or "Concept Briefs" in the Context Matrix. The author can later drag-and-drop these research briefs directly into Phase 4 chapters to instruct the AI to "Write this scene using this research brief."
+- **Sensory & Detail Synthesizer**: Generates atmospheric descriptions based on the setting (smells, lighting, architecture).
+
+### 8. Phase 4: Chapter Development & Writing
+- **The Workspace Editor**: The primary TipTap-powered distraction-free canvas.
+- **Chapter Manager**: A sophisticated but clean sidebar interface to create, rename, reorder, and quickly switch between chapters without losing context.
+- **Version Control & Time-Travel**: Every manual save or AI generation creates a checkpoint. Users can easily diff against previous versions of a chapter or instantly revert if they don't like an AI generation.
+- **Draft & Preview Mode**: LLM generations (like Beat-to-Scene) appear in a "Preview Split-Pane" first, allowing the author to accept, reject, or request tweaks *before* it replaces any text in the main manuscript.
+- **Beat-to-Scene Generation**: Convert bulleted lists into drafted prose.
+- **Deep Editorial Co-Pilot**: Highlight text in the manuscript and use advanced tooling: "Expand Description", "Add Dialogue", "Increase Tension", "Fix Grammar", "Show, Don't Tell Converter", and "Adjust Pacing".
+- **Pacing & Emotional Heatmap**: Visual chart overlaid on the text showing action vs. exposition and emotional tempo.
+
+### 9. Phase 5: Book Layout and Formatting
+- **Custom Auto-Typesetting**: Vellum-style rendering engine. Provides a curated but highly customizable set of options (Fonts, Drop-cap styles, Margin widths) that are simple to use but yield professional results without feeling overwhelming.
+- **Ornamentation Engine**: Nano Banana Pro generated custom chapter drop-caps and scene-break icons.
+- **Front/Back Matter Generator**: Auto-drafts Copyright, Acknowledgements, and About the Author.
+- **Inline Illustration Tool**: Generate map inserts or character sketches to distribute within the text.
+
+### 10. Phase 6: Cover Design
+- **Prompt Translation & Generation**: Translates core book themes into Nano Banana Pro prompts. Includes advanced style-tuners so covers don't look generic or "AI-generated," supporting highly specific aesthetics (e.g., "Vintage 70s Sci-Fi Paperback" or "Minimalist Literary Thriller").
+- **Typography Overlay & Series Branding**: A Canva-style canvas to add text, with tools to ensure visual consistency across a multi-book series.
+
+### 11. Phase 7: Publishing & Marketing Prep
+- **Blurb & Synopsis Generator**: Writes Amazon/KDP descriptions and query letters.
+- **Metadata Extractor**: Generates Top 7 keywords, BISAC categories, and demographic targets.
+- **Hosted Mini-Site**: Generates a beautiful "Read Excerpt" web page hosted on Versana for the author to share, driving viral acquisition back to our platform.
+- **Export Engine**: One-click generation of ePub, PDF, and KDP-ready doc formats.
+
+---
+
+## Standalone Tools (Isolated Sandboxes)
+These tools exist in an entirely separate module of the application (`/tools`). They allow users to generate assets, test ideas, or research the market without cluttering their active Workspace Context Matrix. Crucially, they include a **Sandbox Storage Mechanism** where generated ideas/assets can be saved, iterated upon, and eventually exported or "Promoted" straight into an active Workspace's Lore Bible when the author decides to use them.
+
+- **Market Trend & Trope Analyzer**: Evaluates general concepts against market trends and suggests subversions. Used for general research before creating a project.
+- **Premise Collider**: Tool to merge two seemingly unrelated concepts into a cohesive hook for isolated brainstorming.
+- **Mythology & Linguistics Creator**: Sandbox to generate coherent fictional religions, mythos, or naming conventions without committing them to a Lore Bible.
+- **Standalone Asset Generator**: Generate character portraits or mood boards via Nano Banana Pro without tying them to a specific chapter or cover.
+- **Viral Asset Creator**: AI scripts TikTok/Reel videos, Instagram carousel quotes, and author newsletter drafts (can read from a project if requested, but operates mostly in isolation).
+
+## Verification Plan
+1. **Core Experience**: Stand up the TipTap editor and verify custom Mark highlighting performs without lag.
+2. **Databases & Workspaces**: Verify Supabase pgvector isolation (queries for Book A do not retrieve embeddings from Book B).
+3. **Admin Cost Tracking**: End-to-end test of the LLM API calls to ensure token usage is correctly intercepted, calculated, and saved to the Admin dashboard per workspace.
+4. **Marketing Virality**: Verify programmatic SEO page rendering and the functioning of the "Hosted Mini-Site" shareable links.
+5. **Phase Continuity**: Validate that the Proactive AI Phase Assistant correctly reads the state of Phase N and provides relevant tips for moving to Phase N+1.

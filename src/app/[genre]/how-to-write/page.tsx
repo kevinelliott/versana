@@ -2,15 +2,54 @@ import Link from 'next/link';
 import { BookOpen, Sparkles, Database, CheckCircle2 } from 'lucide-react';
 import styles from '../../marketing.module.css';
 
-// This function enables proper static generation for Next.js, meaning
-// we can pre-build thousands of these landing pages at compile time for SEO
-export async function generateStaticParams() {
-    const genres = [
-        'scifi', 'fantasy', 'romance', 'thriller',
-        'mystery', 'litrpg', 'horror', 'historical-fiction'
-    ];
+const GENRE_CMS_DATA: Record<string, { painPoint: string, feature1: string, feature2: string, sub: string }> = {
+    'scifi': {
+        painPoint: "By page 30, ChatGPT forgets your FTL drive capabilities and starts inserting generic tropes.",
+        feature1: "Use the Seed Generator to map out your core cyberpunk or space opera tropes.",
+        feature2: "Track complex interstellar alliances and galactic federations via the visual Relationship Web.",
+        sub: "cybernetics, FTL travel rules, planetary ecologies, or alien politics"
+    },
+    'fantasy': {
+        painPoint: "By chapter 3, traditional AI forgets the rigid rules of your hard magic system.",
+        feature1: "Generate deep lore for ancient prophecies, mythic beasts, and royal bloodlines.",
+        feature2: "Track political factions, noble houses, and secret covens using the Relationship Web.",
+        sub: "hard magic systems, pantheons of gods, ancient ruins, or epic multi-continent journeys"
+    },
+    'romance': {
+        painPoint: "AI struggles to maintain the emotional pacing and tension between your key love interests.",
+        feature1: "Outline the vital 'Meet Cute', 'False Victory', and 'Dark Moment' using our specific Romance beat sheets.",
+        feature2: "Track the emotional distance and intimacy between characters via the Relationship Web.",
+        sub: "slow-burn tension, enemies-to-lovers dynamics, romantic pacing, or emotional stakes"
+    },
+    'thriller': {
+        painPoint: "AI tools often spoil the plot twist too early or fail to maintain narrative tension.",
+        feature1: "Plot out intricate red herrings and false clues using our detailed Chapter Manager.",
+        feature2: "Track suspects, motives, and hidden alliances via the dynamic Relationship Web.",
+        sub: "high-stakes ticking clocks, unreliable narrators, gripping plot twists, or suspenseful pacing"
+    },
+    'historical-fiction': {
+        painPoint: "General AI frequently hallucinates modern anachronisms into your historically accurate setting.",
+        feature1: "Use the Research Assistant to automatically pull historically accurate facts into your Context Matrix.",
+        feature2: "Track real-world historical figures and their relationships with your fictional characters.",
+        sub: "accurate period details, realistic historical figures, dialect, or strict timelines"
+    },
+    'litrpg': {
+        painPoint: "AI easily forgets complex stat blocks, inventory management, and leveling progression.",
+        feature1: "Keep rigid track of character sheets, skill trees, and EXP requirements in the Lore Bible.",
+        feature2: "Visually map party dynamics, raid alliances, and rival guilds on the Relationship Web.",
+        sub: "complex stat tables, progression systems, intricate skill trees, or crunchy mechanics"
+    }
+};
 
-    return genres.map((genre) => ({
+const DEFAULT_CMS = {
+    painPoint: "By page 30, standard AI forgets the rules you established and starts inserting generic tropes that ruin your world-building.",
+    feature1: "Use Versana's Seed Generator to map out the core tropes, and the What-If Engine to subvert them.",
+    feature2: "Track complicated timelines and character alliances using our visual Relationship Web.",
+    sub: "intricate logic, overarching lore, or gripping plot twists"
+};
+
+export async function generateStaticParams() {
+    return Object.keys(GENRE_CMS_DATA).map((genre) => ({
         genre: genre,
     }));
 }
@@ -48,6 +87,8 @@ export default async function GenreLandingPage(
         word.charAt(0).toUpperCase() + word.slice(1)
     ).join(' ');
 
+    const cmsData = GENRE_CMS_DATA[rawGenre] || DEFAULT_CMS;
+
     return (
         <div className={styles.container}>
             {/* Navigation */}
@@ -77,7 +118,7 @@ export default async function GenreLandingPage(
                             How to Write a Bestselling <br /><em>{formattedGenre}</em> Novel
                         </h1>
                         <p className={styles.heroSubtitle}>
-                            Building complex magic systems, intricate futuristic tech, or gripping plot twists? Don't rely on sticky notes. Let Versana's Vector AI remember the details of your {formattedGenre} world while you focus on the prose.
+                            Building {cmsData.sub}? Don't rely on sticky notes. Let Versana's Vector AI remember the details of your {formattedGenre} world while you focus on the prose.
                         </p>
                         <div className={styles.heroActions}>
                             <Link href="/workspace" className={styles.ctaButtonPrimaryLarge}>
@@ -96,7 +137,7 @@ export default async function GenreLandingPage(
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginTop: '2rem' }}>
                             <div style={{ background: 'white', padding: '2rem', borderRadius: '8px', border: '1px solid var(--border-light)' }}>
                                 <h3 style={{ color: '#c92a2a', marginBottom: '1rem' }}>The Old Way (ChatGPT)</h3>
-                                <p style={{ color: 'var(--text-secondary)', lineHeight: '1.5' }}>You feed it a prompt about your {formattedGenre} setting. By page 30, it forgets the rules you established and starts inserting generic tropes that ruin your world-building.</p>
+                                <p style={{ color: 'var(--text-secondary)', lineHeight: '1.5' }}>{cmsData.painPoint}</p>
                             </div>
                             <div style={{ background: 'white', padding: '2rem', borderRadius: '8px', border: '1px solid var(--border-light)', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
                                 <h3 style={{ color: 'var(--tag-green-text)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Database size={20} /> The Versana Way</h3>
@@ -114,11 +155,11 @@ export default async function GenreLandingPage(
                     <div className={styles.problemGrid}>
                         <div className={styles.problemCard}>
                             <h3><CheckCircle2 className={styles.logoIcon} /> 1. Ideation & Tropes</h3>
-                            <p>Use Versana's Seed Generator to map out the core {formattedGenre} tropes, and the What-If Engine to subvert them.</p>
+                            <p>{cmsData.feature1}</p>
                         </div>
                         <div className={styles.problemCard}>
                             <h3><CheckCircle2 className={styles.logoIcon} /> 2. Deep Tracking</h3>
-                            <p>Track complicated {formattedGenre} timelines and character alliances using our visual Relationship Web.</p>
+                            <p>{cmsData.feature2}</p>
                         </div>
                         <div className={styles.problemCard}>
                             <h3><CheckCircle2 className={styles.logoIcon} /> 3. Publishing</h3>

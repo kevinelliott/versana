@@ -109,6 +109,24 @@
     outline: none;
 }
 
+.tunerGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.selectField {
+    width: 100%;
+    padding: 0.6rem;
+    border: 1px solid var(--border-light);
+    border-radius: 6px;
+    background: var(--bg-secondary);
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    outline: none;
+}
+
 .buttonPrimary {
     width: 100%;
     background: var(--text-primary);

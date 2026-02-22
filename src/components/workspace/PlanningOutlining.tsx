@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { LayoutList, BookOpen, Users, Plus } from 'lucide-react';
+import { useWorkspace } from '@/context/WorkspaceContext';
 import styles from './PlanningOutlining.module.css';
 import RelationshipWeb from './RelationshipWeb';
 
@@ -43,15 +44,38 @@ const initialData: BoardData = {
 };
 
 export default function PlanningOutlining() {
+    const { activeWorkspace, setActiveWorkspace } = useWorkspace();
     const [board, setBoard] = useState<BoardData>(initialData);
     const [isBrowser, setIsBrowser] = useState(false);
-    const [activeTab, setActiveTab] = useState<'kanban' | 'relationships'>('kanban');
+    const [activeTab, setActiveTab] = useState<string>('kanban');
 
     // react-beautiful-dnd requires us to ensure we are rendering client-side only
     // to prevent hydration mismatches
     useEffect(() => {
         setIsBrowser(true);
     }, []);
+
+    // Sync board state from database if available
+    useEffect(() => {
+        if (activeWorkspace?.board_state?.kanban && activeWorkspace.board_state.kanban.cards) {
+            setBoard(activeWorkspace.board_state.kanban);
+        }
+    }, [activeWorkspace?.board_state]);
+
+    const saveBoard = async (newBoard: BoardData) => {
+        if (!activeWorkspace) return;
+        try {
+            const updatedBoardState = { ...(activeWorkspace.board_state || {}), kanban: newBoard };
+            await fetch(`/api/workspaces/${activeWorkspace.id}/board`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ board_state: updatedBoardState })
+            });
+            setActiveWorkspace({ ...activeWorkspace, board_state: updatedBoardState });
+        } catch (err) {
+            console.error("Failed to save board state:", err);
+        }
+    };
 
     const onDragEnd = (result: DropResult) => {
         const { destination, source, draggableId } = result;
@@ -69,10 +93,12 @@ export default function PlanningOutlining() {
             newCardIds.splice(destination.index, 0, draggableId);
 
             const newColumn = { ...startColumn, cardIds: newCardIds };
-            setBoard({
+            const newBoard = {
                 ...board,
                 columns: { ...board.columns, [newColumn.id]: newColumn }
-            });
+            };
+            setBoard(newBoard);
+            saveBoard(newBoard);
             return;
         }
 
@@ -85,14 +111,40 @@ export default function PlanningOutlining() {
         finishCardIds.splice(destination.index, 0, draggableId);
         const newFinish = { ...finishColumn, cardIds: finishCardIds };
 
-        setBoard({
+        const newBoard = {
             ...board,
             columns: {
                 ...board.columns,
                 [newStart.id]: newStart,
                 [newFinish.id]: newFinish,
             }
-        });
+        };
+        setBoard(newBoard);
+        saveBoard(newBoard);
+    };
+
+    const handleAddBeat = (columnId: string) => {
+        const newCardId = `card-${Date.now()}`;
+        const newCard: CardData = {
+            id: newCardId,
+            title: 'New Beat',
+            description: 'Edit description here...',
+            tags: ['Plot']
+        };
+
+        const newColumn = {
+            ...board.columns[columnId],
+            cardIds: [...board.columns[columnId].cardIds, newCardId]
+        };
+
+        const newBoard = {
+            ...board,
+            cards: { ...board.cards, [newCardId]: newCard },
+            columns: { ...board.columns, [columnId]: newColumn }
+        };
+
+        setBoard(newBoard);
+        saveBoard(newBoard);
     };
 
     if (!isBrowser) return null;
@@ -102,13 +154,13 @@ export default function PlanningOutlining() {
             <div className={styles.container}>
                 <div className={styles.tabNav}>
                     <button
-                        className={`${styles.tabBtn} ${activeTab === 'kanban' ? styles.tabActive : ''}`}
+                        className={`${styles.tabBtn} ${activeTab === String('kanban') ? styles.tabActive : ''}`}
                         onClick={() => setActiveTab('kanban')}
                     >
                         <LayoutList size={16} /> Kanban Beats
                     </button>
                     <button
-                        className={`${styles.tabBtn} ${activeTab === 'relationships' ? styles.tabActive : ''}`}
+                        className={`${styles.tabBtn} ${activeTab === String('relationships') ? styles.tabActive : ''}`}
                         onClick={() => setActiveTab('relationships')}
                     >
                         <Users size={16} /> Relationship Web
@@ -129,19 +181,19 @@ export default function PlanningOutlining() {
 
                 <div className={styles.tabNav} style={{ marginTop: '1.5rem' }}>
                     <button
-                        className={`${styles.tabBtn} ${activeTab === 'kanban' ? styles.tabActive : ''}`}
+                        className={`${styles.tabBtn} ${activeTab === String('kanban') ? styles.tabActive : ''}`}
                         onClick={() => setActiveTab('kanban')}
                     >
                         <LayoutList size={16} /> Kanban Beats
                     </button>
                     <button
-                        className={`${styles.tabBtn} ${activeTab === 'relationships' ? styles.tabActive : ''}`}
+                        className={`${styles.tabBtn} ${activeTab === String('relationships') ? styles.tabActive : ''}`}
                         onClick={() => setActiveTab('relationships')}
                     >
                         <Users size={16} /> Relationship Web
                     </button>
                     <button
-                        className={`${styles.tabBtn} ${activeTab === 'notes' ? styles.tabActive : ''}`}
+                        className={`${styles.tabBtn} ${activeTab === String('notes') ? styles.tabActive : ''}`}
                         onClick={() => setActiveTab('notes')}
                     >
                         <BookOpen size={16} /> Notes
@@ -202,7 +254,10 @@ export default function PlanningOutlining() {
                                     )}
                                 </Droppable>
 
-                                <button className={styles.addBtn}>
+                                <button
+                                    className={styles.addBtn}
+                                    onClick={() => handleAddBeat(column.id)}
+                                >
                                     <Plus size={16} /> Add Beat
                                 </button>
                             </div>

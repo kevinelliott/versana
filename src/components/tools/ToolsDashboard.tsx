@@ -2,11 +2,12 @@
 
 import React from 'react';
 import { LineChart, GitMerge, ScrollText, Image as ImageIcon, Share2, Sparkles, ArrowRight } from 'lucide-react';
+import Link from 'next/link';
 import styles from './ToolsDashboard.module.css';
 
 const TOOLS = [
     {
-        id: 'market-trend',
+        id: 'market-analyzer',
         title: 'Market Trend & Trope Analyzer',
         description: 'Evaluate your premise against current Amazon/KDP market trends. Discover which tropes to subvert and which to lean into.',
         icon: <LineChart size={24} color="var(--tag-blue-text)" />,
@@ -72,9 +73,9 @@ export default function ToolsDashboard() {
                         </div>
                         <div className={styles.cardFooter}>
                             <span className={`${styles.tag} ${tool.tagClass}`}>{tool.tag}</span>
-                            <button className={styles.enterBtn}>
+                            <Link href={`/tools/${tool.id}`} className={styles.enterBtn} style={{ textDecoration: 'none' }}>
                                 Launch <ArrowRight size={16} />
-                            </button>
+                            </Link>
                         </div>
                     </div>
                 ))}
