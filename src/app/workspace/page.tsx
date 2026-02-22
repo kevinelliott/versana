@@ -4,6 +4,7 @@ import AppLayout from "@/components/layout/AppLayout";
 import Workspace from "@/components/workspace/Workspace";
 import ConceptIdeation from "@/components/workspace/ConceptIdeation";
 import PlanningOutlining from "@/components/workspace/PlanningOutlining";
+import ResearchAssistant from '@/components/workspace/ResearchAssistant';
 import { PhaseProvider, usePhase } from "@/context/PhaseContext";
 import { WorkspaceProvider } from "@/context/WorkspaceContext";
 
@@ -17,6 +18,9 @@ function MainContent() {
       break;
     case '2':
       CurrentView = <PlanningOutlining />;
+      break;
+    case '3':
+      CurrentView = <ResearchAssistant />;
       break;
     case '4':
       CurrentView = <Workspace />;
