@@ -384,6 +384,62 @@
     font-size: 0.9rem;
 }
 
+/* NEW: The Problem Section */
+.problemSection {
+    padding: 6rem 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.problemGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+.problemCard {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+    padding: 2.5rem;
+    border-radius: 12px;
+}
+
+.problemIcon {
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+}
+
+.problemCard h3 {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+}
+
+.problemCard p {
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.toolsSection {
+    padding: 8rem 2rem;
+    background-color: var(--bg-primary);
+}
+
+.footerLinks {
+    display: flex;
+    gap: 2rem;
+}
+
+.footerLinks a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.footerLinks a:hover {
+    color: var(--text-primary);
+}
+
 @media (max-width: 900px) {
     .pricingGrid {
         grid-template-columns: 1fr;

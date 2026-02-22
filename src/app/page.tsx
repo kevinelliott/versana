@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { BookOpen, Sparkles, Brain, Shield, ArrowRight, Check } from 'lucide-react';
+import { BookOpen, Sparkles, Brain, Shield, ArrowRight, Check, PenTool, LayoutTemplate, Zap } from 'lucide-react';
 import styles from './marketing.module.css';
 import ContextVisualizer from '@/components/marketing/ContextVisualizer';
 
@@ -13,8 +13,9 @@ export default function MarketingPage() {
                     <span className={styles.logoText}>Versana</span>
                 </div>
                 <div className={styles.navLinks}>
-                    <a href="#features" className={styles.navLink}>Features</a>
-                    <a href="#pricing" className={styles.navLink}>Pricing</a>
+                    <Link href="/features" className={styles.navLink}>Features</Link>
+                    <Link href="/manifesto" className={styles.navLink}>The Manifesto</Link>
+                    <Link href="/pricing" className={styles.navLink}>Pricing</Link>
                     <Link href="/workspace" className={styles.navLink}>Login</Link>
                     <Link href="/workspace" className={styles.ctaButtonPrimary}>
                         Start Writing Free
@@ -27,21 +28,49 @@ export default function MarketingPage() {
                 <section className={styles.heroSection}>
                     <div className={styles.heroContent}>
                         <div className={styles.badge}>
-                            <Sparkles size={14} /> The World's First RAG-Powered Co-Writer
+                            <Sparkles size={14} /> Built for Novelists, Not Coders.
                         </div>
                         <h1 className={styles.heroTitle}>
-                            Write brilliant fiction with an AI that <em>never</em> forgets.
+                            An AI Co-Writer That Actually Remembers Your <em>Story Bible</em>.
                         </h1>
                         <p className={styles.heroSubtitle}>
-                            Stop fighting with chatbots that lose the plot after three scenes. Versana uses a Dynamic Context Matrix to remember every character, location, and lore detail across a massive multi-book series.
+                            Tired of standard chatbots forgetting your main character's eye color by chapter three? Versana automatically builds a flawless, persistent memory of your entire universe as you write.
                         </p>
                         <div className={styles.heroActions}>
                             <Link href="/workspace" className={styles.ctaButtonPrimaryLarge}>
-                                Start Your Novel <ArrowRight size={18} />
+                                Start Your First Book <ArrowRight size={18} />
                             </Link>
-                            <a href="#visualizer" className={styles.ctaButtonSecondaryLarge}>
-                                See How It Works
+                            <a href="#the-problem" className={styles.ctaButtonSecondaryLarge}>
+                                See Why Writers Switch
                             </a>
+                        </div>
+                    </div>
+                </section>
+
+                {/* The Problem Section */}
+                <section id="the-problem" className={styles.problemSection}>
+                    <div className={styles.sectionHeader}>
+                        <h2 className={styles.sectionTitle}>The "Amnesia" Problem</h2>
+                        <p className={styles.sectionSubtitle}>
+                            Standard AI tools like ChatGPT or Claude are great for a single scene. But write a 90,000-word novel, and they hallucinate. They resurrect dead characters, forget rules of magic, and lose the plot entirely.
+                        </p>
+                    </div>
+
+                    <div className={styles.problemGrid}>
+                        <div className={styles.problemCard}>
+                            <div className={styles.problemIcon}>❌</div>
+                            <h3>Standard AI Forgets</h3>
+                            <p>By page 50, the AI has forgotten the foreshadowing you laid in chapter one. It turns your gritty thriller into a generic action movie.</p>
+                        </div>
+                        <div className={styles.problemCard}>
+                            <div className={styles.problemIcon}>❌</div>
+                            <h3>Messy Prompting</h3>
+                            <p>You waste hours copying and pasting your 10-page character sheets into the chat window every time you start a new session.</p>
+                        </div>
+                        <div className={styles.problemCard}>
+                            <div className={styles.problemIcon}>✨</div>
+                            <h3 className={styles.accentText}>Versana Remembers</h3>
+                            <p>We built a permanent "Context Matrix" into the editor. It reads your manuscript and saves every detail to a secure database. It never forgets.</p>
                         </div>
                     </div>
                 </section>
@@ -49,91 +78,44 @@ export default function MarketingPage() {
                 {/* Visualizer Section */}
                 <section id="visualizer" className={styles.visualizerSection}>
                     <div className={styles.sectionHeader}>
-                        <h2 className={styles.sectionTitle}>The Context Matrix</h2>
+                        <h2 className={styles.sectionTitle}>See The Difference</h2>
                         <p className={styles.sectionSubtitle}>
-                            Traditional AI loses context fast. Versana automatically builds a Vector Story Bible as you write, ensuring it always knows what's happening.
+                            Watch how Versana's persistent memory saves the day when a standard AI fails.
                         </p>
                     </div>
                     <ContextVisualizer />
                 </section>
 
-                {/* Features Section */}
-                <section id="features" className={styles.featuresSection}>
+                {/* Tools Section */}
+                <section id="tools" className={styles.toolsSection}>
                     <div className={styles.sectionHeader}>
-                        <h2 className={styles.sectionTitle}>A Complete Author Toolchain</h2>
-                        <p className={styles.sectionSubtitle}>Everything you need from the first spark of an idea to the final published manuscript.</p>
+                        <h2 className={styles.sectionTitle}>From Blank Page to Published Book</h2>
+                        <p className={styles.sectionSubtitle}>We replaced your 15 different writing apps with one beautifully streamlined studio.</p>
                     </div>
 
                     <div className={styles.featureGrid}>
                         <div className={styles.featureCard}>
                             <div className={styles.featureIcon}><Brain size={24} /></div>
-                            <h3>7-Phase Architecture</h3>
-                            <p>Guided workflows for Ideation, Outlining, World-Building, Drafting, Formatting, Cover Design, and Publishing.</p>
+                            <h3>The Ideation Engine</h3>
+                            <p>Overcome writer's block. Our AI acts as a sounding board, asking you tough "What If" questions to pressure-test your premise before you outline.</p>
                         </div>
                         <div className={styles.featureCard}>
-                            <div className={styles.featureIcon}><Shield size={24} /></div>
-                            <h3>Absolute Isolation</h3>
-                            <p>Multiple Workspaces ensure the lore from your Sci-Fi epic never bleeds into your Fantasy romance.</p>
+                            <div className={styles.featureIcon}><PenTool size={24} /></div>
+                            <h3>Smart Lore Editor</h3>
+                            <p>Write freely. When you type a character's name, Versana subtly underlines it. Hover over it to instantly view their bio, without breaking your flow.</p>
                         </div>
                         <div className={styles.featureCard}>
-                            <div className={styles.featureIcon}><Sparkles size={24} /></div>
-                            <h3>Smart Lore Tags</h3>
-                            <p>Hover over any character or place in your manuscript to instantly pull up its active standing in the Story Bible.</p>
+                            <div className={styles.featureIcon}><LayoutTemplate size={24} /></div>
+                            <h3>Auto-Formatting</h3>
+                            <p>Stop fighting Microsoft Word margins. When your draft is done, Versana generates a beautifully typeset, Vellum-quality ePub ready for Amazon KDP.</p>
                         </div>
+                    </div>
+
+                    <div style={{ textAlign: 'center', marginTop: '3rem' }}>
+                        <Link href="/features" className={styles.ctaButtonSecondaryLarge}>See All 7 Phases of Writing <ArrowRight size={18} /></Link>
                     </div>
                 </section>
 
-                {/* Pricing Section */}
-                <section id="pricing" className={styles.pricingSection}>
-                    <div className={styles.sectionHeader}>
-                        <h2 className={styles.sectionTitle}>Simple, Transparent Pricing</h2>
-                        <p className={styles.sectionSubtitle}>Write your first book for free. Upgrade when you need infinite memory.</p>
-                    </div>
-
-                    <div className={styles.pricingGrid}>
-                        <div className={styles.pricingCard}>
-                            <h3>Hobbyist</h3>
-                            <div className={styles.price}>$0<span>/mo</span></div>
-                            <p className={styles.pricingDesc}>Perfect for exploring ideas and drafting short stories.</p>
-                            <ul className={styles.pricingFeatures}>
-                                <li><Check size={16} /> 1 Active Workspace</li>
-                                <li><Check size={16} /> Session-only Context Matrix</li>
-                                <li><Check size={16} /> 50,000 AI words / month</li>
-                                <li><Check size={16} /> Standard TipTap Editor</li>
-                            </ul>
-                            <Link href="/workspace" className={styles.pricingBtnOutline}>Get Started</Link>
-                        </div>
-
-                        <div className={`${styles.pricingCard} ${styles.pricingCardFeatured}`}>
-                            <div className={styles.featuredBadge}>Most Popular</div>
-                            <h3>Pro Author</h3>
-                            <div className={styles.price}>$19<span>/mo</span></div>
-                            <p className={styles.pricingDesc}>For dedicated novelists who need permanent memory.</p>
-                            <ul className={styles.pricingFeatures}>
-                                <li><Check size={16} /> 3 Active Workspaces</li>
-                                <li><Check size={16} /> <strong>Persistent Vector DB Memory</strong></li>
-                                <li><Check size={16} /> 500,000 AI words / month</li>
-                                <li><Check size={16} /> Market Research & Asset Tools</li>
-                                <li><Check size={16} /> Advanced Co-Pilot features</li>
-                            </ul>
-                            <Link href="/workspace" className={styles.pricingBtnPrimary}>Start Pro Trial</Link>
-                        </div>
-
-                        <div className={styles.pricingCard}>
-                            <h3>Master</h3>
-                            <div className={styles.price}>$49<span>/mo</span></div>
-                            <p className={styles.pricingDesc}>For rapid-release authors and publishing teams.</p>
-                            <ul className={styles.pricingFeatures}>
-                                <li><Check size={16} /> Unlimited Workspaces</li>
-                                <li><Check size={16} /> Persistent Vector DB Memory</li>
-                                <li><Check size={16} /> <strong>Unlimited AI Words</strong></li>
-                                <li><Check size={16} /> Nano Banana Pro Cover Gen</li>
-                                <li><Check size={16} /> Auto-Typesetting & Hosted Mini-Sites</li>
-                            </ul>
-                            <Link href="/workspace" className={styles.pricingBtnOutline}>Go Master</Link>
-                        </div>
-                    </div>
-                </section>
             </main>
 
             <footer className={styles.footer}>
@@ -141,6 +123,11 @@ export default function MarketingPage() {
                     <div className={styles.logo}>
                         <BookOpen className={styles.logoIcon} size={20} />
                         <span className={styles.logoText}>Versana</span>
+                    </div>
+                    <div className={styles.footerLinks}>
+                        <Link href="/features">Features</Link>
+                        <Link href="/pricing">Pricing</Link>
+                        <a href="#">Terms of Service</a>
                     </div>
                     <p className={styles.footerCopy}>&copy; {new Date().getFullYear()} Versana AI. All rights reserved.</p>
                 </div>
