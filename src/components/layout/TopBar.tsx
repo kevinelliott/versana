@@ -1,9 +1,9 @@
 import React from 'react';
-import { BookOpen, Search, Bell, User } from 'lucide-react';
-import Link from 'next/link';
+import { BookOpen, Search, Bell } from 'lucide-react';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import { usePhase } from '@/context/PhaseContext';
 import ThemeToggle from './ThemeToggle';
+import UserDropdown from './UserDropdown';
 import styles from './TopBar.module.css';
 
 const PHASES = [
@@ -62,9 +62,7 @@ export default function TopBar() {
                 <button className={styles.iconButton}>
                     <Bell size={18} />
                 </button>
-                <Link href="/profile" className={styles.iconButton} title="User Profile">
-                    <User size={18} />
-                </Link>
+                <UserDropdown />
                 <button className={styles.exportButton}>
                     Export
                 </button>

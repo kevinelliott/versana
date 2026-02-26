@@ -1,0 +1,157 @@
+.container {
+    position: relative;
+    display: inline-block;
+}
+
+.badge {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.3rem;
+    border-radius: 6px;
+    transition: background 0.2s ease;
+}
+
+.badge:hover {
+    background: var(--bg-secondary);
+}
+
+.avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--accent-terracotta);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.name {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.chevron {
+    color: var(--text-secondary);
+}
+
+.dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    width: 240px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    box-shadow: var(--shadow-float);
+    z-index: 1000;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.header {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.headerName {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.headerEmail {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.tierBadge {
+    margin-top: 0.5rem;
+    display: inline-block;
+    padding: 0.2rem 0.5rem;
+    background: var(--tag-gold-bg);
+    color: var(--tag-gold-text);
+    font-size: 0.7rem;
+    font-weight: 600;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+    width: fit-content;
+}
+
+.divider {
+    height: 1px;
+    background: var(--border-light);
+}
+
+.menu {
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.menuItem {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 0.8rem;
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    border-radius: 6px;
+    text-decoration: none;
+    transition: background 0.2s ease;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-family: inherit;
+    text-align: left;
+    width: 100%;
+}
+
+.menuItem:hover {
+    background: var(--bg-secondary);
+}
+
+.logout {
+    color: var(--accent-red);
+}
+
+.logout:hover {
+    background: rgba(212, 76, 71, 0.1);
+}
+
+.loadingBadge {
+    padding: 0.3rem;
+}
+
+.skeleton {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--bg-secondary);
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+}
