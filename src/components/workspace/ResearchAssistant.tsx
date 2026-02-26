@@ -5,6 +5,7 @@ import { Search, Globe, PlusCircle, MapPin as MapPinIcon, Crosshair } from 'luci
 import Map, { NavigationControl, Marker } from 'react-map-gl/mapbox';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import styles from './ResearchAssistant.module.css';
+import workspaceStyles from './Workspace.module.css';
 import { useWorkspace } from '@/context/WorkspaceContext';
 
 export default function ResearchAssistant() {
@@ -23,7 +24,7 @@ export default function ResearchAssistant() {
         latitude: 51.5072,
         zoom: 11
     });
-     
+
     const [markers, setMarkers] = useState<{ lng: number, lat: number, title: string }[]>([
         { lng: -0.1276, lat: 51.5072, title: 'Central London Reference' },
         { lng: -0.0754, lat: 51.5055, title: 'Tower Bridge' }
@@ -97,18 +98,18 @@ export default function ResearchAssistant() {
     };
 
     return (
-        <div className={styles.container}>
-            <div className={styles.header}>
-                <h1 className={styles.title}>
-                    <span style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Phase 3</span>
+        <div className={workspaceStyles.workspaceContainer}>
+            <div className={workspaceStyles.workspaceGlobalHeader}>
+                <h1 className={workspaceStyles.phaseTitle}>
+                    <span className={workspaceStyles.phaseLabel}>Phase 3</span>
                     {isNonFicProject ? 'Research & Sourcing' : 'Research Assistant'}
                 </h1>
-                <p className={styles.subtitle}>
+                <p className={workspaceStyles.phaseSubtitle}>
                     {isNonFicProject ? 'Query the web and synthesize facts direct to your Knowledge Base.' : 'Query the real world and synthesize sensory details direct to your Story Bible.'}
                 </p>
             </div>
 
-            <div className={styles.grid}>
+            <div className={`${workspaceStyles.workspace} ${styles.gridContainer}`}>
                 {/* Main Search Panel */}
                 <div className={styles.mainPanel}>
                     <div className={styles.searchHeader}>

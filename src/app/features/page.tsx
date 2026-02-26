@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import React from 'react';
 import { BookOpen, Sparkles, Brain, Shield, PenTool, LayoutTemplate, Map } from 'lucide-react';
 import styles from '../marketing.module.css';
 import ContextVisualizer from '@/components/marketing/ContextVisualizer';

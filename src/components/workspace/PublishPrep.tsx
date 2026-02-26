@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { BookOpen, Sparkles, Tag, Globe, Download, Copy, ExternalLink, CheckCircle2 } from 'lucide-react';
 import styles from './PublishPrep.module.css';
+import workspaceStyles from './Workspace.module.css';
 
 import { useWorkspace } from '@/context/WorkspaceContext';
 
@@ -93,13 +94,16 @@ export default function PublishPrep() {
     };
 
     return (
-        <div className={styles.container}>
-            <div className={styles.header}>
-                <h1 className={styles.title}>Phase 8: Publishing & Marketing Prep</h1>
-                <p className={styles.subtitle}>Generate optimized blurbs, extract metadata, and export your final manuscript.</p>
+        <div className={workspaceStyles.workspaceContainer}>
+            <div className={workspaceStyles.workspaceGlobalHeader}>
+                <h1 className={workspaceStyles.phaseTitle}>
+                    <span className={workspaceStyles.phaseLabel}>Phase 8</span>
+                    Publishing & Marketing Prep
+                </h1>
+                <p className={workspaceStyles.phaseSubtitle}>Generate optimized blurbs, extract metadata, and export your final manuscript.</p>
             </div>
 
-            <div className={styles.grid}>
+            <div className={`${workspaceStyles.workspace} ${styles.gridContainer}`}>
                 {/* Column 1: Generators */}
                 <div className={styles.column}>
                     <div className={styles.card}>

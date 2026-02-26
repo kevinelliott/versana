@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Sparkles, Image as ImageIcon, Type, Download, Maximize2, Palette } from 'lucide-react';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import styles from './CoverDesign.module.css';
+import workspaceStyles from './Workspace.module.css';
 
 export default function CoverDesign() {
     const { activeWorkspace, setActiveWorkspace } = useWorkspace();
@@ -22,6 +23,8 @@ export default function CoverDesign() {
 
     const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
+    const [isRefining, setIsRefining] = useState(false);
+    const [layoutMode, setLayoutMode] = useState<'classic' | 'modern' | 'cinematic'>('classic');
 
     useEffect(() => {
         if (activeWorkspace?.board_state?.cover_design && !isLoaded) {
@@ -86,14 +89,57 @@ export default function CoverDesign() {
         }
     };
 
+    const handleRefinePrompt = async () => {
+        setIsRefining(true);
+        try {
+            // Fetch lore
+            const loreRes = await fetch(`/api/lore?workspaceId=${activeWorkspace?.id}`);
+            const loreData = await loreRes.json();
+            const text = Array.isArray(loreData) ? loreData.map(l => l.synopsis).join('\n') : '';
+
+            const systemPrompt = `You are a Midjourney/DALL-E prompt engineer. Based on the provided contextual lore and the current prompt draft, rewrite the prompt to be highly detailed and visually descriptive, focusing strictly on aesthetics, lighting, composition, and mood, explicitly for generating a top-tier book cover art. ONLY output the refined prompt without markdown. Do not include 'Prompt:' or any pleasantries. Ensure you append '--ar 2:3' at the end.`;
+
+            const res = await fetch('/api/ai/claude', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    workspaceId: activeWorkspace?.id,
+                    systemPrompt,
+                    messages: [{ role: 'user', content: `Current Draft Prompt: ${prompt}\n\nProject Context:\n${text}` }]
+                })
+            });
+
+            if (!res.body) throw new Error('No body');
+
+            const reader = res.body.getReader();
+            const decoder = new TextDecoder();
+
+            setPrompt(''); // clear the prompt as we stream it in
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                const chunk = decoder.decode(value, { stream: true });
+                setPrompt(prev => prev + chunk);
+            }
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setIsRefining(false);
+        }
+    };
+
     return (
-        <div className={styles.container}>
-            <div className={styles.header}>
-                <h1 className={styles.title}>Phase 7: Cover Design</h1>
-                <p className={styles.subtitle}>{isNonFicProject ? 'Translate your core thesis into prompts and generate your book cover.' : 'Translate lore into prompts and generate your book cover.'}</p>
+        <div className={workspaceStyles.workspaceContainer}>
+            <div className={workspaceStyles.workspaceGlobalHeader}>
+                <h1 className={workspaceStyles.phaseTitle}>
+                    <span className={workspaceStyles.phaseLabel}>Phase 7</span>
+                    Cover Design
+                </h1>
+                <p className={workspaceStyles.phaseSubtitle}>{isNonFicProject ? 'Translate your core thesis into prompts and generate your book cover.' : 'Translate lore into prompts and generate your book cover.'}</p>
             </div>
 
-            <div className={styles.grid}>
+            <div className={`${workspaceStyles.workspace} ${styles.gridContainer}`}>
                 {/* Left Sidebar: Controls */}
                 <div className={styles.promptPanel}>
                     <div className={styles.card}>
@@ -163,8 +209,13 @@ export default function CoverDesign() {
                         </div>
 
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                            <button className={styles.buttonSecondary}>
-                                Refine Prompt
+                            <button
+                                className={styles.buttonSecondary}
+                                onClick={handleRefinePrompt}
+                                disabled={isRefining}
+                                style={{ opacity: isRefining ? 0.7 : 1 }}
+                            >
+                                <Sparkles size={16} /> {isRefining ? 'Refining...' : 'Refine Prompt'}
                             </button>
                             <button
                                 className={styles.buttonPrimary}
@@ -230,13 +281,13 @@ export default function CoverDesign() {
                         <div className={styles.coverOverlay}></div>
 
                         {/* Interactive Typography Layer */}
-                        <div className={styles.coverContent}>
+                        <div className={`${styles.coverContent} ${layoutMode === 'modern' ? styles.layoutModern : layoutMode === 'cinematic' ? styles.layoutCinematic : styles.layoutClassic}`}>
                             <div className={styles.coverAuthor}>{author}</div>
 
                             <div className={styles.coverTitle}>
                                 {title.split(' ').map((word, i) => (
                                     <React.Fragment key={i}>
-                                        {word}<br />
+                                        {word}{(layoutMode !== 'modern' && layoutMode !== 'cinematic') || layoutMode === 'cinematic' ? <br /> : ' '}
                                     </React.Fragment>
                                 ))}
                             </div>
@@ -246,7 +297,9 @@ export default function CoverDesign() {
                     </div>
 
                     <div className={styles.controlsOverlay}>
-                        <button className={styles.iconBtn} title="Change Layout">
+                        <button className={styles.iconBtn} title="Change Layout" onClick={() => {
+                            setLayoutMode(prev => prev === 'classic' ? 'modern' : prev === 'modern' ? 'cinematic' : 'classic');
+                        }}>
                             <Palette size={18} />
                         </button>
                         <button className={styles.iconBtn} title="Download High-Res">

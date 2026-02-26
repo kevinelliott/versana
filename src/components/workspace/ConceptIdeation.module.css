@@ -1,28 +1,8 @@
-.container {
-    padding: 2rem;
-    width: 100%;
-    margin: 0 auto;
-    color: var(--text-primary);
+.contentWrapper {
     display: flex;
     flex-direction: column;
     gap: 3rem;
-}
-
-.header {
-    border-bottom: 1px solid var(--border-light);
-    padding-bottom: 1.5rem;
-}
-
-.title {
-    font-family: var(--font-serif);
-    font-size: 2rem;
-    color: var(--text-primary);
-    margin-bottom: 0.5rem;
-}
-
-.subtitle {
-    color: var(--text-secondary);
-    font-size: 1rem;
+    padding-bottom: 2rem;
 }
 
 /* AI Seed Generator */

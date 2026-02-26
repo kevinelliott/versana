@@ -1,18 +1,3 @@
-.container {
-    padding: 2rem;
-    width: 100%;
-    margin: 0 auto;
-    color: var(--text-primary);
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-}
-
-.header {
-    margin-bottom: 2rem;
-    flex-shrink: 0;
-}
-
 .tabNav {
     display: flex;
     gap: 0.5rem;
@@ -48,17 +33,7 @@
     border: 1px solid var(--border-light);
 }
 
-.title {
-    font-family: var(--font-serif);
-    font-size: 2rem;
-    color: var(--text-primary);
-    margin-bottom: 0.5rem;
-}
 
-.subtitle {
-    color: var(--text-secondary);
-    font-size: 1rem;
-}
 
 .boardScroll {
     display: flex;

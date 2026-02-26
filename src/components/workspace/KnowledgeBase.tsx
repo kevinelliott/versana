@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import styles from './KnowledgeBase.module.css';
+import workspaceStyles from './Workspace.module.css';
 import { BookOpen, MapPin, User, Hash, Edit3, Trash2, Check, X, Shield } from 'lucide-react';
 
 const ICONS: Record<string, React.FC<Record<string, unknown>>> = {
@@ -13,6 +14,7 @@ const ICONS: Record<string, React.FC<Record<string, unknown>>> = {
 
 export default function KnowledgeBase() {
     const { activeWorkspace, selectedLoreId, setSelectedLoreId } = useWorkspace();
+    const isNonFicProject = activeWorkspace?.genre?.toLowerCase().includes('[non-fiction]') ?? false;
     interface LoreEntity {
         id: string;
         name: string;
@@ -114,101 +116,113 @@ export default function KnowledgeBase() {
     }
 
     return (
-        <div className={styles.container}>
-            {deleteConfirmation && (
-                <div className={styles.modalOverlay} style={{ zIndex: 10000 }}>
-                    <div className={styles.modalContent} style={{ maxWidth: '400px' }}>
-                        <h2 className={styles.modalTitle} style={{ color: 'var(--text-danger, #ef4444)', marginBottom: '1rem' }}>Delete Entry</h2>
-                        <p className={styles.modalDesc} style={{ marginBottom: '2rem' }}>Are you sure you want to delete this knowledge base entry? This action is permanent and cannot be undone.</p>
-                        <div className={styles.modalActions}>
-                            <button className={styles.cancelBtn} onClick={() => setDeleteConfirmation(null)} disabled={isSaving}>Cancel</button>
-                            <button className={styles.modalActionBtn} onClick={confirmDelete} disabled={isSaving} style={{ background: 'var(--text-danger, #ef4444)', borderColor: 'var(--text-danger, #ef4444)' }}>
-                                {isSaving ? 'Deleting...' : 'Delete'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-            <div className={styles.sidebar}>
-                <div className={styles.sidebarHeader}>
-                    <h3>Entries ({loreEntities.length})</h3>
-                </div>
-                <div className={styles.entryList}>
-                    {loreEntities.map(item => {
-                        const typeStr = (item.type || 'Other').toLowerCase();
-                        let Icon = ICONS.default;
-                        if (typeStr.includes('character')) Icon = ICONS.character;
-                        else if (typeStr.includes('place') || typeStr.includes('setting')) Icon = ICONS.place;
-                        else if (typeStr.includes('plot')) Icon = ICONS['plot hook'];
-
-                        return (
-                            <button
-                                key={item.id}
-                                className={`${styles.entryBtn} ${selectedLoreId === item.id || (!selectedLoreId && activeItem?.id === item.id) ? styles.activeEntry : ''}`}
-                                onClick={() => setSelectedLoreId(item.id)}
-                            >
-                                <Icon size={16} className={styles.entryIcon} />
-                                <span className={styles.entryName}>{item.name}</span>
-                            </button>
-                        );
-                    })}
-                </div>
+        <div className={workspaceStyles.workspaceContainer}>
+            <div className={workspaceStyles.workspaceGlobalHeader}>
+                <h1 className={workspaceStyles.phaseTitle}>
+                    <span className={workspaceStyles.phaseLabel}>{isNonFicProject ? 'Reference' : 'Lore'}</span>
+                    {isNonFicProject ? 'Knowledge Base' : 'Context Matrix'}
+                </h1>
+                <p className={workspaceStyles.phaseSubtitle}>
+                    {isNonFicProject ? 'Manage your topics, research data, and factual entities.' : 'Manage your characters, settings, and lore entities.'}
+                </p>
             </div>
 
-            <div className={styles.contentArea}>
-                {activeItem ? (
-                    <div className={styles.itemDetails}>
-                        <div className={styles.itemHeader}>
-                            <div className={styles.headerTitle}>
-                                <span className={styles.itemBadge}>{activeItem.type || 'Entity'}</span>
+            <div className={`${workspaceStyles.workspace} ${styles.kbWrapper}`}>
+                {deleteConfirmation && (
+                    <div className={styles.modalOverlay} style={{ zIndex: 10000 }}>
+                        <div className={styles.modalContent} style={{ maxWidth: '400px' }}>
+                            <h2 className={styles.modalTitle} style={{ color: 'var(--text-danger, #ef4444)', marginBottom: '1rem' }}>Delete Entry</h2>
+                            <p className={styles.modalDesc} style={{ marginBottom: '2rem' }}>Are you sure you want to delete this knowledge base entry? This action is permanent and cannot be undone.</p>
+                            <div className={styles.modalActions}>
+                                <button className={styles.cancelBtn} onClick={() => setDeleteConfirmation(null)} disabled={isSaving}>Cancel</button>
+                                <button className={styles.modalActionBtn} onClick={confirmDelete} disabled={isSaving} style={{ background: 'var(--text-danger, #ef4444)', borderColor: 'var(--text-danger, #ef4444)' }}>
+                                    {isSaving ? 'Deleting...' : 'Delete'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+                <div className={styles.sidebar}>
+                    <div className={styles.sidebarHeader}>
+                        <h3>Entries ({loreEntities.length})</h3>
+                    </div>
+                    <div className={styles.entryList}>
+                        {loreEntities.map(item => {
+                            const typeStr = (item.type || 'Other').toLowerCase();
+                            let Icon = ICONS.default;
+                            if (typeStr.includes('character')) Icon = ICONS.character;
+                            else if (typeStr.includes('place') || typeStr.includes('setting')) Icon = ICONS.place;
+                            else if (typeStr.includes('plot')) Icon = ICONS['plot hook'];
+
+                            return (
+                                <button
+                                    key={item.id}
+                                    className={`${styles.entryBtn} ${selectedLoreId === item.id || (!selectedLoreId && activeItem?.id === item.id) ? styles.activeEntry : ''}`}
+                                    onClick={() => setSelectedLoreId(item.id)}
+                                >
+                                    <Icon size={16} className={styles.entryIcon} />
+                                    <span className={styles.entryName}>{item.name}</span>
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                <div className={styles.contentArea}>
+                    {activeItem ? (
+                        <div className={styles.itemDetails}>
+                            <div className={styles.itemHeader}>
+                                <div className={styles.headerTitle}>
+                                    <span className={styles.itemBadge}>{activeItem.type || 'Entity'}</span>
+                                    {editingId === activeItem.id ? (
+                                        <input
+                                            type="text"
+                                            className={styles.editTitleInput}
+                                            value={editName}
+                                            onChange={(e) => setEditName(e.target.value)}
+                                            disabled={isSaving}
+                                        />
+                                    ) : (
+                                        <h2>{activeItem.name}</h2>
+                                    )}
+                                </div>
+                                <div className={styles.headerActions}>
+                                    {editingId === activeItem.id ? (
+                                        <>
+                                            <button onClick={() => handleSave(activeItem.id)} disabled={isSaving || !editName.trim()} className={styles.saveBtn}><Check size={16} /> Save</button>
+                                            <button onClick={() => setEditingId(null)} disabled={isSaving} className={styles.cancelBtn}><X size={16} /> Cancel</button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <button onClick={() => handleEdit(activeItem)} className={styles.actionBtn}><Edit3 size={16} /> Edit</button>
+                                            <button onClick={() => handleDelete(activeItem.id)} className={`${styles.actionBtn} ${styles.deleteBtn}`}><Trash2 size={16} /> Delete</button>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className={styles.itemBody}>
+                                <h3>Synopsis & Details</h3>
                                 {editingId === activeItem.id ? (
-                                    <input
-                                        type="text"
-                                        className={styles.editTitleInput}
-                                        value={editName}
-                                        onChange={(e) => setEditName(e.target.value)}
+                                    <textarea
+                                        className={styles.editSynopsisArea}
+                                        value={editSynopsis}
+                                        onChange={(e) => setEditSynopsis(e.target.value)}
                                         disabled={isSaving}
                                     />
                                 ) : (
-                                    <h2>{activeItem.name}</h2>
-                                )}
-                            </div>
-                            <div className={styles.headerActions}>
-                                {editingId === activeItem.id ? (
-                                    <>
-                                        <button onClick={() => handleSave(activeItem.id)} disabled={isSaving || !editName.trim()} className={styles.saveBtn}><Check size={16} /> Save</button>
-                                        <button onClick={() => setEditingId(null)} disabled={isSaving} className={styles.cancelBtn}><X size={16} /> Cancel</button>
-                                    </>
-                                ) : (
-                                    <>
-                                        <button onClick={() => handleEdit(activeItem)} className={styles.actionBtn}><Edit3 size={16} /> Edit</button>
-                                        <button onClick={() => handleDelete(activeItem.id)} className={`${styles.actionBtn} ${styles.deleteBtn}`}><Trash2 size={16} /> Delete</button>
-                                    </>
+                                    <div className={styles.synopsisText}>
+                                        {activeItem.synopsis ? activeItem.synopsis.split('\n').map((para: string, i: number) => (
+                                            <p key={i}>{para}</p>
+                                        )) : <span style={{ opacity: 0.5 }}>No synopsis provided for this entry.</span>}
+                                    </div>
                                 )}
                             </div>
                         </div>
-
-                        <div className={styles.itemBody}>
-                            <h3>Synopsis & Details</h3>
-                            {editingId === activeItem.id ? (
-                                <textarea
-                                    className={styles.editSynopsisArea}
-                                    value={editSynopsis}
-                                    onChange={(e) => setEditSynopsis(e.target.value)}
-                                    disabled={isSaving}
-                                />
-                            ) : (
-                                <div className={styles.synopsisText}>
-                                    {activeItem.synopsis ? activeItem.synopsis.split('\n').map((para: string, i: number) => (
-                                        <p key={i}>{para}</p>
-                                    )) : <span style={{ opacity: 0.5 }}>No synopsis provided for this entry.</span>}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                ) : (
-                    <div className={styles.noSelection}>Select an entry from the sidebar to view details.</div>
-                )}
+                    ) : (
+                        <div className={styles.noSelection}>Select an entry from the sidebar to view details.</div>
+                    )}
+                </div>
             </div>
         </div>
     );

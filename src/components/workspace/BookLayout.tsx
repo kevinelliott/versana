@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Settings2, Download, Image as ImageIcon, Sparkles } from 'lucide-react';
 import styles from './BookLayout.module.css';
+import workspaceStyles from './Workspace.module.css';
 import { useWorkspace } from '@/context/WorkspaceContext';
 
 export default function BookLayout() {
@@ -109,13 +110,16 @@ export default function BookLayout() {
     };
 
     return (
-        <div className={styles.container}>
-            <div className={styles.header}>
-                <h1 className={styles.title}>Phase 6: {isNonFicProject ? 'Document Layout & Formatting' : 'Book Layout & Formatting'}</h1>
-                <p className={styles.subtitle}>Configure Auto-Typesetting and generate chapter ornamentations.</p>
+        <div className={workspaceStyles.workspaceContainer}>
+            <div className={workspaceStyles.workspaceGlobalHeader}>
+                <h1 className={workspaceStyles.phaseTitle}>
+                    <span className={workspaceStyles.phaseLabel}>Phase 6</span>
+                    {isNonFicProject ? 'Document Layout & Formatting' : 'Book Layout & Formatting'}
+                </h1>
+                <p className={workspaceStyles.phaseSubtitle}>Configure Auto-Typesetting and generate chapter ornamentations.</p>
             </div>
 
-            <div className={styles.layoutGrid}>
+            <div className={`${workspaceStyles.workspace} ${styles.gridContainer}`}>
                 {/* Left Sidebar: Controls */}
                 <div className={styles.controlsPanel}>
                     <div className={styles.controlSection}>

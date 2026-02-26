@@ -5,6 +5,7 @@ import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea
 import { LayoutList, BookOpen, Users, Plus, LayoutTemplate, GitMerge } from 'lucide-react';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import styles from './PlanningOutlining.module.css';
+import workspaceStyles from './Workspace.module.css';
 import RelationshipWeb from './RelationshipWeb';
 import ExpansionEngine from './ExpansionEngine';
 
@@ -412,84 +413,8 @@ export default function PlanningOutlining() {
 
     if (!isBrowser) return null;
 
-    if (activeTab === 'relationships') {
-        return (
-            <div className={styles.container}>
-                <div className={styles.tabNav}>
-                    <button
-                        className={`${styles.tabBtn} ${activeTab === String('kanban') ? styles.tabActive : ''}`}
-                        onClick={() => setActiveTab('kanban')}
-                    >
-                        <LayoutList size={16} /> {isNonFicProject ? 'Kanban Outline' : 'Kanban Beats'}
-                    </button>
-                    {!isNonFicProject && (
-                        <button
-                            className={`${styles.tabBtn} ${activeTab === String('relationships') ? styles.tabActive : ''}`}
-                            onClick={() => setActiveTab('relationships')}
-                        >
-                            <Users size={16} /> Relationship Web
-                        </button>
-                    )}
-                    <button
-                        className={`${styles.tabBtn} ${activeTab === String('notes') ? styles.tabActive : ''}`}
-                        onClick={() => setActiveTab('notes')}
-                    >
-                        <BookOpen size={16} /> Notes
-                    </button>
-                    <button
-                        className={`${styles.tabBtn} ${activeTab === String('expansion') ? styles.tabActive : ''}`}
-                        onClick={() => setActiveTab('expansion')}
-                    >
-                        <GitMerge size={16} /> Expansion Engine
-                    </button>
-                </div>
-                <div style={{ flexGrow: 1, marginTop: '1rem', borderTop: '1px solid var(--border-light)' }}>
-                    <RelationshipWeb />
-                </div>
-            </div>
-        );
-    }
-
-    if (activeTab === 'expansion') {
-        return (
-            <div className={styles.container}>
-                <div className={styles.tabNav}>
-                    <button
-                        className={`${styles.tabBtn} ${activeTab === String('kanban') ? styles.tabActive : ''}`}
-                        onClick={() => setActiveTab('kanban')}
-                    >
-                        <LayoutList size={16} /> {isNonFicProject ? 'Kanban Outline' : 'Kanban Beats'}
-                    </button>
-                    {!isNonFicProject && (
-                        <button
-                            className={`${styles.tabBtn} ${activeTab === String('relationships') ? styles.tabActive : ''}`}
-                            onClick={() => setActiveTab('relationships')}
-                        >
-                            <Users size={16} /> Relationship Web
-                        </button>
-                    )}
-                    <button
-                        className={`${styles.tabBtn} ${activeTab === String('notes') ? styles.tabActive : ''}`}
-                        onClick={() => setActiveTab('notes')}
-                    >
-                        <BookOpen size={16} /> Notes
-                    </button>
-                    <button
-                        className={`${styles.tabBtn} ${activeTab === String('expansion') ? styles.tabActive : ''}`}
-                        onClick={() => setActiveTab('expansion')}
-                    >
-                        <GitMerge size={16} /> Expansion Engine
-                    </button>
-                </div>
-                <div style={{ flexGrow: 1, marginTop: '1rem', borderTop: '1px solid var(--border-light)' }}>
-                    <ExpansionEngine onExportToKanban={handleExportExpansionBeats} />
-                </div>
-            </div>
-        );
-    }
-
     return (
-        <div className={styles.container}>
+        <div className={workspaceStyles.workspaceContainer}>
             {templateConfirmation && (
                 <div className={styles.modalOverlay} style={{ zIndex: 10000 }}>
                     <div className={styles.modalContent} style={{ maxWidth: '400px' }}>
@@ -508,14 +433,15 @@ export default function PlanningOutlining() {
                     </div>
                 </div>
             )}
-            <div className={styles.header}>
+
+            <div className={workspaceStyles.workspaceGlobalHeader}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div>
-                        <h1 className={styles.title}>
-                            <span style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Phase 2</span>
+                        <h1 className={workspaceStyles.phaseTitle}>
+                            <span className={workspaceStyles.phaseLabel}>Phase 2</span>
                             {isNonFicProject ? 'Outline & Structure' : 'Planning & Outlining'}
                         </h1>
-                        <p className={styles.subtitle}>
+                        <p className={workspaceStyles.phaseSubtitle}>
                             {isNonFicProject ? 'Map your chapters and sections. Organize arguments logically.' : 'Map your structural beats. Move scenes freely between acts.'}
                         </p>
                     </div>
@@ -563,98 +489,114 @@ export default function PlanningOutlining() {
                 </div>
             </div>
 
-            <DragDropContext onDragEnd={onDragEnd}>
-                <div style={{ display: 'flex', flexGrow: 1, minHeight: 0 }}>
-                    {/* Chapter Sidebar */}
-                    <div className={styles.chapterSidebar}>
-                        <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between' }}>
-                            Manuscript
-                            {isSaving && <LayoutList size={14} className="spin" />}
-                        </div>
-                        <div style={{ overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                            {chapters.map((chapter) => (
-                                <Droppable key={chapter.id} droppableId={`chapter-${chapter.id}`}>
-                                    {(provided, snapshot) => (
-                                        <div
-                                            ref={provided.innerRef}
-                                            {...provided.droppableProps}
-                                            className={`${styles.chapterItem} ${currentChapterId === chapter.id ? styles.chapterItemActive : ''} ${snapshot.isDraggingOver ? styles.chapterItemDraggingOver : ''}`}
-                                            onClick={() => setCurrentChapterId(chapter.id)}
-                                        >
-                                            <div className={styles.chapterItemTitle}>{chapter.title}</div>
-                                            <div style={{ fontSize: '0.8rem', opacity: 0.7 }}>Drag {isNonFicProject ? 'sections' : 'beats'} here</div>
-                                            <div style={{ display: 'none' }}>{provided.placeholder}</div>
-                                        </div>
-                                    )}
-                                </Droppable>
-                            ))}
-                        </div>
+            <div className={workspaceStyles.workspace} style={{ display: 'flex', flexDirection: 'column', flexGrow: 1, minHeight: 0 }}>
+                {activeTab === 'relationships' && (
+                    <div style={{ flexGrow: 1, marginTop: '1rem' }}>
+                        <RelationshipWeb />
                     </div>
+                )}
 
-                    <div className={styles.boardScroll} style={{ paddingLeft: '1.5rem' }}>
-                        {board.columnOrder.map((columnId) => {
-                            const column = board.columns[columnId];
-                            const cards = column.cardIds.map(cardId => board.cards[cardId]);
+                {activeTab === 'expansion' && (
+                    <div style={{ flexGrow: 1, marginTop: '1rem' }}>
+                        <ExpansionEngine onExportToKanban={handleExportExpansionBeats} />
+                    </div>
+                )}
 
-                            return (
-                                <div key={column.id} className={styles.column}>
-                                    <div className={styles.columnHeader}>
-                                        <h3 className={styles.columnTitle}>{column.title}</h3>
-                                        <span className={styles.columnBadge}>{cards.length} {isNonFicProject ? 'sections' : 'beats'}</span>
-                                    </div>
-
-                                    <Droppable droppableId={column.id}>
-                                        {(provided) => (
-                                            <div
-                                                className={styles.cardList}
-                                                ref={provided.innerRef}
-                                                {...provided.droppableProps}
-                                            >
-                                                {cards.map((card, index) => (
-                                                    <Draggable key={card.id} draggableId={card.id} index={index}>
-                                                        {(provided, snapshot) => (
-                                                            <div
-                                                                className={`${styles.card} ${snapshot.isDragging ? styles.cardDragging : ''}`}
-                                                                ref={provided.innerRef}
-                                                                {...provided.draggableProps}
-                                                                {...provided.dragHandleProps}
-                                                            >
-                                                                <h4 className={styles.cardTitle}>{card.title}</h4>
-                                                                <p className={styles.cardDesc}>{card.description}</p>
-
-                                                                <div className={styles.cardFooter}>
-                                                                    <div style={{ display: 'flex', gap: '4px' }}>
-                                                                        {card.tags.map(tag => (
-                                                                            <span key={tag} className={`${styles.tag} ${styles[`tag${tag}`]}`}>
-                                                                                {tag}
-                                                                            </span>
-                                                                        ))}
-                                                                    </div>
-                                                                    <div className={styles.iconGrp}>
-                                                                        <LayoutList size={14} />
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        )}
-                                                    </Draggable>
-                                                ))}
-                                                {provided.placeholder}
-                                            </div>
-                                        )}
-                                    </Droppable>
-
-                                    <button
-                                        className={styles.addBtn}
-                                        onClick={() => handleAddBeat(column.id)}
-                                    >
-                                        <Plus size={16} /> Add {isNonFicProject ? 'Section' : 'Beat'}
-                                    </button>
+                {(activeTab === 'kanban' || activeTab === 'notes') && (
+                    <DragDropContext onDragEnd={onDragEnd}>
+                        <div style={{ display: 'flex', flexGrow: 1, minHeight: 0 }}>
+                            {/* Chapter Sidebar */}
+                            <div className={styles.chapterSidebar}>
+                                <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between' }}>
+                                    Manuscript
+                                    {isSaving && <LayoutList size={14} className="spin" />}
                                 </div>
-                            );
-                        })}
-                    </div>
-                </div>
-            </DragDropContext>
+                                <div style={{ overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                    {chapters.map((chapter) => (
+                                        <Droppable key={chapter.id} droppableId={`chapter-${chapter.id}`}>
+                                            {(provided, snapshot) => (
+                                                <div
+                                                    ref={provided.innerRef}
+                                                    {...provided.droppableProps}
+                                                    className={`${styles.chapterItem} ${currentChapterId === chapter.id ? styles.chapterItemActive : ''} ${snapshot.isDraggingOver ? styles.chapterItemDraggingOver : ''}`}
+                                                    onClick={() => setCurrentChapterId(chapter.id)}
+                                                >
+                                                    <div className={styles.chapterItemTitle}>{chapter.title}</div>
+                                                    <div style={{ fontSize: '0.8rem', opacity: 0.7 }}>Drag {isNonFicProject ? 'sections' : 'beats'} here</div>
+                                                    <div style={{ display: 'none' }}>{provided.placeholder}</div>
+                                                </div>
+                                            )}
+                                        </Droppable>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className={styles.boardScroll} style={{ paddingLeft: '1.5rem' }}>
+                                {board.columnOrder.map((columnId) => {
+                                    const column = board.columns[columnId];
+                                    const cards = column.cardIds.map(cardId => board.cards[cardId]);
+
+                                    return (
+                                        <div key={column.id} className={styles.column}>
+                                            <div className={styles.columnHeader}>
+                                                <h3 className={styles.columnTitle}>{column.title}</h3>
+                                                <span className={styles.columnBadge}>{cards.length} {isNonFicProject ? 'sections' : 'beats'}</span>
+                                            </div>
+
+                                            <Droppable droppableId={column.id}>
+                                                {(provided) => (
+                                                    <div
+                                                        className={styles.cardList}
+                                                        ref={provided.innerRef}
+                                                        {...provided.droppableProps}
+                                                    >
+                                                        {cards.map((card, index) => (
+                                                            <Draggable key={card.id} draggableId={card.id} index={index}>
+                                                                {(provided, snapshot) => (
+                                                                    <div
+                                                                        className={`${styles.card} ${snapshot.isDragging ? styles.cardDragging : ''}`}
+                                                                        ref={provided.innerRef}
+                                                                        {...provided.draggableProps}
+                                                                        {...provided.dragHandleProps}
+                                                                    >
+                                                                        <h4 className={styles.cardTitle}>{card.title}</h4>
+                                                                        <p className={styles.cardDesc}>{card.description}</p>
+
+                                                                        <div className={styles.cardFooter}>
+                                                                            <div style={{ display: 'flex', gap: '4px' }}>
+                                                                                {card.tags.map(tag => (
+                                                                                    <span key={tag} className={`${styles.tag} ${styles[`tag${tag}`]}`}>
+                                                                                        {tag}
+                                                                                    </span>
+                                                                                ))}
+                                                                            </div>
+                                                                            <div className={styles.iconGrp}>
+                                                                                <LayoutList size={14} />
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                            </Draggable>
+                                                        ))}
+                                                        {provided.placeholder}
+                                                    </div>
+                                                )}
+                                            </Droppable>
+
+                                            <button
+                                                className={styles.addBtn}
+                                                onClick={() => handleAddBeat(column.id)}
+                                            >
+                                                <Plus size={16} /> Add {isNonFicProject ? 'Section' : 'Beat'}
+                                            </button>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </DragDropContext>
+                )}
+            </div>
         </div>
     );
 }

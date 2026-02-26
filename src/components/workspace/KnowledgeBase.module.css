@@ -1,8 +1,13 @@
-.container {
+.kbWrapper {
     display: flex;
-    height: 100vh;
+    flex: 1;
     background-color: var(--bg-primary);
     color: var(--text-primary);
+    gap: 0;
+    padding: 0 !important;
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    overflow: hidden;
 }
 
 .sidebar {

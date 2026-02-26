@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Activity, ShieldCheck, CheckSquare, RefreshCw, Zap, Layers, Bug } from 'lucide-react';
 import { useWorkspace } from '@/context/WorkspaceContext';
+import styles from './Workspace.module.css';
 
 export default function DeepEdits() {
     const { chapters, activeWorkspace } = useWorkspace();
@@ -143,7 +144,7 @@ export default function DeepEdits() {
     };
 
     return (
-        <div style={{ padding: '2rem', color: 'var(--text-primary)' }}>
+        <div className={styles.workspaceContainer}>
             {seedSuccess && (
                 <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10000 }}>
                     <div className="glass-panel" style={{ background: 'var(--bg-primary)', padding: '2rem', borderRadius: '12px', maxWidth: '400px', border: '1px solid var(--border-light)' }}>
@@ -163,13 +164,18 @@ export default function DeepEdits() {
                 </div>
             )}
 
-            <div style={{ marginBottom: '2rem' }}>
-                <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '2.5rem', marginBottom: '0.5rem' }}>Phase 5: {isNonFicProject ? 'Review & Fact-Checking' : 'Revisions & Deep Edits'}</h1>
-                <p style={{ color: 'var(--text-secondary)' }}>{isNonFicProject ? 'Run global consistency checks, factual audits, and refine prose.' : 'Run global consistency checks, pacing analysis, and refine prose before layout design.'}</p>
+            <div className={styles.workspaceGlobalHeader}>
+                <h1 className={styles.phaseTitle}>
+                    <span className={styles.phaseLabel}>Phase 5</span>
+                    {isNonFicProject ? 'Review & Fact-Checking' : 'Revisions & Deep Edits'}
+                </h1>
+                <p className={styles.phaseSubtitle}>
+                    {isNonFicProject ? 'Run global consistency checks, factual audits, and refine prose.' : 'Run global consistency checks, pacing analysis, and refine prose before layout design.'}
+                </p>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '2rem' }}>
-                <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-light)', borderRadius: '12px', padding: '1rem 2rem 2rem', minHeight: '400px' }}>
+            <div className={styles.workspace} style={{ display: 'grid', gridTemplateColumns: '1fr 350px', gap: '2rem' }}>
+                <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-light)', borderRadius: '12px', padding: '1rem 2rem 2rem', minHeight: '400px', display: 'flex', flexDirection: 'column' }}>
 
                     <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', borderBottom: '1px solid var(--border-light)', paddingBottom: '0.5rem' }}>
                         <button

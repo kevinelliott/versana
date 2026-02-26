@@ -8,7 +8,7 @@ import ThemeToggle from '@/components/layout/ThemeToggle';
 
 export default function MarketingNav() {
     return (
-        <nav className={styles.nav} style={{ backgroundColor: 'var(--bg-primary)' }}>
+        <nav className={styles.nav}>
             <div className={styles.logo}>
                 <BookOpen className={styles.logoIcon} size={24} />
                 <span className={styles.logoText}>Versana</span>

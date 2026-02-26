@@ -5,6 +5,7 @@ import { Sparkles, BrainCircuit, Send, Loader2, Save } from 'lucide-react';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import { usePhase } from '@/context/PhaseContext';
 import styles from './ConceptIdeation.module.css';
+import workspaceStyles from './Workspace.module.css';
 
 interface ChatMessage {
     id: string;
@@ -172,95 +173,96 @@ export default function ConceptIdeation() {
     };
 
     return (
-        <div className={styles.container}>
-            <div className={styles.header}>
-                <h1 className={styles.title}>
-                    <span style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Phase 1</span>
+        <div className={workspaceStyles.workspaceContainer}>
+            <div className={workspaceStyles.workspaceGlobalHeader}>
+                <h1 className={workspaceStyles.phaseTitle}>
+                    <span className={workspaceStyles.phaseLabel}>Phase 1</span>
                     {isNonFicProject ? 'Topic & Thesis' : 'Concept & Ideation'}
                 </h1>
-                <p className={styles.subtitle}>
+                <p className={workspaceStyles.phaseSubtitle}>
                     {isNonFicProject ? 'Develop your core topic and pressure-test your thesis with the What-If Engine.' : 'Generate core premise ideas and pressure-test them with the What-If Engine.'}
                 </p>
             </div>
 
-            {/* AI Seed Generator */}
-            <section className={styles.seedSection}>
-                <h2 className={styles.sectionTitle}>
-                    <Sparkles className={styles.icon} size={22} />
-                    AI Seed Generator
-                </h2>
-                <form className={styles.formGroup} onSubmit={handleGenerateConcepts}>
-                    <input
-                        type="text"
-                        className={styles.input}
-                        placeholder={isNonFicProject ? "e.g. A practical guide to 15-minute healthy keto meals..." : "e.g. A sci-fi noir about a detective who can taste time..."}
-                        value={seedPrompt}
-                        onChange={(e) => setSeedPrompt(e.target.value)}
-                        disabled={isGenerating}
-                    />
-                    <button type="submit" className={styles.btnPrimary} disabled={!seedPrompt || isGenerating}>
-                        {isGenerating ? <Loader2 size={18} className="spin" /> : 'Generate Hooks'}
-                    </button>
-                </form>
+            <div className={`${workspaceStyles.workspace} ${styles.contentWrapper}`}>
+                <section className={styles.seedSection}>
+                    <h2 className={styles.sectionTitle}>
+                        <Sparkles className={styles.icon} size={22} />
+                        AI Seed Generator
+                    </h2>
+                    <form className={styles.formGroup} onSubmit={handleGenerateConcepts}>
+                        <input
+                            type="text"
+                            className={styles.input}
+                            placeholder={isNonFicProject ? "e.g. A practical guide to 15-minute healthy keto meals..." : "e.g. A sci-fi noir about a detective who can taste time..."}
+                            value={seedPrompt}
+                            onChange={(e) => setSeedPrompt(e.target.value)}
+                            disabled={isGenerating}
+                        />
+                        <button type="submit" className={styles.btnPrimary} disabled={!seedPrompt || isGenerating}>
+                            {isGenerating ? <Loader2 size={18} className="spin" /> : 'Generate Hooks'}
+                        </button>
+                    </form>
 
-                {seedError && (
-                    <div style={{ color: 'var(--accent-terracotta)', marginTop: '0.5rem', fontSize: '0.9rem' }}>
-                        {seedError}
-                    </div>
-                )}
-
-                {concepts.length > 0 && (
-                    <div className={styles.resultsGrid}>
-                        {concepts.map(concept => (
-                            <div key={concept.id} className={styles.conceptCard}>
-                                <h3 className={styles.conceptTitle}>{concept.title}</h3>
-                                <p className={styles.conceptDesc}>{concept.description}</p>
-                                <button
-                                    style={{ marginTop: '1rem', background: 'transparent', border: '1px solid var(--border-light)', color: 'var(--text-secondary)', padding: '0.4rem 0.8rem', borderRadius: '4px', fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
-                                    onClick={() => handleSaveConceptToLore(concept)}
-                                >
-                                    <Save size={14} /> Save to {isNonFicProject ? 'Knowledge Base' : 'Lore Bible'}
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </section>
-
-            {/* What-If Engine */}
-            <section className={styles.whatIfSection}>
-                <h2 className={styles.sectionTitle}>
-                    <BrainCircuit className={styles.icon} size={22} />
-                    The What-If Engine
-                </h2>
-
-                <div className={styles.chatContainer}>
-                    {messages.map(msg => (
-                        <div key={msg.id} className={`${styles.message} ${msg.role === 'user' ? styles.userMessage : styles.aiMessage}`}>
-                            <span dangerouslySetInnerHTML={{ __html: msg.content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
-                        </div>
-                    ))}
-                    {isLoading && (
-                        <div className={`${styles.message} ${styles.aiMessage}`}>
-                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Loader2 size={16} className="spin" /> Thinking...</span>
+                    {seedError && (
+                        <div style={{ color: 'var(--accent-terracotta)', marginTop: '0.5rem', fontSize: '0.9rem' }}>
+                            {seedError}
                         </div>
                     )}
-                </div>
 
-                <form className={styles.qaForm} onSubmit={handleWhatIfSubmit}>
-                    <input
-                        type="text"
-                        className={styles.input}
-                        placeholder={isNonFicProject ? "Type your thesis or answer the What-If question..." : "Type your premise or answer the What-If question..."}
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        disabled={isLoading}
-                    />
-                    <button type="submit" className={styles.sendBtn} disabled={!input || isLoading}>
-                        <Send size={18} />
-                    </button>
-                </form>
-            </section>
+                    {concepts.length > 0 && (
+                        <div className={styles.resultsGrid}>
+                            {concepts.map(concept => (
+                                <div key={concept.id} className={styles.conceptCard}>
+                                    <h3 className={styles.conceptTitle}>{concept.title}</h3>
+                                    <p className={styles.conceptDesc}>{concept.description}</p>
+                                    <button
+                                        style={{ marginTop: '1rem', background: 'transparent', border: '1px solid var(--border-light)', color: 'var(--text-secondary)', padding: '0.4rem 0.8rem', borderRadius: '4px', fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                                        onClick={() => handleSaveConceptToLore(concept)}
+                                    >
+                                        <Save size={14} /> Save to {isNonFicProject ? 'Knowledge Base' : 'Lore Bible'}
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </section>
+
+                {/* What-If Engine */}
+                <section className={styles.whatIfSection}>
+                    <h2 className={styles.sectionTitle}>
+                        <BrainCircuit className={styles.icon} size={22} />
+                        The What-If Engine
+                    </h2>
+
+                    <div className={styles.chatContainer}>
+                        {messages.map(msg => (
+                            <div key={msg.id} className={`${styles.message} ${msg.role === 'user' ? styles.userMessage : styles.aiMessage}`}>
+                                <span dangerouslySetInnerHTML={{ __html: msg.content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
+                            </div>
+                        ))}
+                        {isLoading && (
+                            <div className={`${styles.message} ${styles.aiMessage}`}>
+                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Loader2 size={16} className="spin" /> Thinking...</span>
+                            </div>
+                        )}
+                    </div>
+
+                    <form className={styles.qaForm} onSubmit={handleWhatIfSubmit}>
+                        <input
+                            type="text"
+                            className={styles.input}
+                            placeholder={isNonFicProject ? "Type your thesis or answer the What-If question..." : "Type your premise or answer the What-If question..."}
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            disabled={isLoading}
+                        />
+                        <button type="submit" className={styles.sendBtn} disabled={!input || isLoading}>
+                            <Send size={18} />
+                        </button>
+                    </form>
+                </section>
+            </div>
         </div>
     );
 }

@@ -42,6 +42,17 @@ export default function RightSidebar() {
     const [beatsText, setBeatsText] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
 
+    // Auto trigger chat if prompt sent from Workspace
+    useEffect(() => {
+        if (aiChatInitialPrompt) {
+            setIsChatOpen(true);
+            setIsRightSidebarOpen(true);
+            handleChatSubmit(undefined, aiChatInitialPrompt);
+            setAiChatInitialPrompt(null); // clear it after acting
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [aiChatInitialPrompt]);
+
     const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'assistant', content: string }[]>([]);
     const [chatInput, setChatInput] = useState('');
     const [isChatting, setIsChatting] = useState(false);
@@ -114,16 +125,7 @@ export default function RightSidebar() {
         }
     };
 
-    // Auto-trigger chat from text editor "Ask AI" modal
-    useEffect(() => {
-        if (aiChatInitialPrompt) {
-            setIsChatOpen(true);
-            setIsRightSidebarOpen(true);
-            handleChatSubmit(undefined, aiChatInitialPrompt);
-            setAiChatInitialPrompt(null);
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [aiChatInitialPrompt]);
+
 
     const handleToggle = (id: string) => {
         setToggles(toggles.map(t => t.id === id ? { ...t, active: !t.active } : t));
