@@ -19,7 +19,8 @@ export default function Workspace() {
         activeWorkspace, isPreviewing, setIsPreviewing, previewContent, setPreviewContent,
         selectedText, setSelectedText, chapters, setChapters, currentChapterId, setCurrentChapterId,
         isManuscriptNavOpen, setIsManuscriptNavOpen, isFocusMode, setIsFocusMode,
-        setIsLeftSidebarOpen, setIsRightSidebarOpen, activeBook, setWordCount, setReadabilityScore
+        setIsLeftSidebarOpen, setIsRightSidebarOpen, activeBook, setWordCount, setReadabilityScore,
+        setAiChatInitialPrompt
     } = useWorkspace();
 
     const isNonFicProject = activeWorkspace?.genre?.toLowerCase().includes('[non-fiction]') ?? false;
@@ -63,7 +64,7 @@ export default function Workspace() {
     const [quickEditEntity, setQuickEditEntity] = useState<EntityData | null>(null);
     const [quickEditSynopsis, setQuickEditSynopsis] = useState('');
     const [isSavingQuickEdit, setIsSavingQuickEdit] = useState(false);
-    
+
     const [askAiEntity, setAskAiEntity] = useState<EntityData | null>(null);
     const [askAiInput, setAskAiInput] = useState('');
     const [historyItems, setHistoryItems] = useState<{ id: string, time: string, desc: string, revivable?: boolean, chapterId?: string }[]>([
@@ -281,9 +282,9 @@ export default function Workspace() {
                 // A true Flesch-Kincaid requires counting vowels per word. 
                 // For a highly performant IDE we can do a quick syllable regex:
                 const syllableCount = (text.match(/[aeiouy]+/gi) || []).length;
-                
+
                 const rawGrade = 0.39 * (words / sentences) + 11.8 * (syllableCount / (words || 1)) - 15.59;
-                
+
                 let letterGrade = 'A';
                 if (rawGrade > 12) letterGrade = 'University';
                 else if (rawGrade > 10) letterGrade = 'College';
@@ -390,7 +391,7 @@ ${contextText}`;
         const summaryStr = Array.isArray(chapters)
             ? chapters.map(c => `Chapter ${c.order_index}: ${c.title}`).join('\n')
             : '';
-            
+
         const pastContentStr = pastChapters.map(c => `--- Chapter ${c.order_index}: ${c.title} ---\n${extractTextFromTipTap(c.content)}`).join('\n\n');
 
         const systemPrompt = isNonFicProject
@@ -460,7 +461,7 @@ ${pastContentStr}
 
             const reader = res.body.getReader();
             const decoder = new TextDecoder();
-            
+
             let fullText = '';
             while (true) {
                 const { done, value } = await reader.read();
@@ -470,16 +471,16 @@ ${pastContentStr}
                 fullText += chunk;
                 setPreviewContent(prev => prev + chunk);
             }
-            
+
             // Post-process to extract title
             const titleMatch = fullText.match(/^TITLE:\s*([^\n]+)\n+/i) || fullText.match(/^\*TITLE:\s*([^\n\*]+)\*\n+/i);
             if (titleMatch) {
                 const extractedTitle = titleMatch[1].trim();
                 const remainingText = fullText.replace(/^TITLE:\s*[^\n]+\n+/i, '').replace(/^\*TITLE:\s*[^\n\*]+\*\n+/i, '').trim();
-                
+
                 setChapterTitle(extractedTitle);
                 setPreviewContent(remainingText);
-                
+
                 if (currentChapterId) {
                     setChapters(prev => prev.map(ch => ch.id === currentChapterId ? { ...ch, title: extractedTitle } : ch));
                     fetch(`/api/chapters/${currentChapterId}`, {
@@ -489,7 +490,7 @@ ${pastContentStr}
                     });
                 }
             }
-            
+
         } catch (err) {
             console.error("Chapter Generation failed:", err);
             setPreviewContent("An error occurred during generation.");
@@ -1000,13 +1001,13 @@ ${pastContentStr}
                                     onClick={async () => {
                                         if (editor && previewContent) {
                                             let finalContent = previewContent;
-                                            
+
                                             // Parse the generated title out and save it
                                             const titleMatch = previewContent.match(/^TITLE:\s*(.+)$/m);
                                             if (titleMatch && titleMatch[1]) {
                                                 const newTitle = titleMatch[1].trim();
                                                 setChapterTitle(newTitle);
-                                                
+
                                                 // Sync title over to Supabase immediately
                                                 if (activeWorkspace) {
                                                     await fetch(`/api/chapters/${currentChapterId}`, {
@@ -1166,8 +1167,8 @@ ${pastContentStr}
                         />
                         <div className={styles.modalActions}>
                             <button className={styles.btnCancel} onClick={() => setQuickEditEntity(null)}>Cancel</button>
-                            <button 
-                                className={styles.actionBtn} 
+                            <button
+                                className={styles.actionBtn}
                                 style={{ background: 'var(--tag-green-text)', color: 'white' }}
                                 onClick={handleSaveQuickEdit}
                                 disabled={isSavingQuickEdit}
@@ -1186,9 +1187,9 @@ ${pastContentStr}
                             <MessageSquare size={18} color="var(--accent-blue)" /> Ask AI about {askAiEntity.name}
                         </h2>
                         <div style={{ padding: '1rem', background: 'var(--bg-secondary)', borderRadius: '4px', margin: '1rem 0', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                             {isNonFicProject ? "I'm ready to answer any questions about this concept, framework, or reference data from your Knowledge Base." : "I'm ready to answer any questions about this lore entity based on your Context Matrix."}
+                            {isNonFicProject ? "I'm ready to answer any questions about this concept, framework, or reference data from your Knowledge Base." : "I'm ready to answer any questions about this lore entity based on your Context Matrix."}
                         </div>
-                        <input 
+                        <input
                             style={{
                                 width: '100%',
                                 padding: '0.75rem',
@@ -1202,17 +1203,17 @@ ${pastContentStr}
                             placeholder={`Ask something about ${askAiEntity.name}...`}
                             value={askAiInput}
                             onChange={(e) => setAskAiInput(e.target.value)}
-                            autoFocus 
+                            autoFocus
                         />
                         <div className={styles.modalActions} style={{ marginTop: '1.5rem' }}>
                             <button className={styles.btnCancel} onClick={() => setAskAiEntity(null)}>Close</button>
-                            <button 
-                                className={styles.actionBtn} 
+                            <button
+                                className={styles.actionBtn}
                                 style={{ background: 'var(--accent-blue)', color: 'white' }}
                                 onClick={() => {
                                     setIsRightSidebarOpen(true);
+                                    setAiChatInitialPrompt(askAiInput);
                                     setAskAiEntity(null);
-                                    // In a full implementation, you'd dispatch askAiInput to the RightSidebar AI Context
                                 }}
                             >
                                 Send to Co-Pilot <Sparkles size={14} style={{ marginLeft: '0.25rem' }} />

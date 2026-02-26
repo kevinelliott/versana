@@ -11,7 +11,7 @@ export default function RightSidebar() {
     const [isContextOpen, setIsContextOpen] = useState(true);
     const [isChatOpen, setIsChatOpen] = useState(false); // Collapsed by default to save space
 
-    const { activeWorkspace, setIsPreviewing, setPreviewContent, selectedText, isRightSidebarOpen, setIsRightSidebarOpen, isFocusMode } = useWorkspace();
+    const { activeWorkspace, setIsPreviewing, setPreviewContent, selectedText, isRightSidebarOpen, setIsRightSidebarOpen, isFocusMode, aiChatInitialPrompt, setAiChatInitialPrompt } = useWorkspace();
     const isNonFicProject = activeWorkspace?.genre?.toLowerCase().includes('[non-fiction]') ?? false;
 
     // Remove dummy data and use dynamic state
@@ -42,8 +42,7 @@ export default function RightSidebar() {
     const [beatsText, setBeatsText] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
 
-    // Chat States
-    const [chatMessages, setChatMessages] = useState<{role: 'user'|'assistant', content: string}[]>([]);
+    const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'assistant', content: string }[]>([]);
     const [chatInput, setChatInput] = useState('');
     const [isChatting, setIsChatting] = useState(false);
     const chatEndRef = React.useRef<HTMLDivElement>(null);
@@ -55,24 +54,23 @@ export default function RightSidebar() {
         }
     }, [chatMessages, isChatOpen]);
 
-    const handleToggle = (id: string) => {
-        setToggles(toggles.map(t => t.id === id ? { ...t, active: !t.active } : t));
-    };
-
-    const handleChatSubmit = async (e?: React.FormEvent) => {
+    const handleChatSubmit = async (e?: React.FormEvent, initialPromptOverride?: string) => {
         e?.preventDefault();
-        if (!chatInput.trim() || isChatting || !activeWorkspace) return;
+        const userMsg = initialPromptOverride || chatInput;
+        if (!userMsg.trim() || isChatting || !activeWorkspace) return;
 
         setIsChatting(true);
-        const userMsg = chatInput;
-        setChatInput('');
+        if (!initialPromptOverride) {
+            setChatInput('');
+        }
+
         setChatMessages(prev => [...prev, { role: 'user', content: userMsg }]);
 
         const activeLoreStr = toggles
             .filter(t => t.active)
             .map(t => `${t.label} (${t.type}): ${t.synopsis}`)
             .join('\n');
-            
+
         // Provide the currently selected items in the active matrix without dumping everything,
         // thus optimizing token counts and inspecting content logically.
         const systemPrompt = isNonFicProject
@@ -114,6 +112,21 @@ export default function RightSidebar() {
         } finally {
             setIsChatting(false);
         }
+    };
+
+    // Auto-trigger chat from text editor "Ask AI" modal
+    useEffect(() => {
+        if (aiChatInitialPrompt) {
+            setIsChatOpen(true);
+            setIsRightSidebarOpen(true);
+            handleChatSubmit(undefined, aiChatInitialPrompt);
+            setAiChatInitialPrompt(null);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [aiChatInitialPrompt]);
+
+    const handleToggle = (id: string) => {
+        setToggles(toggles.map(t => t.id === id ? { ...t, active: !t.active } : t));
     };
 
     const handleGenerate = async () => {

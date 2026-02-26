@@ -57,6 +57,8 @@ interface WorkspaceContextType {
     setWordCount: React.Dispatch<React.SetStateAction<number>>;
     readabilityScore: string;
     setReadabilityScore: React.Dispatch<React.SetStateAction<string>>;
+    aiChatInitialPrompt: string | null;
+    setAiChatInitialPrompt: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefined);
@@ -77,6 +79,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     const [selectedLoreId, setSelectedLoreId] = useState<string | null>(null);
     const [wordCount, setWordCount] = useState<number>(0);
     const [readabilityScore, setReadabilityScore] = useState<string>('N/A');
+    const [aiChatInitialPrompt, setAiChatInitialPrompt] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchWorkspace = async () => {
@@ -185,7 +188,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
             books, setBooks,
             selectedLoreId, setSelectedLoreId,
             wordCount, setWordCount,
-            readabilityScore, setReadabilityScore
+            readabilityScore, setReadabilityScore,
+            aiChatInitialPrompt, setAiChatInitialPrompt
         }}>
             {children}
         </WorkspaceContext.Provider>
