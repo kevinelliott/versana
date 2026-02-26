@@ -1,4 +1,6 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server';
+import { openai } from '@ai-sdk/openai';
+import { embed } from 'ai';
 
 export async function GET(req: Request) {
     try {
@@ -96,6 +98,46 @@ export async function POST(req: Request) {
         if (error) {
             console.error("Supabase insert error:", error);
             throw error;
+        }
+
+        // Generate embedding and save to context_embeddings
+        try {
+            let embedding: number[] = Array(1536).fill(0.01);
+            let usageTokens = 0;
+
+            if (process.env.OPENAI_API_KEY) {
+                const result = await embed({
+                    model: openai.embedding('text-embedding-3-small'),
+                    value: `Lore Entry: ${name}. Type: ${type}. Synopsis: ${synopsis}`,
+                });
+                embedding = result.embedding;
+                usageTokens = result.usage.tokens;
+            }
+
+            const { error: dbError } = await supabase
+                .from('context_embeddings')
+                .insert({
+                    user_id: userId,
+                    workspace_id: workspaceId,
+                    content: `[LORE: ${name} (${type})] ${synopsis}`,
+                    embedding: embedding,
+                    metadata: { type: 'lore', entityId: newEntry.id, entityName: name }
+                });
+
+            if (dbError) {
+                console.error('Context Matrix Embedding Insert Error:', dbError);
+            } else if (usageTokens > 0) {
+                const adminSupabase = createAdminClient();
+                await adminSupabase.from('api_usage_logs').insert({
+                    user_id: userId,
+                    workspace_id: workspaceId,
+                    model_name: 'text-embedding-3-small',
+                    tokens_used: usageTokens,
+                    cost_usd: usageTokens * 0.02 / 1000000
+                });
+            }
+        } catch (embeddingError) {
+            console.error('Failed to generate embedding for lore:', embeddingError);
         }
 
         return Response.json({

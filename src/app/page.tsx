@@ -2,10 +2,12 @@ import Link from 'next/link';
 import { BookOpen, Sparkles, Brain, ArrowRight, PenTool, LayoutTemplate } from 'lucide-react';
 import styles from './marketing.module.css';
 import ContextVisualizer from '@/components/marketing/ContextVisualizer';
+import GradientOrbs from '@/components/marketing/GradientOrbs';
 
 export default function MarketingPage() {
     return (
         <div className={styles.container}>
+            <GradientOrbs />
             {/* Navigation */}
             <nav className={styles.nav}>
                 <div className={styles.logo}>
