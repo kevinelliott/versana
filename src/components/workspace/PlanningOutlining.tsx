@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
-import { LayoutList, BookOpen, Users, Plus, LayoutTemplate } from 'lucide-react';
+import { LayoutList, BookOpen, Users, Plus, LayoutTemplate, GitMerge } from 'lucide-react';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import styles from './PlanningOutlining.module.css';
 import RelationshipWeb from './RelationshipWeb';
+import ExpansionEngine from './ExpansionEngine';
 
 // Type definitions for our Kanban state
 interface CardData {
@@ -245,6 +246,38 @@ export default function PlanningOutlining() {
         saveBoard(newBoard);
     };
 
+    const handleExportExpansionBeats = (beats: { title: string, description: string, category: string }[]) => {
+        const newCards: Record<string, CardData> = { ...board.cards };
+        const newCardIds = [...(board.columns['col-ideas']?.cardIds || [])];
+
+        beats.forEach((beat, idx) => {
+            const newCardId = `card-${Date.now()}-${idx}`;
+            newCards[newCardId] = {
+                id: newCardId,
+                title: beat.title,
+                description: beat.description,
+                tags: ['Plot']
+            };
+            newCardIds.push(newCardId);
+        });
+
+        const newBoard = {
+            ...board,
+            cards: newCards,
+            columns: {
+                ...board.columns,
+                'col-ideas': {
+                    ...board.columns['col-ideas'],
+                    cardIds: newCardIds
+                }
+            }
+        };
+        setBoard(newBoard);
+        saveBoard(newBoard);
+
+        setActiveTab('kanban'); // Optional: switch back to kanban
+    };
+
     const handleAddBeat = (columnId: string) => {
         const newCardId = `card-${Date.now()}`;
         const newCard: CardData = {
@@ -397,9 +430,59 @@ export default function PlanningOutlining() {
                             <Users size={16} /> Relationship Web
                         </button>
                     )}
+                    <button
+                        className={`${styles.tabBtn} ${activeTab === String('notes') ? styles.tabActive : ''}`}
+                        onClick={() => setActiveTab('notes')}
+                    >
+                        <BookOpen size={16} /> Notes
+                    </button>
+                    <button
+                        className={`${styles.tabBtn} ${activeTab === String('expansion') ? styles.tabActive : ''}`}
+                        onClick={() => setActiveTab('expansion')}
+                    >
+                        <GitMerge size={16} /> Expansion Engine
+                    </button>
                 </div>
                 <div style={{ flexGrow: 1, marginTop: '1rem', borderTop: '1px solid var(--border-light)' }}>
                     <RelationshipWeb />
+                </div>
+            </div>
+        );
+    }
+
+    if (activeTab === 'expansion') {
+        return (
+            <div className={styles.container}>
+                <div className={styles.tabNav}>
+                    <button
+                        className={`${styles.tabBtn} ${activeTab === String('kanban') ? styles.tabActive : ''}`}
+                        onClick={() => setActiveTab('kanban')}
+                    >
+                        <LayoutList size={16} /> {isNonFicProject ? 'Kanban Outline' : 'Kanban Beats'}
+                    </button>
+                    {!isNonFicProject && (
+                        <button
+                            className={`${styles.tabBtn} ${activeTab === String('relationships') ? styles.tabActive : ''}`}
+                            onClick={() => setActiveTab('relationships')}
+                        >
+                            <Users size={16} /> Relationship Web
+                        </button>
+                    )}
+                    <button
+                        className={`${styles.tabBtn} ${activeTab === String('notes') ? styles.tabActive : ''}`}
+                        onClick={() => setActiveTab('notes')}
+                    >
+                        <BookOpen size={16} /> Notes
+                    </button>
+                    <button
+                        className={`${styles.tabBtn} ${activeTab === String('expansion') ? styles.tabActive : ''}`}
+                        onClick={() => setActiveTab('expansion')}
+                    >
+                        <GitMerge size={16} /> Expansion Engine
+                    </button>
+                </div>
+                <div style={{ flexGrow: 1, marginTop: '1rem', borderTop: '1px solid var(--border-light)' }}>
+                    <ExpansionEngine onExportToKanban={handleExportExpansionBeats} />
                 </div>
             </div>
         );
@@ -470,6 +553,12 @@ export default function PlanningOutlining() {
                         onClick={() => setActiveTab('notes')}
                     >
                         <BookOpen size={16} /> Notes
+                    </button>
+                    <button
+                        className={`${styles.tabBtn} ${activeTab === String('expansion') ? styles.tabActive : ''}`}
+                        onClick={() => setActiveTab('expansion')}
+                    >
+                        <GitMerge size={16} /> Expansion Engine
                     </button>
                 </div>
             </div>
