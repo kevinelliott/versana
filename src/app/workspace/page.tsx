@@ -9,6 +9,7 @@ import BookLayout from '@/components/workspace/BookLayout';
 import CoverDesign from '@/components/workspace/CoverDesign';
 import PublishPrep from '@/components/workspace/PublishPrep';
 import DeepEdits from '@/components/workspace/DeepEdits';
+import KnowledgeBase from '@/components/workspace/KnowledgeBase';
 import { PhaseProvider, usePhase } from "@/context/PhaseContext";
 import { WorkspaceProvider } from "@/context/WorkspaceContext";
 
@@ -40,6 +41,9 @@ function MainContent() {
       break;
     case '8':
       CurrentView = <PublishPrep />;
+      break;
+    case 'lore':
+      CurrentView = <KnowledgeBase />;
       break;
     default:
       CurrentView = (

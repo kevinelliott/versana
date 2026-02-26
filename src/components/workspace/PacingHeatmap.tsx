@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import styles from './PacingHeatmap.module.css';
+import { useWorkspace } from '@/context/WorkspaceContext';
 
 interface PacingHeatmapProps {
     text: string;
@@ -9,6 +10,9 @@ const ACTION_WORDS = ['suddenly', 'ran', 'hit', 'shot', 'exploded', 'fast', 'sla
 const CALM_WORDS = ['thought', 'wondered', 'felt', 'slowly', 'breeze', 'quiet', 'watched', 'silence', 'peaceful', 'stared', 'remembered'];
 
 export default function PacingHeatmap({ text }: PacingHeatmapProps) {
+    const { activeWorkspace } = useWorkspace();
+    const isNonFicProject = activeWorkspace?.genre?.toLowerCase().includes('[non-fiction]') ?? false;
+
     const analysis = useMemo(() => {
         if (!text) return [];
         // Split by paragraph
@@ -56,15 +60,15 @@ export default function PacingHeatmap({ text }: PacingHeatmapProps) {
     return (
         <div className={styles.container}>
             <div className={styles.header}>
-                <h3 className={styles.title}>Pacing & Emotional Heatmap</h3>
+                <h3 className={styles.title}>{isNonFicProject ? 'Readability & Structural Heatmap' : 'Pacing & Emotional Heatmap'}</h3>
                 <div className={styles.legend}>
                     <div className={styles.legendItem}>
                         <div className={styles.box} style={{ background: 'var(--tag-red-bg)' }}></div>
-                        Fast / Action
+                        {isNonFicProject ? 'Dense / Analytical' : 'Fast / Action'}
                     </div>
                     <div className={styles.legendItem}>
                         <div className={styles.box} style={{ background: 'var(--tag-blue-bg)' }}></div>
-                        Slow / Introspective
+                        {isNonFicProject ? 'Expanded / Contextual' : 'Slow / Introspective'}
                     </div>
                 </div>
             </div>

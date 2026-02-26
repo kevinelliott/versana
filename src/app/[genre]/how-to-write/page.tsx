@@ -56,7 +56,6 @@ export async function generateStaticParams() {
 
 // Dynamically generate Meta Tags for SEO ranking
 export async function generateMetadata(
-    // @ts-ignore
     { params }: { params: Promise<{ genre: string }> }
 ) {
     // Await the params object in Next.js 15
@@ -76,7 +75,6 @@ export async function generateMetadata(
 
 
 export default async function GenreLandingPage(
-    // @ts-ignore
     { params }: { params: Promise<{ genre: string }> }
 ) {
     // Await params object for dynamic routing in App Router Next.js 15
@@ -118,7 +116,7 @@ export default async function GenreLandingPage(
                             How to Write a Bestselling <br /><em>{formattedGenre}</em> Novel
                         </h1>
                         <p className={styles.heroSubtitle}>
-                            Building {cmsData.sub}? Don't rely on sticky notes. Let Versana's Vector AI remember the details of your {formattedGenre} world while you focus on the prose.
+                            Building {cmsData.sub}? Don&apos;t rely on sticky notes. Let Versana&apos;s Vector AI remember the details of your {formattedGenre} world while you focus on the prose.
                         </p>
                         <div className={styles.heroActions}>
                             <Link href="/workspace" className={styles.ctaButtonPrimaryLarge}>

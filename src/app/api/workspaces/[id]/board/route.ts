@@ -16,7 +16,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         // Local dev bypass
         if (!user && process.env.NODE_ENV === 'development') {
             supabase = createAdminClient();
-            user = { id: 'ea333780-a920-420d-a6c7-ccc7c04a5ae0' } as any;
+            user = { id: 'ea333780-a920-420d-a6c7-ccc7c04a5ae0' } as { id: string, app_metadata: Record<string, unknown>, user_metadata: Record<string, unknown>, aud: string, created_at: string };
         }
 
         if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -35,7 +35,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         }
 
         return NextResponse.json(data);
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error("Error updating board state:", err);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }

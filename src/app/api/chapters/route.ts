@@ -4,10 +4,10 @@ import { createClient, createAdminClient } from '@/lib/supabase/server';
 export async function GET(req: Request) {
     try {
         const { searchParams } = new URL(req.url);
-        const workspaceId = searchParams.get('workspaceId');
+        const bookId = searchParams.get('bookId');
 
-        if (!workspaceId) {
-            return new Response('Workspace ID required', { status: 400 });
+        if (!bookId) {
+            return new Response('Book ID required', { status: 400 });
         }
 
         let supabase = await createClient();
@@ -27,7 +27,7 @@ export async function GET(req: Request) {
         const { data: chapters, error } = await supabase
             .from('chapters')
             .select('id, title, order_index, updated_at')
-            .eq('workspace_id', workspaceId)
+            .eq('book_id', bookId)
             .order('order_index', { ascending: true });
 
         if (error) throw error;
@@ -56,16 +56,17 @@ export async function POST(req: Request) {
             }
         }
 
-        const { workspaceId, title, orderIndex } = await req.json();
+        const { workspaceId, bookId, title, orderIndex } = await req.json();
 
-        if (!workspaceId || !title) {
-            return new Response('Workspace ID and Title required', { status: 400 });
+        if (!workspaceId || !bookId || !title) {
+            return new Response('Workspace ID, Book ID, and Title required', { status: 400 });
         }
 
         const { data: chapter, error } = await supabase
             .from('chapters')
             .insert({
                 workspace_id: workspaceId,
+                book_id: bookId,
                 title,
                 order_index: orderIndex || 0,
                 content: { type: "doc", content: [] } // Empty TipTap doc

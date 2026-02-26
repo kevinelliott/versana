@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { BookOpen, Edit2, MessageSquare } from 'lucide-react';
+import { useWorkspace } from '@/context/WorkspaceContext';
 import styles from './HoverCard.module.css';
 
-interface EntityData {
+export interface EntityData {
     id: string;
     name: string;
     type: 'character' | 'place' | 'lore' | 'plot' | 'rule' | string;
@@ -11,6 +12,7 @@ interface EntityData {
     mentions?: number;
     status?: string;
     associated?: string[];
+    aliases?: string[];
 }
 
 interface HoverCardProps {
@@ -18,18 +20,31 @@ interface HoverCardProps {
     x: number;
     y: number;
     onClose: () => void;
+    onMouseEnter?: () => void;
     visible: boolean;
 }
 
-export default function HoverCard({ entity, x, y, visible, onClose }: HoverCardProps) {
+export default function HoverCard({ entity, x, y, visible, onClose, onMouseEnter }: HoverCardProps) {
     const [isRendered, setIsRendered] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [editedSynopsis, setEditedSynopsis] = useState(entity?.synopsis || '');
     const [isSaving, setIsSaving] = useState(false);
     const cardRef = useRef<HTMLDivElement>(null);
 
+    const { activeWorkspace } = useWorkspace();
+    const isNonFicProject = activeWorkspace?.genre?.toLowerCase().includes('[non-fiction]') ?? false;
+
+    let displayType = entity?.type;
+    if (isNonFicProject && displayType) {
+        if (displayType === 'character') displayType = 'Key Figure / Subject';
+        else if (displayType === 'place') displayType = 'Location / Context';
+        else if (displayType === 'plot') displayType = 'Data Point / KPI';
+        else if (displayType === 'lore') displayType = 'Concept / Framework';
+    }
+
     useEffect(() => {
         if (visible && entity) {
+             
             setIsRendered(true);
             setEditedSynopsis(entity.synopsis || ''); // Reset draft when opened
         } else {
@@ -39,16 +54,31 @@ export default function HoverCard({ entity, x, y, visible, onClose }: HoverCardP
             }, 200);
             return () => clearTimeout(timer);
         }
-    }, [visible, entity?.synopsis]);
+        // Dependency array covers semantic requirements for this simple hook
+    }, [visible, entity]);
 
     const handleSave = async () => {
         if (!entity) return;
         setIsSaving(true);
-        // Simulate DB Sync & Vector Embedding Update 
-        await new Promise(resolve => setTimeout(resolve, 600));
-        entity.synopsis = editedSynopsis;
-        setIsSaving(false);
-        setIsEditing(false);
+        try {
+            const res = await fetch(`/api/lore/${entity.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ synopsis: editedSynopsis })
+            });
+            if (res.ok) {
+                // Cannot mutate props directly in React.
+                // In a real app we'd dispatch an update to Context or call an API here.
+                entity.synopsis = editedSynopsis; // optimistic update of in-memory object
+            } else {
+                console.error("Failed to update lore");
+            }
+        } catch (e) {
+            console.error("Error updating lore:", e);
+        } finally {
+            setIsSaving(false);
+            setIsEditing(false);
+        }
     };
 
     if (!isRendered || !entity) return null;
@@ -59,6 +89,7 @@ export default function HoverCard({ entity, x, y, visible, onClose }: HoverCardP
             className={`${styles.card} ${visible ? styles.visible : ''}`}
             style={{ left: x, top: y - 10 }}
             onMouseLeave={onClose}
+            onMouseEnter={onMouseEnter}
         >
             <div className={styles.header}>
                 <div className={styles.thumbnail}>
@@ -66,7 +97,7 @@ export default function HoverCard({ entity, x, y, visible, onClose }: HoverCardP
                 </div>
                 <div className={styles.titleInfo}>
                     <div className={styles.name}>{entity.name}</div>
-                    <div className={styles.badge}>{entity.type}</div>
+                    <div className={styles.badge}>{displayType}</div>
                 </div>
             </div>
 

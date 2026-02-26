@@ -1,11 +1,59 @@
-.sidebar {
+.sidebarWrapper {
+    position: relative;
     width: var(--right-sidebar-width);
     height: 100%;
     background-color: var(--bg-primary);
     border-left: 1px solid var(--border-light);
+    flex-shrink: 0;
+    transition: width 0.3s ease;
+}
+
+.sidebarWrapper.collapsed {
+    width: 0;
+    border-left: none;
+}
+
+.sidebarContent {
+    width: var(--right-sidebar-width);
+    height: 100%;
     display: flex;
     flex-direction: column;
-    flex-shrink: 0;
+    overflow-y: auto;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+.sidebarWrapper.collapsed .sidebarContent {
+    opacity: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.sidebarToggleBtn {
+    position: absolute;
+    left: -12px;
+    top: 20px;
+    width: 24px;
+    height: 24px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 50;
+    color: var(--text-secondary);
+    box-shadow: -2px 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.sidebarToggleBtn:hover {
+    color: var(--text-primary);
+    background: var(--bg-hover);
+}
+
+.sidebarWrapper.collapsed .sidebarToggleBtn {
+    left: -24px;
 }
 
 .contextMatrix {

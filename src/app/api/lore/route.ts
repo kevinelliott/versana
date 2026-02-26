@@ -46,3 +46,68 @@ export async function GET(req: Request) {
         return new Response('Internal Server Error', { status: 500 });
     }
 }
+
+export async function POST(req: Request) {
+    try {
+        let supabase = await createClient();
+
+        const { data: { user } } = await supabase.auth.getUser();
+        let userId = user?.id;
+
+        if (!userId) {
+            if (process.env.NODE_ENV === 'development') {
+                userId = 'ea333780-a920-420d-a6c7-ccc7c04a5ae0'; // Mock dev user
+                supabase = createAdminClient();
+            } else {
+                return new Response('Unauthorized', { status: 401 });
+            }
+        }
+
+        const body = await req.json();
+        const { workspaceId, name, type, synopsis } = body;
+
+        if (!workspaceId || !name || !type) {
+            return new Response('Missing required fields', { status: 400 });
+        }
+
+        const { data: workspace } = await supabase
+            .from('workspaces')
+            .select('id')
+            .eq('id', workspaceId)
+            .eq('user_id', userId)
+            .single();
+
+        if (!workspace && process.env.NODE_ENV !== 'development') {
+            return new Response('Workspace not found or unauthorized', { status: 404 });
+        }
+
+        const { data: newEntry, error } = await supabase
+            .from('lore_entries')
+            .insert({
+                workspace_id: workspaceId,
+                entity_name: name,
+                entity_type: type,
+                synopsis: synopsis,
+                status: 'Active'
+            })
+            .select('*')
+            .single();
+
+        if (error) {
+            console.error("Supabase insert error:", error);
+            throw error;
+        }
+
+        return Response.json({
+            id: newEntry.id,
+            name: newEntry.entity_name,
+            aliases: newEntry.aliases || [],
+            type: newEntry.entity_type,
+            synopsis: newEntry.synopsis,
+            status: newEntry.status
+        });
+    } catch (error: unknown) {
+        console.error('Create Lore API Error:', error);
+        return new Response('Internal Server Error: ' + (error as Error).message, { status: 500 });
+    }
+}

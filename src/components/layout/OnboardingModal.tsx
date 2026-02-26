@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Brain, X, CheckCircle, DatabaseZap } from 'lucide-react';
+import { X, CheckCircle, DatabaseZap } from 'lucide-react';
 import styles from './OnboardingModal.module.css';
 
 export default function OnboardingModal() {
@@ -11,6 +11,7 @@ export default function OnboardingModal() {
         // Show modal on first visit (for demo purposes we just show it if not explicitly dismissed)
         const hasSeen = localStorage.getItem('versana_onboarding_seen');
         if (!hasSeen) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setIsOpen(true);
         }
     }, []);
@@ -38,7 +39,7 @@ export default function OnboardingModal() {
 
                 <div className={styles.body}>
                     <p className={styles.intro}>
-                        Versana isn't just a text editor—it's an intelligent exoskeleton for your story. You might be wondering: <i>How is this better than pasting my chapters into ChatGPT?</i>
+                        Versana isn&apos;t just a text editor—it&apos;s an intelligent exoskeleton for your story. You might be wondering: <i>How is this better than pasting my chapters into ChatGPT?</i>
                     </p>
 
                     <ul className={styles.featureList}>

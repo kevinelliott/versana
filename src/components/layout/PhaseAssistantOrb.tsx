@@ -3,9 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import { Sparkles, X, MessageSquareHeart } from 'lucide-react';
 import { usePhase } from '@/context/PhaseContext';
+import { useWorkspace } from '@/context/WorkspaceContext';
 import styles from './PhaseAssistantOrb.module.css';
 
-const PHASE_TIPS: Record<string, string> = {
+const FIC_TIPS: Record<string, string> = {
     '1': "Welcome to Ideation! Try using the What-If Engine to push your premise into darker or more unexpected territory.",
     '2': "You're Outlining. Drag cards around the Save the Cat beat board. Try mapping character alliances in the Relationship Web.",
     '3': "Research Phase. When you find a good article via the World-Wide Web search, hit 'Save to Lore Bible' to persist it to your Context Matrix.",
@@ -16,16 +17,32 @@ const PHASE_TIPS: Record<string, string> = {
     '8': "Publishing Prep. Let's extract your BISAC codes and generate your Amazon Blurb based on your final story.",
 };
 
+const NON_FIC_TIPS: Record<string, string> = {
+    '1': "Welcome to Ideation! Try using the Socratic Engine to refine your core thesis.",
+    '2': "You're Outlining. Drag cards to structure your argument. Group concepts in the Conceptual Map.",
+    '3': "Research Phase. Find academic sources or statistics and hit 'Save to Knowledge Base' to persist to your project.",
+    '4': "You're Drafting! Highlight any text to bring up the Editorial Co-pilot for rewrites, or open the Draft & Preview pane to review generated sections.",
+    '5': "Review & Fact-Checking. Run an audit to verify logic constraints and structural integrity.",
+    '6': "Formatting Phase. Adjust your typographic settings and generate diagrams before exporting your PDF.",
+    '7': "Cover Design. Versana will conceptualize your core argument as a striking professional book cover.",
+    '8': "Publishing Prep. Extract SEO keywords and let AI write a compelling back-cover synopsis for your audience.",
+};
+
 export default function PhaseAssistantOrb() {
     const { activePhase } = usePhase();
+    const { activeWorkspace } = useWorkspace();
+    const isNonFicProject = activeWorkspace?.genre?.toLowerCase().includes('[non-fiction]') ?? false;
+    const tips = isNonFicProject ? NON_FIC_TIPS : FIC_TIPS;
+
     const [isOpen, setIsOpen] = useState(false);
     const [hasUnread, setHasUnread] = useState(true);
-    const [currentTip, setCurrentTip] = useState(PHASE_TIPS['1']);
+    const [currentTip, setCurrentTip] = useState(tips['1']);
 
     // When the phase changes, update the tip, show unread badge, and optionally auto-open or pulse.
     useEffect(() => {
-        if (PHASE_TIPS[activePhase]) {
-            setCurrentTip(PHASE_TIPS[activePhase]);
+        if (tips[activePhase]) {
+             
+            setCurrentTip(tips[activePhase]);
             setHasUnread(true);
             setIsOpen(true); // Auto pop-up when entering a new phase to guide the user!
 
@@ -35,6 +52,7 @@ export default function PhaseAssistantOrb() {
             }, 8000);
             return () => clearTimeout(timer);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activePhase]);
 
     const handleToggle = () => {

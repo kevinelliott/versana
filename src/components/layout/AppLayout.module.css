@@ -10,7 +10,8 @@
 .mainLayout {
     display: flex;
     flex: 1;
-    height: calc(100vh - var(--topbar-height));
+    height: 100%;
+    min-height: 0;
     position: relative;
 }
 

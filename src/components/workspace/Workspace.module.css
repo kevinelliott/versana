@@ -1,31 +1,114 @@
+.workspaceContainer {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+}
+
+.workspaceGlobalHeader {
+    padding: 2rem 2rem 1.5rem 2rem;
+    border-bottom: 1px solid var(--border-light);
+    background: var(--bg-primary);
+}
+
+.phaseLabel {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+}
+
+.phaseTitle {
+    font-family: var(--font-serif);
+    font-size: 2rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.phaseSubtitle {
+    color: var(--text-secondary);
+    font-size: 1rem;
+}
+
 .workspace {
     position: relative;
-    padding: 2rem 4rem;
+    padding: 1rem 2rem 2rem 2rem;
     height: 100%;
+    width: 100%;
     margin: 0 auto;
     display: flex;
-    gap: 3rem;
+    gap: 2rem;
 }
 
 .editorMain {
     flex-grow: 1;
-    max-width: 1000px;
-    /* Allow wider for split pane */
+    width: 100%;
     position: relative;
     display: flex;
     gap: 2rem;
     transition: all 0.3s;
 }
 
+.chapterSidebarWrapper {
+    position: relative;
+    width: 280px;
+    height: 100%;
+    flex-shrink: 0;
+    border-right: 1px solid var(--border-light);
+    transition: width 0.3s ease;
+}
+
+.chapterSidebarWrapper.collapsed {
+    width: 0;
+    border-right: none;
+}
+
+.chapterSidebarWrapper.collapsed .sidebarToggleBtn {
+    right: -24px;
+}
+
 .chapterSidebar {
     width: 280px;
-    flex-shrink: 0;
+    height: 100%;
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    border-right: 1px solid var(--border-light);
     padding-right: 1.5rem;
-    height: 100%;
+    overflow-y: auto;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+.chapterSidebarWrapper.collapsed .chapterSidebar {
+    opacity: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.sidebarToggleBtn {
+    position: absolute;
+    right: -12px;
+    top: 20px;
+    width: 24px;
+    height: 24px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 50;
+    color: var(--text-secondary);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.sidebarToggleBtn:hover {
+    color: var(--text-primary);
+    background: var(--bg-hover);
 }
 
 .chapterSidebarHeader {
@@ -99,8 +182,10 @@
 
 .editorContainer {
     position: relative;
-    max-width: 100%;
-    /* Classic optimal reading width */
+    width: 100%;
+    max-width: none !important;
+    margin: 0;
+    /* Let it fill the available space naturally */
     display: flex;
     flex-direction: column;
 }
@@ -144,6 +229,32 @@
 .documentTitle:empty:before {
     content: "Untitled Chapter";
     color: var(--text-secondary);
+}
+
+.generateTitleBtn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.8rem;
+    background: var(--tag-purple-bg);
+    color: var(--tag-purple-text);
+    border: 1px solid rgba(147, 51, 234, 0.2);
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    animation: fadeIn 0.15s ease-out;
+}
+
+.generateTitleBtn:hover:not(:disabled) {
+    background: rgba(147, 51, 234, 0.2);
+}
+
+.generateTitleBtn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
 }
 
 .editorArea {
@@ -390,4 +501,198 @@
     background-color: transparent !important;
     border-bottom-color: transparent !important;
     color: inherit !important;
+}
+
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modalContent {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    padding: 2rem;
+    width: 400px;
+    max-width: 90%;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.modalTitle {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+}
+
+.modalBody {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-bottom: 2rem;
+}
+
+.modalActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+}
+
+.btnCancel {
+    background: transparent;
+    border: 1px solid var(--border-light);
+    color: var(--text-secondary);
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btnCancel:hover {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.btnDelete {
+    background: #e53935;
+    border: none;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btnDelete:hover {
+    background: #c62828;
+}
+
+.contextMenuItem {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    text-align: left;
+    padding: 0.5rem 1rem;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.contextMenuItem:hover {
+    background: var(--bg-hover);
+}
+
+.emptyStateGen {
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+    padding: 2rem;
+    border: 1px dashed var(--border-light);
+    border-radius: 12px;
+    background: var(--bg-secondary);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-width: 600px;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.emptyStateTitle {
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.emptyStateDesc {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.emptyStateInput {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    padding: 0.75rem;
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    width: 100%;
+    min-height: 80px;
+    resize: vertical;
+    font-family: inherit;
+}
+
+.emptyStateRow {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.emptyStateSelect {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    color: var(--text-primary);
+    padding: 0.5rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    outline: none;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .workspace {
+        flex-direction: column;
+        padding: 1rem;
+    }
+
+    .chapterSidebarWrapper {
+        width: 100% !important;
+        height: auto;
+        border-right: none;
+        border-bottom: 1px solid var(--border-light);
+        padding-bottom: 1rem;
+    }
+
+    .chapterSidebar {
+        width: 100%;
+        height: auto;
+        max-height: 250px;
+    }
+
+    .sidebarToggleBtn {
+        display: none;
+    }
+
+    .emptyStateRow {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .toolbar {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        justify-content: flex-start;
+    }
+
+    .toolBtn {
+        flex: 1;
+        text-align: center;
+        white-space: nowrap;
+    }
 }

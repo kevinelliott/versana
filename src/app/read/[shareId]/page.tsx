@@ -1,24 +1,78 @@
-import React from 'react';
 import { BookOpen, Share2, Sparkles, ChevronRight } from 'lucide-react';
+import Link from 'next/link';
+import { createAdminClient } from '@/lib/supabase/server';
+import { notFound } from 'next/navigation';
 
-export default function MiniSite({ params }: { params: { shareId: string } }) {
-    // In a real application, we would fetch the Workspace/Project by shareId from Supabase
-    // const workspace = await supabase.from('workspaces').select('*').eq('share_id', params.shareId).single();
+export default async function MiniSite({ params }: { params: { shareId: string } }) {
+    const supabase = createAdminClient();
 
-    // Mock data for the demonstration
-    const bookTitle = "The Obsidian Crown";
-    const authorName = "K. R. Author";
-    const synopsis = "When Captain Aris discovers a derelict Hegemony frigate drifting at the edge of the charted sectors, he expects a simple salvage operation. Instead, he uncovers a conspiracy that threatens to ignite a galaxy-wide war. With his crew of misfits and a rogue AI, Aris must race against time to prevent the Obsidian Crown from falling into the hands of the Rebellion.";
-    const coverUrl = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop";
-    const genre = "Sci-Fi Thriller";
-    const readTime = "Est. 12 Hours";
+    // 1. Fetch Book
+    const { data: book, error: bookError } = await supabase
+        .from('books')
+        .select('*, workspaces(*, users(full_name))')
+        .eq('id', params.shareId)
+        .single();
 
-    // Mock excerpt from Phase 4
-    const excerpt = `The snow fell heavy over the battlements of the old fort. Captain Aris tightened his grip on the plasma rifle, his breath pluming in the frigid air. The Rebellion could not afford to lose this vantage point. If the Hegemony breached the wall, the entire sector would fall within the week.
+    if (bookError || !book || !book.workspaces) {
+        return notFound();
+    }
 
-"They're coming from the eastern ridge," shouted Mira, pointing toward the jagged peaks. She wiped frost from her visor, her expression grim. "The scanners are picking up heavy armor. Mechanized infantry."
+    const workspace = book.workspaces;
 
-Aris cursed softly. They had been outmaneuvered. The intelligence reports had promised a skeletal garrison, not a full battalion of shock troops. He signaled the rest of his squad to hold position.`;
+    // 2. Fetch Chapters for excerpt & read time
+    const { data: chapters } = await supabase
+        .from('chapters')
+        .select('id, title, content, word_count, order_index')
+        .eq('book_id', book.id)
+        .order('order_index', { ascending: true });
+
+    // 3. Extract the first chapter with content to show as an excerpt
+    let firstChapterContent = '';
+    let totalWordCount = 0;
+
+    if (chapters) {
+        for (const chap of chapters) {
+            totalWordCount += (chap.word_count || 0);
+
+            if (!firstChapterContent && chap.content) {
+                // Extremely naive extraction of text from TipTap JSON
+                try {
+                    let extracted = '';
+                    if (typeof chap.content === 'object' && chap.content.content) {
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        const recursiveExtract = (nodes: any[]) => {
+                            nodes.forEach(node => {
+                                if (node.type === 'paragraph') {
+                                    if (node.content) {
+                                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                        extracted += node.content.map((c: any) => c.text).join('') + '\n\n';
+                                    }
+                                } else if (node.content) {
+                                    recursiveExtract(node.content);
+                                }
+                            });
+                        };
+                        recursiveExtract(chap.content.content);
+                    }
+                    firstChapterContent = extracted.trim() || 'Chapter is empty.';
+                } catch {
+
+                    firstChapterContent = 'Failed to load chapter content.';
+                }
+            }
+        }
+    }
+
+    const bookTitle = book.title || "Untitled Draft";
+    const authorName = workspace.users?.full_name || "Unknown Author";
+    const synopsis = workspace.description || "A new universe awaits. The author is currently generating the Context Matrix and exploring the realms of this new manuscript.";
+    const coverUrl = workspace.board_state?.cover_design?.coverImageUrl || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop";
+    const genre = book.genre || workspace.genre || "Fiction";
+
+    // Avg reading speed is 250 wpm.
+    const readMinutes = Math.max(1, Math.ceil(totalWordCount / 250));
+    const readTime = readMinutes > 60 ? `Est. ${Math.floor(readMinutes / 60)} Hours` : `Est. ${readMinutes} Mins`;
+    const excerpt = firstChapterContent;
 
     return (
         <div style={{ minHeight: '100vh', background: '#f8fafc', fontFamily: 'var(--font-sans)', color: '#0f172a' }}>
@@ -63,6 +117,7 @@ Aris cursed softly. They had been outmaneuvered. The intelligence reports had pr
                             boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
                             position: 'relative'
                         }}>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src={coverUrl} alt="Cover" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                             <div style={{
                                 position: 'absolute',
@@ -146,7 +201,7 @@ Aris cursed softly. They had been outmaneuvered. The intelligence reports had pr
                             <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
                                 The author used the Versana Context Matrix and AI Co-Pilot to develop this universe.
                             </p>
-                            <a href="/" style={{ color: '#6366f1', textDecoration: 'none', fontWeight: 500, fontSize: '0.9rem' }}>Start your novel today &rarr;</a>
+                            <Link href="/" style={{ color: '#6366f1', textDecoration: 'none', fontWeight: 500, fontSize: '0.9rem' }}>Start your novel today &rarr;</Link>
                         </div>
                     </div>
                 </div>

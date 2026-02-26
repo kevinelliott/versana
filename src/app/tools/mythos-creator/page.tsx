@@ -13,20 +13,18 @@ export default function MythosCreator() {
         setIsGenerating(true);
         setResult(null);
         try {
-            const res = await fetch('/api/ai/claude', {
+            const res = await fetch('/api/tools/mythos-creator', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    // Mock workspace ID since this is a standalone tool
-                    workspaceId: 'sandbox',
-                    systemPrompt: 'You are an expert world-builder and linguist. Generate a highly detailed and coherent mythos, fictional religion, or naming convention based on the user prompt. Include a summary, key tenets/rules, and 5 example vocabulary words or names with meanings. Output in clear markdown format.',
-                    messages: [{ role: 'user', content: `Generate a mythos based on: ${topic}` }]
-                })
+                body: JSON.stringify({ topic })
             });
 
-            // Handle the streaming response correctly as we updated in PublishPrep
-            const text = await res.text();
-            setResult(text);
+            if (!res.ok) {
+                throw new Error('Failed to generate mythos');
+            }
+
+            const data = await res.json();
+            setResult(data.mythos);
         } catch (e) {
             console.error("Failed to generate mythos:", e);
             setResult("An error occurred during generation. Please try again.");

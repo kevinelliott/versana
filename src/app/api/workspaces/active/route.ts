@@ -1,6 +1,6 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server';
 
-export async function GET(req: Request) {
+export async function GET() {
     try {
         let supabase = await createClient();
 
@@ -17,7 +17,7 @@ export async function GET(req: Request) {
         }
 
         // Get the most recently created workspace
-        let { data: workspace, error } = await supabase
+        const { data: workspaceData, error } = await supabase
             .from('workspaces')
             .select('*')
             .eq('user_id', userId)
@@ -28,6 +28,8 @@ export async function GET(req: Request) {
         if (error && error.code !== 'PGRST116') { // PGRST116 is no rows returned
             throw error;
         }
+
+        let workspace = workspaceData;
 
         if (!workspace) {
             // Create a default workspace if none exists
@@ -46,8 +48,8 @@ export async function GET(req: Request) {
         }
 
         return Response.json(workspace);
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Active Workspace API Error:', error);
-        return new Response(JSON.stringify({ error: error.message, stack: error.stack }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+        return new Response(JSON.stringify({ error: (error as Error).message, stack: (error as Error).stack }), { status: 500, headers: { 'Content-Type': 'application/json' } });
     }
 }

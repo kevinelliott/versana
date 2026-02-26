@@ -5,21 +5,24 @@
   --bg-primary: #ffffff;
   --bg-secondary: #f7f7f5;
   --bg-tertiary: #efefe9;
-  
+
   --text-primary: #37352f;
   --text-secondary: #787774;
   --text-muted: #9f9e99;
-  
+
   --border-light: #e6e6e6;
   --border-color: #d3d3d3;
-  
-  --accent-primary: #527A7A; /* Refined Sage */
+
+  --accent-primary: #527A7A;
+  /* Refined Sage */
   --accent-hover: #405F5F;
-  --accent-purple: #9065B0; /* Subtle writerly purple */
-  --accent-blue: #337EA9; 
+  --accent-purple: #9065B0;
+  /* Subtle writerly purple */
+  --accent-blue: #337EA9;
   --accent-green: #448361;
   --accent-gold: #D99C3D;
   --accent-red: #D44C47;
+  --accent-terracotta: #db5a42;
 
   /* Tag colors (Glassmorphism inspired but subtle) */
   --tag-blue-bg: rgba(51, 126, 169, 0.1);
@@ -37,12 +40,13 @@
 
   /* Typography */
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif;
-  --font-serif: "Georgia", "Times New Roman", serif; /* For the writing workspace */
-  
+  --font-serif: "Georgia", "Times New Roman", serif;
+  /* For the writing workspace */
+
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --shadow-float: 0 12px 24px -6px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0,0,0,0.05);
+  --shadow-float: 0 12px 24px -6px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -51,18 +55,19 @@
     --bg-primary: #191919;
     --bg-secondary: #202020;
     --bg-tertiary: #2f2f2f;
-    
+
     --text-primary: #rgba(255, 255, 255, 0.9);
     --text-secondary: rgba(255, 255, 255, 0.5);
     --text-muted: rgba(255, 255, 255, 0.3);
-    
+
     --border-light: #2a2a2a;
     --border-color: #333333;
-    
+
     --accent-primary: #6B9A9A;
     --accent-hover: #82B3B3;
-    
-    --shadow-float: 0 12px 24px -6px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255,255,255,0.1);
+    --accent-terracotta: #db5a42;
+
+    --shadow-float: 0 12px 24px -6px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1);
 
     --tag-blue-bg: rgba(51, 126, 169, 0.2);
     --tag-blue-text: #5EB1EF;
@@ -106,17 +111,49 @@ button {
 }
 
 /* Base utility classes for layout */
-.flex { display: flex; }
-.flex-col { flex-direction: column; }
-.items-center { align-items: center; }
-.justify-center { justify-content: center; }
-.justify-between { justify-content: space-between; }
-.gap-1 { gap: 0.25rem; }
-.gap-2 { gap: 0.5rem; }
-.gap-3 { gap: 0.75rem; }
-.gap-4 { gap: 1rem; }
-.w-full { width: 100%; }
-.h-full { height: 100%; }
+.flex {
+  display: flex;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.gap-1 {
+  gap: 0.25rem;
+}
+
+.gap-2 {
+  gap: 0.5rem;
+}
+
+.gap-3 {
+  gap: 0.75rem;
+}
+
+.gap-4 {
+  gap: 1rem;
+}
+
+.w-full {
+  width: 100%;
+}
+
+.h-full {
+  height: 100%;
+}
 
 /* Glassmorphism subtle */
 .glass-panel {
@@ -132,13 +169,16 @@ button {
   width: 8px;
   height: 8px;
 }
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
   background: var(--border-color);
   border-radius: 4px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
 }

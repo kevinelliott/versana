@@ -11,8 +11,6 @@ if (!SUPABASE_URL || !SERVICE_KEY) {
 const supabase = createClient(SUPABASE_URL, SERVICE_KEY)
 
 async function seedUser() {
-    const userId = '00000000-0000-0000-0000-000000000000';
-
     console.log("Creating auth user...")
     // Supabase auth.admin bypasses email sending and creates directly
     const { data: authUser, error: authError } = await supabase.auth.admin.createUser({

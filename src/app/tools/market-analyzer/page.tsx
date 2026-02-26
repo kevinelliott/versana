@@ -1,8 +1,53 @@
-import React from 'react';
-import { LineChart, Search, TrendingUp, AlertCircle } from 'lucide-react';
+'use client';
+
+import React, { useState } from 'react';
+import { LineChart, Search, TrendingUp, AlertCircle, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
+interface AnalysisResult {
+    viabilityScore: number;
+    viabilityLabel: string;
+    viabilityDescription: string;
+    tropesToSubvert: { name: string; description: string }[];
+    demographic: string;
+    targetKeyword: string;
+    wordCountRange: string;
+    wordCountReasoning: string;
+}
+
 export default function MarketAnalyzer() {
+    const [premise, setPremise] = useState("Enemies to Lovers in a Cyberpunk city");
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [result, setResult] = useState<AnalysisResult | null>(null);
+
+    const handleAnalyze = async () => {
+        if (!premise.trim()) return;
+
+        setIsAnalyzing(true);
+        setError(null);
+        setResult(null);
+
+        try {
+            const res = await fetch('/api/tools/market-analyzer', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ premise }),
+            });
+
+            if (!res.ok) {
+                throw new Error('Failed to analyze the premise.');
+            }
+
+            const data: AnalysisResult = await res.json();
+            setResult(data);
+        } catch (err: unknown) {
+            setError((err as Error).message || 'An error occurred during analysis.');
+        } finally {
+            setIsAnalyzing(false);
+        }
+    };
+
     return (
         <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', padding: '4rem 2rem' }}>
             <div style={{ maxWidth: '900px', margin: '0 auto' }}>
@@ -35,71 +80,105 @@ export default function MarketAnalyzer() {
                                 outline: 'none',
                                 marginBottom: '1.5rem'
                             }}
-                            defaultValue="Enemies to Lovers in a Cyberpunk city"
+                            value={premise}
+                            onChange={(e) => setPremise(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleAnalyze()}
+                            disabled={isAnalyzing}
                         />
                     </div>
+                    {error && (
+                        <div style={{ color: 'var(--accent-terracotta)', marginBottom: '1rem', fontSize: '0.9rem' }}>
+                            {error}
+                        </div>
+                    )}
                     <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                        <button style={{ background: 'var(--text-primary)', color: 'var(--bg-primary)', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '6px', fontSize: '0.95rem', fontWeight: 500, cursor: 'pointer' }}>
-                            Analyze Market
+                        <button
+                            onClick={handleAnalyze}
+                            disabled={isAnalyzing}
+                            style={{
+                                background: 'var(--text-primary)',
+                                color: 'var(--bg-primary)',
+                                border: 'none',
+                                padding: '0.75rem 1.5rem',
+                                borderRadius: '6px',
+                                fontSize: '0.95rem',
+                                fontWeight: 500,
+                                cursor: isAnalyzing ? 'not-allowed' : 'pointer',
+                                opacity: isAnalyzing ? 0.7 : 1,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem'
+                            }}
+                        >
+                            {isAnalyzing ? <><Loader2 size={18} className="spin" /> Analyzing Market...</> : 'Analyze Market'}
                         </button>
                     </div>
                 </div>
 
-                {/* Mock Results Dashboard */}
-                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '2rem' }}>
-
-                    {/* Left Column: Analysis */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                        <div style={{ padding: '1.5rem', border: '1px solid var(--border-light)', borderRadius: '12px', background: 'var(--bg-primary)' }}>
-                            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.05rem', marginBottom: '1rem', color: 'var(--text-primary)' }}>
-                                <TrendingUp size={18} color="var(--tag-green-text)" /> Current Market Viability
-                            </h3>
-                            <div style={{ display: 'flex', alignItems: 'flex-end', gap: '1rem', marginBottom: '1rem' }}>
-                                <div style={{ fontSize: '3rem', fontWeight: 700, lineHeight: 1, color: 'var(--text-primary)' }}>78%</div>
-                                <div style={{ color: 'var(--text-secondary)', paddingBottom: '0.5rem' }}>High Demand, High Competition</div>
+                {/* Dashboard Results UI */}
+                {result && (
+                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '2rem' }}>
+                        {/* Left Column: Analysis */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                            <div style={{ padding: '1.5rem', border: '1px solid var(--border-light)', borderRadius: '12px', background: 'var(--bg-primary)' }}>
+                                <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.05rem', marginBottom: '1rem', color: 'var(--text-primary)' }}>
+                                    <TrendingUp size={18} color="var(--tag-green-text)" /> Current Market Viability
+                                </h3>
+                                <div style={{ display: 'flex', alignItems: 'flex-end', gap: '1rem', marginBottom: '1rem' }}>
+                                    <div style={{ fontSize: '3rem', fontWeight: 700, lineHeight: 1, color: 'var(--text-primary)' }}>{result.viabilityScore}%</div>
+                                    <div style={{ color: 'var(--text-secondary)', paddingBottom: '0.5rem' }}>{result.viabilityLabel}</div>
+                                </div>
+                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: 1.6 }}>
+                                    {result.viabilityDescription}
+                                </p>
                             </div>
-                            <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: 1.6 }}>
-                                "Cyberpunk Romance" is currently experiencing a 42% YoY growth on Amazon KDP, driven heavily by successful indie authors and recent media adaptations. However, the exact "Enemies to Lovers" trope within this space is approaching saturation.
-                            </p>
+
+                            <div style={{ padding: '1.5rem', border: '1px solid var(--border-light)', borderRadius: '12px', background: 'var(--bg-primary)' }}>
+                                <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.05rem', marginBottom: '1rem', color: 'var(--text-primary)' }}>
+                                    <AlertCircle size={18} color="var(--accent-terracotta)" /> Tropes to Subvert
+                                </h3>
+
+                                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                    {result.tropesToSubvert.map((trope, idx) => (
+                                        <li key={idx} style={{ background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '8px' }}>
+                                            <strong style={{ display: 'block', fontSize: '0.95rem', color: 'var(--text-primary)', marginBottom: '0.25rem' }}>{trope.name}</strong>
+                                            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{trope.description}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
                         </div>
 
-                        <div style={{ padding: '1.5rem', border: '1px solid var(--border-light)', borderRadius: '12px', background: 'var(--bg-primary)' }}>
-                            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.05rem', marginBottom: '1rem', color: 'var(--text-primary)' }}>
-                                <AlertCircle size={18} color="var(--accent-terracotta)" /> Tropes to Subvert
-                            </h3>
-
-                            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                <li style={{ background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '8px' }}>
-                                    <strong style={{ display: 'block', fontSize: '0.95rem', color: 'var(--text-primary)', marginBottom: '0.25rem' }}>The Cop and the Hacker</strong>
-                                    <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Overused. Try: The Corporate Auditor and the Street Ripper Doc.</span>
-                                </li>
-                                <li style={{ background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '8px' }}>
-                                    <strong style={{ display: 'block', fontSize: '0.95rem', color: 'var(--text-primary)', marginBottom: '0.25rem' }}>Rainy Neon Monologues</strong>
-                                    <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Reader fatigue detected. Try focusing on a daytime, starkly lit, high-class corporate sector to contrast the usual grit.</span>
-                                </li>
-                            </ul>
+                        {/* Right Column: Key Metrics */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                            <div style={{ padding: '1.5rem', border: '1px solid var(--border-light)', borderRadius: '12px', background: 'var(--bg-primary)' }}>
+                                <div style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Est. Reader Demographic</div>
+                                <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{result.demographic}</div>
+                            </div>
+                            <div style={{ padding: '1.5rem', border: '1px solid var(--border-light)', borderRadius: '12px', background: 'var(--bg-primary)' }}>
+                                <div style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Top Target Keyword</div>
+                                <div style={{ fontWeight: 600, color: 'var(--text-primary)', background: 'var(--bg-secondary)', display: 'inline-block', padding: '0.25rem 0.5rem', borderRadius: '4px', border: '1px solid var(--border-light)' }}>{result.targetKeyword}</div>
+                            </div>
+                            <div style={{ padding: '1.5rem', border: '1px solid var(--border-light)', borderRadius: '12px', background: 'var(--bg-primary)' }}>
+                                <div style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Ideal Word Count</div>
+                                <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{result.wordCountRange}</div>
+                                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.5rem', lineHeight: 1.4 }}>{result.wordCountReasoning}</p>
+                            </div>
                         </div>
                     </div>
-
-                    {/* Right Column: Key Metrics */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        <div style={{ padding: '1.5rem', border: '1px solid var(--border-light)', borderRadius: '12px', background: 'var(--bg-primary)' }}>
-                            <div style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Est. Reader Demographic</div>
-                            <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Age 18-35 (65% Female)</div>
-                        </div>
-                        <div style={{ padding: '1.5rem', border: '1px solid var(--border-light)', borderRadius: '12px', background: 'var(--bg-primary)' }}>
-                            <div style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Top Target Keyword</div>
-                            <div style={{ fontWeight: 600, color: 'var(--text-primary)', background: 'var(--bg-secondary)', display: 'inline-block', padding: '0.25rem 0.5rem', borderRadius: '4px', border: '1px solid var(--border-light)' }}>#SciFiRomance</div>
-                        </div>
-                        <div style={{ padding: '1.5rem', border: '1px solid var(--border-light)', borderRadius: '12px', background: 'var(--bg-primary)' }}>
-                            <div style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Ideal Word Count</div>
-                            <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>75,000 - 90,000 words</div>
-                            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.5rem', lineHeight: 1.4 }}>Readers of this niche prefer fast-paced, action-heavy narratives over sprawling epics.</p>
-                        </div>
-                    </div>
-                </div>
-
+                )}
             </div>
+
+            {/* Minimal inline style for custom class .spin */}
+            <style dangerouslySetInnerHTML={{
+                __html: `
+                .spin {
+                    animation: spin 1s linear infinite;
+                }
+                @keyframes spin {
+                    100% { transform: rotate(360deg); }
+                }
+            `}} />
         </div>
     );
 }

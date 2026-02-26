@@ -1,18 +1,19 @@
-import { NextResponse } from 'next/server';
 import { createClient, createAdminClient } from '@/lib/supabase/server';
 import epub from 'epub-gen-memory';
 import { Document, Packer, Paragraph, TextRun } from "docx";
 import { generateHTML } from '@tiptap/html';
 import StarterKit from '@tiptap/starter-kit';
 import { LoreTag } from '@/components/workspace/editor/LoreTagExtension';
+import type { JSONContent } from '@tiptap/core';
 
 export async function GET(req: Request) {
     try {
         const { searchParams } = new URL(req.url);
         const workspaceId = searchParams.get('workspaceId');
+        const bookId = searchParams.get('bookId');
         const format = searchParams.get('format'); // 'epub' or 'docx'
 
-        if (!workspaceId || !format) {
+        if (!workspaceId || !bookId || !format) {
             return new Response('Missing parameters', { status: 400 });
         }
 
@@ -40,22 +41,32 @@ export async function GET(req: Request) {
             return new Response('Workspace not found', { status: 404 });
         }
 
+        const { data: book, error: bookError } = await supabase
+            .from('books')
+            .select('*')
+            .eq('id', bookId)
+            .single();
+
+        if (bookError || !book) {
+            return new Response('Book not found', { status: 404 });
+        }
+
         // Fetch chapters
         const { data: chapters, error: chpsError } = await supabase
             .from('chapters')
             .select('*')
-            .eq('workspace_id', workspaceId)
+            .eq('book_id', bookId)
             .order('order_index', { ascending: true });
 
         if (chpsError) {
             return new Response('Error fetching chapters', { status: 500 });
         }
 
-        const fallbackTitle = workspace.board_state?.cover_design?.title || workspace.name || "Untitled Book";
-        const fallbackAuthor = workspace.board_state?.cover_design?.author || "Author";
+        const fallbackTitle = book.title || workspace.name || "Untitled Book";
+        const fallbackAuthor = (workspace.board_state as Record<string, Record<string, unknown>>)?.cover_design?.author as string || "Author";
 
         if (format === 'epub') {
-            const epubChapters = chapters.map((ch: any, index: number) => {
+            const epubChapters = chapters.map((ch: { title?: string, content?: JSONContent }, index: number) => {
                 let htmlContent = '<p></p>';
                 if (ch.content) {
                     htmlContent = generateHTML(ch.content, [StarterKit, LoreTag]);
@@ -79,7 +90,7 @@ export async function GET(req: Request) {
 
             return new Response(buffer as unknown as BodyInit, { status: 200, headers });
         } else if (format === 'docx') {
-            const docChildren: any[] = [];
+            const docChildren: Paragraph[] = [];
 
             // Very simple Word generator reading raw text for manuscript
             for (const [index, ch] of chapters.entries()) {
@@ -93,7 +104,7 @@ export async function GET(req: Request) {
                     const contentBlocks = ch.content.content || [];
                     for (const block of contentBlocks) {
                         if (block.type === 'paragraph') {
-                            const text = block.content ? block.content.map((c: any) => c.text).join('') : '';
+                            const text = block.content ? block.content.map((c: Record<string, unknown>) => typeof c.text === 'string' ? c.text : '').join('') : '';
                             docChildren.push(new Paragraph({
                                 text: text,
                                 spacing: { after: 200 }
@@ -123,8 +134,8 @@ export async function GET(req: Request) {
 
         return new Response('Unsupported format', { status: 400 });
 
-    } catch (e: any) {
+    } catch (e: unknown) {
         console.error("Export Error:", e);
-        return new Response(e.message, { status: 500 });
+        return new Response((e as Error).message, { status: 500 });
     }
 }

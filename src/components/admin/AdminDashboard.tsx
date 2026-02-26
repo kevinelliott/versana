@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ShieldAlert, Users, CreditCard, Activity, ArrowUpRight, ArrowDownRight, Database, AlertCircle, LineChart } from 'lucide-react';
+import { ShieldAlert, Users, Activity, ArrowUpRight, ArrowDownRight, Database, AlertCircle, LineChart } from 'lucide-react';
 import styles from './AdminDashboard.module.css';
 
 const MOCK_USERS = [
@@ -12,26 +12,34 @@ const MOCK_USERS = [
 ];
 
 export default function AdminDashboard() {
-    const [dbUsers, setDbUsers] = React.useState<any[]>([]);
+    const [dbUsers, setDbUsers] = React.useState<{ id: string, full_name?: string, email?: string, subscription_tier: string, created_at: string, last_sign_in_at?: string }[]>([]);
+    const [metrics, setMetrics] = React.useState<{ users: number, workspaces: number, chapters: number }>({ users: 0, workspaces: 0, chapters: 0 });
     const [isLoading, setIsLoading] = React.useState(true);
 
     React.useEffect(() => {
-        async function fetchUsers() {
+        async function fetchData() {
             try {
-                const res = await fetch('/api/admin/users');
-                const data = await res.json();
-                if (data.users) {
-                    // Combine our real DB users with mocks for a populated feel if DB is empty
-                    // or just use DB users
-                    setDbUsers(data.users);
+                const [usersRes, metricsRes] = await Promise.all([
+                    fetch('/api/admin/users'),
+                    fetch('/api/admin/metrics')
+                ]);
+
+                if (usersRes.ok) {
+                    const data = await usersRes.json();
+                    if (data.users) setDbUsers(data.users);
+                }
+
+                if (metricsRes.ok) {
+                    const mData = await metricsRes.json();
+                    setMetrics(mData);
                 }
             } catch (err) {
-                console.error("Error fetching admin users", err);
+                console.error("Error fetching admin data", err);
             } finally {
                 setIsLoading(false);
             }
         }
-        fetchUsers();
+        fetchData();
     }, []);
 
     // If db doesn't have enough, append mocks for layout visualization
@@ -65,14 +73,14 @@ export default function AdminDashboard() {
                     <div className={styles.statsRow}>
                         <div className={styles.statCard}>
                             <div className={styles.statLabel}>Total Active Users</div>
-                            <div className={styles.statValue}>12,450</div>
+                            <div className={styles.statValue}>{metrics.users > 0 ? metrics.users : '12,450'}</div>
                             <div className={`${styles.statTrend} ${styles.trendUp}`}>
                                 <ArrowUpRight size={16} /> +14% this month
                             </div>
                         </div>
                         <div className={styles.statCard}>
-                            <div className={styles.statLabel}>MRR (Stripe)</div>
-                            <div className={styles.statValue}>$142,800</div>
+                            <div className={styles.statLabel}>Total Chapters Written</div>
+                            <div className={styles.statValue}>{metrics.chapters > 0 ? metrics.chapters : '142,800'}</div>
                             <div className={`${styles.statTrend} ${styles.trendUp}`}>
                                 <ArrowUpRight size={16} /> +8.2% this month
                             </div>
@@ -189,21 +197,21 @@ export default function AdminDashboard() {
                             <div className={styles.costItem}>
                                 <div className={styles.costModel}>
                                     <Database size={16} color="var(--tag-purple-text)" />
-                                    Claude 3.5 Sonnet
+                                    Claude 3 Haiku (Core)
                                 </div>
                                 <div className={styles.costAmount}>$4,250.00</div>
                             </div>
                             <div className={styles.costItem}>
                                 <div className={styles.costModel}>
                                     <Database size={16} color="var(--tag-blue-text)" />
-                                    GPT-4o-mini (NER)
+                                    Claude 3 Haiku (NER)
                                 </div>
                                 <div className={styles.costAmount}>$840.50</div>
                             </div>
                             <div className={styles.costItem}>
                                 <div className={styles.costModel}>
                                     <Database size={16} color="var(--tag-gold-text)" />
-                                    Nano Banana Pro (Art)
+                                    DALL-E 3 (Nano Banana Pro)
                                 </div>
                                 <div className={styles.costAmount}>$1,120.00</div>
                             </div>

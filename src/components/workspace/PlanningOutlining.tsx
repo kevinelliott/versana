@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
-import { LayoutList, BookOpen, Users, Plus } from 'lucide-react';
+import { LayoutList, BookOpen, Users, Plus, LayoutTemplate } from 'lucide-react';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import styles from './PlanningOutlining.module.css';
 import RelationshipWeb from './RelationshipWeb';
@@ -35,20 +35,22 @@ const initialData: BoardData = {
         'c4': { id: 'c4', title: 'Arrival at Xol', description: 'The atmosphere is stripped. First signs of the mechanized threat.', tags: ['Setting'] },
     },
     columns: {
+        'col-ideas': { id: 'col-ideas', title: 'Lore Inbox (Hooks)', cardIds: [] },
         'col-1': { id: 'col-1', title: 'Act I (Setup)', cardIds: ['c2', 'c1', 'c3'] },
         'col-2': { id: 'col-2', title: 'Act II A (Rising Action)', cardIds: ['c4'] },
         'col-3': { id: 'col-3', title: 'Act II B (The Turn)', cardIds: [] },
         'col-4': { id: 'col-4', title: 'Act III (Resolution)', cardIds: [] },
     },
-    columnOrder: ['col-1', 'col-2', 'col-3', 'col-4'],
+    columnOrder: ['col-ideas', 'col-1', 'col-2', 'col-3', 'col-4'],
 };
 
 export default function PlanningOutlining() {
-    const { activeWorkspace, setActiveWorkspace, chapters, setChapters, currentChapterId, setCurrentChapterId } = useWorkspace();
+    const { activeWorkspace, setActiveWorkspace, chapters, currentChapterId, setCurrentChapterId } = useWorkspace();
     const [board, setBoard] = useState<BoardData>(initialData);
     const [isBrowser, setIsBrowser] = useState(false);
     const [activeTab, setActiveTab] = useState<string>('kanban');
     const [isSaving, setIsSaving] = useState(false);
+    const [templateConfirmation, setTemplateConfirmation] = useState(false);
 
     // react-beautiful-dnd requires us to ensure we are rendering client-side only
     // to prevent hydration mismatches
@@ -56,12 +58,78 @@ export default function PlanningOutlining() {
         setIsBrowser(true);
     }, []);
 
+    const isNonFicProject = activeWorkspace?.genre?.toLowerCase().includes('[non-fiction]') ?? false;
+
     // Sync board state from database if available
     useEffect(() => {
-        if (activeWorkspace?.board_state?.kanban && activeWorkspace.board_state.kanban.cards) {
-            setBoard(activeWorkspace.board_state.kanban);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        if (activeWorkspace?.board_state?.kanban && (activeWorkspace.board_state.kanban as any).cards) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const loadedBoard = { ...activeWorkspace.board_state.kanban } as any;
+            // Ensure col-ideas exists even if migrating old board state
+            if (!loadedBoard.columns['col-ideas']) {
+                loadedBoard.columns['col-ideas'] = { id: 'col-ideas', title: 'Lore Inbox (Hooks)', cardIds: [] };
+                if (!loadedBoard.columnOrder.includes('col-ideas')) {
+                    loadedBoard.columnOrder = ['col-ideas', ...loadedBoard.columnOrder];
+                }
+            }
+            setBoard(loadedBoard);
         }
     }, [activeWorkspace?.board_state]);
+
+    // Pull unassigned Plot Hooks from Lore
+    useEffect(() => {
+        const fetchLoreHooks = async () => {
+            if (!activeWorkspace) return;
+            try {
+                const res = await fetch(`/api/lore?workspaceId=${activeWorkspace.id}`);
+                const data = await res.json();
+
+                // Get all plot hooks from Lore
+                const hooks = data.filter((item: { type: string, id: string, name: string, synopsis: string }) => item.type === 'Plot Hook');
+
+                setBoard(prevBoard => {
+                    let updated = false;
+                    const newCards = { ...prevBoard.cards };
+                    const newInboxCardIds = [...(prevBoard.columns['col-ideas']?.cardIds || [])];
+
+                    hooks.forEach((hook: { type: string, id: string, name: string, synopsis: string }) => {
+                        // Check if this hook exists anywhere in the board's cards
+                        if (!newCards[hook.id]) {
+                            newCards[hook.id] = {
+                                id: hook.id,
+                                title: hook.name,
+                                description: hook.synopsis,
+                                tags: ['Plot']
+                            };
+                            newInboxCardIds.push(hook.id);
+                            updated = true;
+                        }
+                    });
+
+                    if (updated) {
+                        return {
+                            ...prevBoard,
+                            cards: newCards,
+                            columns: {
+                                ...prevBoard.columns,
+                                'col-ideas': {
+                                    ...prevBoard.columns['col-ideas'],
+                                    cardIds: newInboxCardIds
+                                }
+                            }
+                        };
+                    }
+
+                    return prevBoard;
+                });
+            } catch (err) {
+                console.error("Failed to fetch lore hooks:", err);
+            }
+        };
+
+        fetchLoreHooks();
+    }, [activeWorkspace]);
 
     const saveBoard = async (newBoard: BoardData) => {
         if (!activeWorkspace) return;
@@ -201,6 +269,114 @@ export default function PlanningOutlining() {
         saveBoard(newBoard);
     };
 
+    const loadTemplate = () => {
+        setTemplateConfirmation(true);
+    };
+
+    const confirmLoadTemplate = () => {
+        setTemplateConfirmation(false);
+        if (isNonFicProject) {
+
+            const nfBeats = [
+                { col: 'col-1', title: '1. Introduction / Hook', desc: 'State the premise. Why should the reader care? What problem are we solving?' },
+                { col: 'col-1', title: '2. The Core Problem', desc: 'Identify the pain points or establish the historical context.' },
+                { col: 'col-1', title: '3. Thesis Statement', desc: 'The big idea that promises a solution or fresh perspective.' },
+
+                { col: 'col-2', title: '4. Foundation / History', desc: 'Background information necessary to understand the main arguments.' },
+                { col: 'col-2', title: '5. Argument 1 / Principle 1', desc: 'First major point or methodology.' },
+                { col: 'col-2', title: '6. Case Study 1', desc: 'Evidence or story supporting the first argument.' },
+
+                { col: 'col-3', title: '7. Argument 2 / Principle 2', desc: 'Second major point or methodology.' },
+                { col: 'col-3', title: '8. Case Study 2', desc: 'Evidence or story supporting the second argument.' },
+                { col: 'col-3', title: '9. Counter-Arguments', desc: 'Addressing skepticism and presenting alternative viewpoints objectively.' },
+
+                { col: 'col-4', title: '10. Synthesis & Action Plan', desc: 'How to apply these ideas in the real world.' },
+                { col: 'col-4', title: '11. Conclusion', desc: 'Summary of the journey. Final inspiring thought or call to action.' },
+            ];
+
+            const newBoard = { ...board };
+            const targetCols = ['col-1', 'col-2', 'col-3', 'col-4'];
+            targetCols.forEach(colId => {
+                if (!newBoard.columns[colId]) {
+                    newBoard.columns[colId] = { id: colId, title: colId, cardIds: [] };
+                    if (!newBoard.columnOrder.includes(colId)) {
+                        newBoard.columnOrder.push(colId);
+                    }
+                }
+            });
+
+            nfBeats.forEach((beat, index) => {
+                const newCardId = `nf-${Date.now()}-${index}`;
+                const newCard: CardData = {
+                    id: newCardId,
+                    title: beat.title,
+                    description: beat.desc,
+                    tags: ['Plot'] // Assuming Plot maps to Data Points / KPIs
+                };
+
+                newBoard.cards[newCardId] = newCard;
+                newBoard.columns[beat.col].cardIds.push(newCardId);
+            });
+
+            setBoard(newBoard);
+            saveBoard(newBoard);
+            return;
+            setBoard(newBoard);
+            saveBoard(newBoard);
+            return;
+        }
+
+        const stcBeats = [
+            { col: 'col-1', title: '1. Opening Image (1%)', desc: 'A visual that represents the hero\'s flawed world before the adventure begins.' },
+            { col: 'col-1', title: '2. Theme Stated (5%)', desc: 'A statement made by a character (not the hero) that hints at what the hero will learn.' },
+            { col: 'col-1', title: '3. Set-Up (1-10%)', desc: 'Explore the hero\'s current life, flaws, and the things that need fixing.' },
+            { col: 'col-1', title: '4. Catalyst (10%)', desc: 'The inciting incident. A life-changing event that knocks down the house of cards.' },
+            { col: 'col-1', title: '5. Debate (10-20%)', desc: 'The hero doubts the journey. A question is asked: will they answer the call?' },
+
+            { col: 'col-2', title: '6. Break Into Two (20%)', desc: 'The hero makes a choice and the journey begins. We leave the old world behind.' },
+            { col: 'col-2', title: '7. B Story (22%)', desc: 'Introduction of a subplot, usually involving the love interest or a character who embodies the theme.' },
+            { col: 'col-2', title: '8. Fun and Games (20-50%)', desc: 'The promise of the premise. The hero explores the new world. We see them succeed or fail based on the hook.' },
+            { col: 'col-2', title: '9. Midpoint (50%)', desc: 'A false victory or false defeat. The stakes are raised, and the countdown clock begins.' },
+
+            { col: 'col-3', title: '10. Bad Guys Close In (50-75%)', desc: 'The novelty wears off. Internal and external forces tighten around the hero.' },
+            { col: 'col-3', title: '11. All Is Lost (75%)', desc: 'The lowest point. The mentor dies (literally or metaphorically). A whiff of death.' },
+            { col: 'col-3', title: '12. Dark Night of the Soul (75-80%)', desc: 'The hero wallows in hopelessness. They must figure out the lesson before proceeding.' },
+
+            { col: 'col-4', title: '13. Break Into Three (80%)', desc: 'The hero synthesizes the A Story and B Story. They find the solution.' },
+            { col: 'col-4', title: '14. Finale (80-99%)', desc: 'The hero confronts the antagonist using their new knowledge. The flawed world is changed.' },
+            { col: 'col-4', title: '15. Final Image (100%)', desc: 'A mirror to the Opening Image, proving that the hero and the world have transformed.' }
+        ];
+
+        const newBoard = { ...board };
+
+        // Make sure the columns exist (incase they deleted or renamed them, we append to col-1 to col-4)
+        const targetCols = ['col-1', 'col-2', 'col-3', 'col-4'];
+        targetCols.forEach(colId => {
+            if (!newBoard.columns[colId]) {
+                newBoard.columns[colId] = { id: colId, title: colId, cardIds: [] };
+                if (!newBoard.columnOrder.includes(colId)) {
+                    newBoard.columnOrder.push(colId);
+                }
+            }
+        });
+
+        stcBeats.forEach((beat, index) => {
+            const newCardId = `stc-${Date.now()}-${index}`;
+            const newCard: CardData = {
+                id: newCardId,
+                title: beat.title,
+                description: beat.desc,
+                tags: ['Plot']
+            };
+
+            newBoard.cards[newCardId] = newCard;
+            newBoard.columns[beat.col].cardIds.push(newCardId);
+        });
+
+        setBoard(newBoard);
+        saveBoard(newBoard);
+    };
+
     if (!isBrowser) return null;
 
     if (activeTab === 'relationships') {
@@ -211,14 +387,16 @@ export default function PlanningOutlining() {
                         className={`${styles.tabBtn} ${activeTab === String('kanban') ? styles.tabActive : ''}`}
                         onClick={() => setActiveTab('kanban')}
                     >
-                        <LayoutList size={16} /> Kanban Beats
+                        <LayoutList size={16} /> {isNonFicProject ? 'Kanban Outline' : 'Kanban Beats'}
                     </button>
-                    <button
-                        className={`${styles.tabBtn} ${activeTab === String('relationships') ? styles.tabActive : ''}`}
-                        onClick={() => setActiveTab('relationships')}
-                    >
-                        <Users size={16} /> Relationship Web
-                    </button>
+                    {!isNonFicProject && (
+                        <button
+                            className={`${styles.tabBtn} ${activeTab === String('relationships') ? styles.tabActive : ''}`}
+                            onClick={() => setActiveTab('relationships')}
+                        >
+                            <Users size={16} /> Relationship Web
+                        </button>
+                    )}
                 </div>
                 <div style={{ flexGrow: 1, marginTop: '1rem', borderTop: '1px solid var(--border-light)' }}>
                     <RelationshipWeb />
@@ -229,23 +407,64 @@ export default function PlanningOutlining() {
 
     return (
         <div className={styles.container}>
+            {templateConfirmation && (
+                <div className={styles.modalOverlay} style={{ zIndex: 10000 }}>
+                    <div className={styles.modalContent} style={{ maxWidth: '400px' }}>
+                        <h2 className={styles.modalTitle} style={{ marginBottom: '1rem' }}>Load Template</h2>
+                        <p className={styles.modalDesc} style={{ marginBottom: '2rem' }}>
+                            {isNonFicProject
+                                ? "This will add a standard Non-Fiction outline structure to your Kanban board. Proceed?"
+                                : "This will add the 15 'Save the Cat!' beat cards to your current Kanban board. Proceed?"}
+                        </p>
+                        <div className={styles.modalActions}>
+                            <button className={styles.cancelBtn} onClick={() => setTemplateConfirmation(false)}>Cancel</button>
+                            <button className={styles.modalActionBtn} onClick={confirmLoadTemplate}>
+                                Load Template
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
             <div className={styles.header}>
-                <h1 className={styles.title}>Phase 2: Planning & Outlining</h1>
-                <p className={styles.subtitle}>Map your structural beats. Move scenes freely between acts.</p>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                        <h1 className={styles.title}>
+                            <span style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Phase 2</span>
+                            {isNonFicProject ? 'Outline & Structure' : 'Planning & Outlining'}
+                        </h1>
+                        <p className={styles.subtitle}>
+                            {isNonFicProject ? 'Map your chapters and sections. Organize arguments logically.' : 'Map your structural beats. Move scenes freely between acts.'}
+                        </p>
+                    </div>
+
+                    <button
+                        onClick={loadTemplate}
+                        style={{
+                            display: 'flex', alignItems: 'center', gap: '0.5rem',
+                            background: 'var(--tag-purple-bg)', color: 'var(--tag-purple-text)',
+                            border: '1px solid var(--tag-purple-text)', padding: '0.5rem 1rem',
+                            borderRadius: '6px', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer'
+                        }}
+                    >
+                        <LayoutTemplate size={16} /> {isNonFicProject ? 'Load Non-Fiction Template' : 'Load Save the Cat! Template'}
+                    </button>
+                </div>
 
                 <div className={styles.tabNav} style={{ marginTop: '1.5rem' }}>
                     <button
                         className={`${styles.tabBtn} ${activeTab === String('kanban') ? styles.tabActive : ''}`}
                         onClick={() => setActiveTab('kanban')}
                     >
-                        <LayoutList size={16} /> Kanban Beats
+                        <LayoutList size={16} /> {isNonFicProject ? 'Kanban Outline' : 'Kanban Beats'}
                     </button>
-                    <button
-                        className={`${styles.tabBtn} ${activeTab === String('relationships') ? styles.tabActive : ''}`}
-                        onClick={() => setActiveTab('relationships')}
-                    >
-                        <Users size={16} /> Relationship Web
-                    </button>
+                    {!isNonFicProject && (
+                        <button
+                            className={`${styles.tabBtn} ${activeTab === String('relationships') ? styles.tabActive : ''}`}
+                            onClick={() => setActiveTab('relationships')}
+                        >
+                            <Users size={16} /> Relationship Web
+                        </button>
+                    )}
                     <button
                         className={`${styles.tabBtn} ${activeTab === String('notes') ? styles.tabActive : ''}`}
                         onClick={() => setActiveTab('notes')}
@@ -274,7 +493,7 @@ export default function PlanningOutlining() {
                                             onClick={() => setCurrentChapterId(chapter.id)}
                                         >
                                             <div className={styles.chapterItemTitle}>{chapter.title}</div>
-                                            <div style={{ fontSize: '0.8rem', opacity: 0.7 }}>Drag beats here</div>
+                                            <div style={{ fontSize: '0.8rem', opacity: 0.7 }}>Drag {isNonFicProject ? 'sections' : 'beats'} here</div>
                                             <div style={{ display: 'none' }}>{provided.placeholder}</div>
                                         </div>
                                     )}
@@ -292,7 +511,7 @@ export default function PlanningOutlining() {
                                 <div key={column.id} className={styles.column}>
                                     <div className={styles.columnHeader}>
                                         <h3 className={styles.columnTitle}>{column.title}</h3>
-                                        <span className={styles.columnBadge}>{cards.length} beats</span>
+                                        <span className={styles.columnBadge}>{cards.length} {isNonFicProject ? 'sections' : 'beats'}</span>
                                     </div>
 
                                     <Droppable droppableId={column.id}>
@@ -339,7 +558,7 @@ export default function PlanningOutlining() {
                                         className={styles.addBtn}
                                         onClick={() => handleAddBeat(column.id)}
                                     >
-                                        <Plus size={16} /> Add Beat
+                                        <Plus size={16} /> Add {isNonFicProject ? 'Section' : 'Beat'}
                                     </button>
                                 </div>
                             );

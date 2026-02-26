@@ -17,3 +17,14 @@
     background-color: transparent !important;
     color: inherit !important;
 }
+
+/* Ensure text selection remains visibly highlighted even when the editor loses focus (e.g., when the context menu is open) */
+.ProseMirror ::selection {
+    background: rgba(90, 150, 255, 0.4);
+    color: inherit;
+}
+
+.ProseMirror-focused ::selection {
+    background: rgba(60, 130, 246, 0.4);
+    color: inherit;
+}

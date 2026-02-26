@@ -19,8 +19,8 @@ export async function GET() {
         }
 
         return NextResponse.json({ users: data });
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error('Admin API error:', err);
-        return NextResponse.json({ error: err.message }, { status: 500 });
+        return NextResponse.json({ error: (err as Error).message }, { status: 500 });
     }
 }

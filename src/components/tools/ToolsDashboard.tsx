@@ -1,8 +1,9 @@
 'use client';
 
 import React from 'react';
-import { LineChart, GitMerge, ScrollText, Image as ImageIcon, Share2, Sparkles, ArrowRight } from 'lucide-react';
+import { LineChart, GitMerge, ScrollText, Image as ImageIcon, Share2, Sparkles, ArrowRight, Type } from 'lucide-react';
 import Link from 'next/link';
+import { useWorkspace } from '@/context/WorkspaceContext';
 import styles from './ToolsDashboard.module.css';
 
 const TOOLS = [
@@ -45,10 +46,21 @@ const TOOLS = [
         icon: <Share2 size={24} color="var(--tag-green-text)" />,
         tag: 'Marketing',
         tagClass: styles.tagMarketing
+    },
+    {
+        id: 'typography-generator',
+        title: 'Nano Banana Typography',
+        description: 'Generate beautiful drop caps, scene break flourishes, and title typography assets directly from text prompts.',
+        icon: <Type size={24} color="var(--accent-terracotta)" />,
+        tag: 'Visuals',
+        tagClass: styles.tagResearch
     }
 ];
 
 export default function ToolsDashboard() {
+    const { activeWorkspace } = useWorkspace();
+    const isNonFicProject = activeWorkspace?.genre?.toLowerCase().includes('[non-fiction]') ?? false;
+
     return (
         <div className={styles.container}>
             <div className={styles.header}>
@@ -57,7 +69,7 @@ export default function ToolsDashboard() {
                     Standalone Tools
                 </h1>
                 <p className={styles.subtitle}>
-                    Isolated sandboxes for market research, ideation, and asset generation. These tools do not alter your active project's Context Matrix.
+                    Isolated sandboxes for market research, ideation, and asset generation. These tools do not alter your active project&apos;s {isNonFicProject ? 'Knowledge Base' : 'Context Matrix'}.
                 </p>
             </div>
 

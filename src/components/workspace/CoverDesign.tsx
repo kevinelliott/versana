@@ -7,11 +7,13 @@ import styles from './CoverDesign.module.css';
 
 export default function CoverDesign() {
     const { activeWorkspace, setActiveWorkspace } = useWorkspace();
+    const isNonFicProject = activeWorkspace?.genre?.toLowerCase().includes('[non-fiction]') ?? false;
+
     const [isLoaded, setIsLoaded] = useState(false);
-    const [title, setTitle] = useState('The Winter Siege');
+    const [title, setTitle] = useState(isNonFicProject ? 'The Principles of Growth' : 'The Winter Siege');
     const [author, setAuthor] = useState('K. R. Author');
-    const [subtitle, setSubtitle] = useState('A Tale of the Hegemony');
-    const [prompt, setPrompt] = useState('A lone starship captain standing in the snow outside a massive stone fortress, clutching a plasma rifle. Dark, gritty sci-fi aesthetic, cinematic lighting, dramatic shadows. --ar 2:3');
+    const [subtitle, setSubtitle] = useState(isNonFicProject ? 'A Guide to Scale' : 'A Tale of the Hegemony');
+    const [prompt, setPrompt] = useState(isNonFicProject ? 'A minimalist, conceptual representation of exponential business growth using abstract geometry and sleek metallic lines. Professional aesthetic, clean white background. --ar 2:3' : 'A lone starship captain standing in the snow outside a massive stone fortress, clutching a plasma rifle. Dark, gritty sci-fi aesthetic, cinematic lighting, dramatic shadows. --ar 2:3');
 
     // Advanced Style Tuner States
     const [artStyle, setArtStyle] = useState('cinematic');
@@ -23,7 +25,8 @@ export default function CoverDesign() {
 
     useEffect(() => {
         if (activeWorkspace?.board_state?.cover_design && !isLoaded) {
-            const cd = activeWorkspace.board_state.cover_design;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const cd = activeWorkspace.board_state.cover_design as any;
             if (cd.title) setTitle(cd.title);
             if (cd.author) setAuthor(cd.author);
             if (cd.subtitle) setSubtitle(cd.subtitle);
@@ -70,6 +73,7 @@ export default function CoverDesign() {
                 body: JSON.stringify({
                     prompt: prompt,
                     type: "Book Cover Art",
+                    workspaceId: activeWorkspace?.id,
                     style: `${artStyle} art style, ${mood} mood, ${palette} color palette`
                 })
             });
@@ -86,7 +90,7 @@ export default function CoverDesign() {
         <div className={styles.container}>
             <div className={styles.header}>
                 <h1 className={styles.title}>Phase 7: Cover Design</h1>
-                <p className={styles.subtitle}>Translate lore into prompts and generate your book cover.</p>
+                <p className={styles.subtitle}>{isNonFicProject ? 'Translate your core thesis into prompts and generate your book cover.' : 'Translate lore into prompts and generate your book cover.'}</p>
             </div>
 
             <div className={styles.grid}>
@@ -97,7 +101,7 @@ export default function CoverDesign() {
                             <Sparkles size={18} color="var(--tag-purple-text)" /> Prompt Translator
                         </h3>
                         <p className={styles.cardDesc}>
-                            Versana analyzed Chapter 4 and your Lore Bible to generate this image prompt. Edit it, or generate variations.
+                            {isNonFicProject ? 'Versana analyzed your Knowledge Base to generate this conceptual image prompt. Edit it, or generate variations.' : 'Versana analyzed Chapter 4 and your Lore Bible to generate this image prompt. Edit it, or generate variations.'}
                         </p>
 
                         <textarea
@@ -110,20 +114,41 @@ export default function CoverDesign() {
                             <div className={styles.inputGroup} style={{ marginBottom: 0 }}>
                                 <label className={styles.inputLabel}>Art Style</label>
                                 <select className={styles.selectField} value={artStyle} onChange={(e) => setArtStyle(e.target.value)}>
-                                    <option value="cinematic">Cinematic Realism</option>
-                                    <option value="vintage">Vintage 70s Sci-Fi</option>
-                                    <option value="anime">Studio Ghibli Anime</option>
-                                    <option value="minimalist">Minimalist Vector</option>
-                                    <option value="oil">Classical Oil Painting</option>
+                                    {isNonFicProject ? (
+                                        <>
+                                            <option value="minimalist vector">Minimalist Vector</option>
+                                            <option value="abstract 3d">Abstract 3D Render</option>
+                                            <option value="conceptual photography">Conceptual Photography</option>
+                                            <option value="swiss graphic design">Swiss Graphic Design</option>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <option value="cinematic">Cinematic Realism</option>
+                                            <option value="vintage">Vintage 70s Sci-Fi</option>
+                                            <option value="anime">Studio Ghibli Anime</option>
+                                            <option value="minimalist">Minimalist Vector</option>
+                                            <option value="oil">Classical Oil Painting</option>
+                                        </>
+                                    )}
                                 </select>
                             </div>
                             <div className={styles.inputGroup} style={{ marginBottom: 0 }}>
                                 <label className={styles.inputLabel}>Mood / Lighting</label>
                                 <select className={styles.selectField} value={mood} onChange={(e) => setMood(e.target.value)}>
-                                    <option value="dark">Dark & Gritty</option>
-                                    <option value="ethereal">Ethereal & Dreamy</option>
-                                    <option value="epic">Epic High-Contrast</option>
-                                    <option value="neon">Neon Cyberpunk</option>
+                                    {isNonFicProject ? (
+                                        <>
+                                            <option value="clean">Clean & Bright</option>
+                                            <option value="authoritative">Authoritative / Stark</option>
+                                            <option value="optimistic">Optimistic / Warm</option>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <option value="dark">Dark & Gritty</option>
+                                            <option value="ethereal">Ethereal & Dreamy</option>
+                                            <option value="epic">Epic High-Contrast</option>
+                                            <option value="neon">Neon Cyberpunk</option>
+                                        </>
+                                    )}
                                 </select>
                             </div>
                             <div className={styles.inputGroup} style={{ marginBottom: 0, gridColumn: '1 / -1' }}>

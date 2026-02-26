@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { Image as ImageIcon, Wand2, Sparkles, Loader2, Download, Maximize2 } from 'lucide-react';
 import Link from 'next/link';
-import Image from 'next/image';
 
 export default function AssetGenerator() {
     const [prompt, setPrompt] = useState('A sprawling cyberpunk metropolis with neon pink and cyan lights, rain slicked streets, flying cars, cinematic lighting, highly detailed');
@@ -177,6 +176,7 @@ export default function AssetGenerator() {
 
                         {resultUrl && !isGenerating && (
                             <>
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
                                     src={resultUrl}
                                     alt="Generated Asset"

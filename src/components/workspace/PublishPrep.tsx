@@ -7,8 +7,11 @@ import styles from './PublishPrep.module.css';
 import { useWorkspace } from '@/context/WorkspaceContext';
 
 export default function PublishPrep() {
-    const { activeWorkspace } = useWorkspace();
+    const { activeWorkspace, activeBook } = useWorkspace();
     const [isCopied, setIsCopied] = useState(false);
+    const [isUpdatingPreview, setIsUpdatingPreview] = useState(false);
+
+    const isNonFicProject = activeWorkspace?.genre?.toLowerCase().includes('[non-fiction]') ?? false;
 
     // UI State
     const [blurb, setBlurb] = useState('');
@@ -17,11 +20,12 @@ export default function PublishPrep() {
 
     // Loading State
     const [isGeneratingBlurb, setIsGeneratingBlurb] = useState(false);
+    const [isGeneratingPitch, setIsGeneratingPitch] = useState(false);
     const [isExtractingMeta, setIsExtractingMeta] = useState(false);
 
-    const handleCopy = () => {
-        setIsCopied(true);
-        setTimeout(() => setIsCopied(false), 2000);
+    const handleUpdatePreview = () => {
+        setIsUpdatingPreview(true);
+        setTimeout(() => setIsUpdatingPreview(false), 1500);
     };
 
     const generateBlurb = async () => {
@@ -30,19 +34,15 @@ export default function PublishPrep() {
         try {
             const loreRes = await fetch(`/api/lore?workspaceId=${activeWorkspace.id}`);
             const loreData = await loreRes.json();
-            const contextText = Array.isArray(loreData) ? loreData.map((e: any) => `${e.name} (${e.type}): ${e.synopsis}`).join('\n') : '';
+            const contextText = Array.isArray(loreData) ? loreData.map((e: { name: string, type: string, synopsis: string }) => `${e.name} (${e.type}): ${e.synopsis}`).join('\n') : '';
 
-            const res = await fetch('/api/ai/claude', {
+            const res = await fetch('/api/tools/blurb-generator', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    workspaceId: activeWorkspace.id,
-                    systemPrompt: 'You are an expert literary publicist. Given the Context Matrix, write a compelling, high-stakes book blurb designed for a back cover or Amazon. Focus on the core conflict, the protagonist, and the setting. Output ONLY the blurb paragraphs.',
-                    messages: [{ role: 'user', content: `CONTEXT MATRIX:\n${contextText}` }]
-                })
+                body: JSON.stringify({ contextText, workspaceId: activeWorkspace.id })
             });
-            const text = await res.text();
-            if (text) setBlurb(text);
+            const data = await res.json();
+            if (data.blurb) setBlurb(data.blurb);
         } catch (e) {
             console.error(e);
         } finally {
@@ -50,31 +50,40 @@ export default function PublishPrep() {
         }
     };
 
+    const generateShortPitch = async () => {
+        if (!activeWorkspace) return;
+        setIsGeneratingPitch(true);
+        try {
+            const loreRes = await fetch(`/api/lore?workspaceId=${activeWorkspace.id}`);
+            const loreData = await loreRes.json();
+            const contextText = Array.isArray(loreData) ? loreData.map((e: { name: string, type: string, synopsis: string }) => `${e.name} (${e.type}): ${e.synopsis}`).join('\n') : '';
+
+            const res = await fetch('/api/tools/blurb-generator', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contextText, workspaceId: activeWorkspace.id, type: 'short' })
+            });
+            const data = await res.json();
+            if (data.blurb) setBlurb(data.blurb);
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setIsGeneratingPitch(false);
+        }
+    };
+
     const extractMetadata = async () => {
         if (!activeWorkspace) return;
         setIsExtractingMeta(true);
         try {
-            const res = await fetch('/api/ai/claude', {
+            const res = await fetch('/api/tools/metadata-extractor', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    workspaceId: activeWorkspace.id,
-                    systemPrompt: 'You are an expert book marketer. Extract metadata from the blurb into JSON. Respond ONLY with valid JSON with keys "keywords" (array of 7 SEO strings) and "bisac" (array of 2 BISAC strings).',
-                    messages: [{ role: 'user', content: `Please extract metadata. Here is the blurb: ${blurb || 'Science fiction space opera with a rogue captain.'}` }]
-                })
+                body: JSON.stringify({ blurb: blurb || (isNonFicProject ? 'A comprehensive guide solving a real-world problem.' : 'Science fiction space opera with a rogue captain.'), workspaceId: activeWorkspace.id })
             });
-            const data = await res.json();
-
-            // Try to parse JSON from the LLM output
-            try {
-                // If it adds markdown blocks, strip them
-                let cleanText = data.text.replace(/```json/g, '').replace(/```/g, '').trim();
-                const json = JSON.parse(cleanText);
-                if (json.keywords) setKeywords(json.keywords);
-                if (json.bisac) setBisac(json.bisac);
-            } catch (parseError) {
-                console.error("Failed to parse JSON response:", parseError, data.text);
-            }
+            const json = await res.json();
+            if (json.keywords) setKeywords(json.keywords);
+            if (json.bisac) setBisac(json.bisac);
 
         } catch (e) {
             console.error(e);
@@ -98,7 +107,7 @@ export default function PublishPrep() {
                             <Sparkles size={18} color="var(--tag-purple-text)" /> Blurb & Synopsis Generator
                         </h3>
                         <p className={styles.cardDesc}>
-                            Versana synthesizes your entire Context Matrix to write a compelling Amazon/KDP book description highlighting core tropes.
+                            {isNonFicProject ? 'Versana synthesizes your entire Knowledge Base to write a compelling Amazon/KDP book description highlighting core arguments and value propositions.' : 'Versana synthesizes your entire Context Matrix to write a compelling Amazon/KDP book description highlighting core tropes.'}
                         </p>
                         <textarea
                             className={styles.textareaBox}
@@ -107,8 +116,10 @@ export default function PublishPrep() {
                             placeholder="Your blurb will appear here..."
                         />
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                            <button className={styles.buttonSecondary} disabled={isGeneratingBlurb}>Generate Short Pitch</button>
-                            <button className={styles.buttonPrimary} onClick={generateBlurb} disabled={isGeneratingBlurb}>
+                            <button className={styles.buttonSecondary} onClick={generateShortPitch} disabled={isGeneratingPitch || isGeneratingBlurb}>
+                                {isGeneratingPitch ? 'Generating...' : 'Generate Short Pitch'}
+                            </button>
+                            <button className={styles.buttonPrimary} onClick={generateBlurb} disabled={isGeneratingBlurb || isGeneratingPitch}>
                                 {isGeneratingBlurb ? 'Generating...' : 'Regenerate Blurb'}
                             </button>
                         </div>
@@ -165,18 +176,31 @@ export default function PublishPrep() {
                             A public, indexable landing page to share the first chapter as a lead magnet. Includes a mailing list sign-up natively integrated.
                         </p>
                         <div className={styles.shareBox}>
-                            <span className={styles.shareLink}>versana.app/read/the-winter-siege</span>
+                            <span className={styles.shareLink}>
+                                {activeBook ? `versana.app/read/${activeBook.id}` : 'versana.app/read/the-winter-siege'}
+                            </span>
                             <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                <button className={styles.buttonSecondary} style={{ padding: '0.5rem', width: 'auto' }} onClick={handleCopy} title="Copy Link">
+                                <button className={styles.buttonSecondary} style={{ padding: '0.5rem', width: 'auto' }} onClick={() => {
+                                    if (activeBook) {
+                                        navigator.clipboard.writeText(`https://versana.app/read/${activeBook.id}`);
+                                    }
+                                    setIsCopied(true);
+                                    setTimeout(() => setIsCopied(false), 2000);
+                                }} title="Copy Link">
                                     {isCopied ? <CheckCircle2 size={16} color="var(--tag-green-text)" /> : <Copy size={16} />}
                                 </button>
-                                <button className={styles.buttonSecondary} style={{ padding: '0.5rem', width: 'auto' }} title="Open in new tab">
+                                <button className={styles.buttonSecondary} style={{ padding: '0.5rem', width: 'auto' }} title="Open in new tab" onClick={() => window.open(`/read/${activeBook?.id}`, '_blank')}>
                                     <ExternalLink size={16} />
                                 </button>
                             </div>
                         </div>
-                        <button className={styles.buttonPrimary} style={{ marginTop: '1rem' }}>
-                            Update Published Preview
+                        <button
+                            className={styles.buttonPrimary}
+                            style={{ marginTop: '1rem' }}
+                            onClick={handleUpdatePreview}
+                            disabled={isUpdatingPreview}
+                        >
+                            {isUpdatingPreview ? 'Updating Live Site...' : 'Update Published Preview'}
                         </button>
                     </div>
 
@@ -192,7 +216,7 @@ export default function PublishPrep() {
                             <button
                                 className={styles.buttonPrimary}
                                 style={{ background: 'var(--text-primary)', justifyContent: 'space-between', padding: '1rem' }}
-                                onClick={() => activeWorkspace && window.open(`/api/export?workspaceId=${activeWorkspace.id}&format=epub`, '_blank')}
+                                onClick={() => activeWorkspace && activeBook && window.open(`/api/export?workspaceId=${activeWorkspace.id}&bookId=${activeBook.id}&format=epub`, '_blank')}
                             >
                                 <span>Export Complete ePub 3.0</span>
                                 <BookOpen size={16} />
@@ -208,7 +232,7 @@ export default function PublishPrep() {
                             <button
                                 className={styles.buttonSecondary}
                                 style={{ justifyContent: 'space-between', padding: '1rem', background: 'var(--bg-primary)' }}
-                                onClick={() => activeWorkspace && window.open(`/api/export?workspaceId=${activeWorkspace.id}&format=docx`, '_blank')}
+                                onClick={() => activeWorkspace && activeBook && window.open(`/api/export?workspaceId=${activeWorkspace.id}&bookId=${activeBook.id}&format=docx`, '_blank')}
                             >
                                 <span>Export Raw Manuscript (.docx)</span>
                                 <Download size={16} />

@@ -14,18 +14,18 @@ export default function ViralCreator() {
         setIsGenerating(true);
         setResult(null);
         try {
-            const res = await fetch('/api/ai/claude', {
+            const res = await fetch('/api/tools/viral-creator', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    workspaceId: 'sandbox',
-                    systemPrompt: `You are an expert ${platform} marketing specialist for fiction authors. You know exactly how to hook an audience in the first 3 seconds, keep retention high, and craft compelling call-to-actions. Generate a script/post based on the user's premise. Format it cleanly with [VISUAL/ON-SCREEN TEXT] instructions where appropriate.`,
-                    messages: [{ role: 'user', content: `Premise/Idea: ${topic}` }]
-                })
+                body: JSON.stringify({ topic, platform })
             });
 
-            const text = await res.text();
-            setResult(text);
+            if (!res.ok) {
+                throw new Error('Failed to generate asset');
+            }
+
+            const data = await res.json();
+            setResult(data.asset);
         } catch (e) {
             console.error("Failed to generate asset:", e);
             setResult("An error occurred during generation. Please try again.");

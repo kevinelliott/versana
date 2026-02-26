@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { BookOpen, Sparkles, Brain, Shield, ArrowRight, Check, PenTool, LayoutTemplate, Zap } from 'lucide-react';
+import { BookOpen, Sparkles, Brain, ArrowRight, PenTool, LayoutTemplate } from 'lucide-react';
 import styles from './marketing.module.css';
 import ContextVisualizer from '@/components/marketing/ContextVisualizer';
 
@@ -14,8 +14,9 @@ export default function MarketingPage() {
                 </div>
                 <div className={styles.navLinks}>
                     <Link href="/features" className={styles.navLink}>Features</Link>
-                    <Link href="/manifesto" className={styles.navLink}>The Manifesto</Link>
                     <Link href="/pricing" className={styles.navLink}>Pricing</Link>
+                    <Link href="/manifesto" className={styles.navLink}>The Manifesto</Link>
+                    <Link href="/docs" className={styles.navLink}>Docs</Link>
                     <Link href="/workspace" className={styles.navLink}>Login</Link>
                     <Link href="/workspace" className={styles.ctaButtonPrimary}>
                         Start Writing Free
@@ -28,13 +29,13 @@ export default function MarketingPage() {
                 <section className={styles.heroSection}>
                     <div className={styles.heroContent}>
                         <div className={styles.badge}>
-                            <Sparkles size={14} /> Overcome Writer's Block Forever.
+                            <Sparkles size={14} /> Overcome Writer&apos;s Block Forever.
                         </div>
                         <h1 className={styles.heroTitle}>
                             Your Co-Author That <em>Never Sleeps</em>.
                         </h1>
                         <p className={styles.heroSubtitle}>
-                            From Idea to Published in Record Time. Standard chatbots forget your main character's name by chapter three—Versana automatically builds a flawless, persistent memory of your entire universe as you write.
+                            From Idea to Published in Record Time. Standard chatbots forget your main character&apos;s name by chapter three—Versana automatically builds a flawless, persistent memory of your entire universe as you write.
                         </p>
                         <div className={styles.heroActions}>
                             <Link href="/workspace" className={styles.ctaButtonPrimaryLarge}>
@@ -50,7 +51,7 @@ export default function MarketingPage() {
                 {/* The Problem Section */}
                 <section id="the-problem" className={styles.problemSection}>
                     <div className={styles.sectionHeader}>
-                        <h2 className={styles.sectionTitle}>The "Amnesia" Problem</h2>
+                        <h2 className={styles.sectionTitle}>The &quot;Amnesia&quot; Problem</h2>
                         <p className={styles.sectionSubtitle}>
                             Standard AI tools like ChatGPT or Claude are great for a single scene. But write a 90,000-word novel, and they hallucinate. They resurrect dead characters, forget rules of magic, and lose the plot entirely.
                         </p>
@@ -70,7 +71,7 @@ export default function MarketingPage() {
                         <div className={styles.problemCard}>
                             <div className={styles.problemIcon}>✨</div>
                             <h3 className={styles.accentText}>Versana Remembers</h3>
-                            <p>We built a permanent "Context Matrix" into the editor. It reads your manuscript and saves every detail to a secure database. It never forgets.</p>
+                            <p>We built a permanent &quot;Context Matrix&quot; into the editor. It reads your manuscript and saves every detail to a secure database. It never forgets.</p>
                         </div>
                     </div>
                 </section>
@@ -80,7 +81,7 @@ export default function MarketingPage() {
                     <div className={styles.sectionHeader}>
                         <h2 className={styles.sectionTitle}>See The Difference</h2>
                         <p className={styles.sectionSubtitle}>
-                            Watch how Versana's persistent memory saves the day when a standard AI fails.
+                            Watch how Versana&apos;s persistent memory saves the day when a standard AI fails.
                         </p>
                     </div>
                     <ContextVisualizer />
@@ -97,12 +98,12 @@ export default function MarketingPage() {
                         <div className={styles.featureCard}>
                             <div className={styles.featureIcon}><Brain size={24} /></div>
                             <h3>The Ideation Engine</h3>
-                            <p>Overcome writer's block. Our AI acts as a sounding board, asking you tough "What If" questions to pressure-test your premise before you outline. Generate conflict out of thin air.</p>
+                            <p>Overcome writer&apos;s block. Our AI acts as a sounding board, asking you tough &quot;What If&quot; questions to pressure-test your premise before you outline. Generate conflict out of thin air.</p>
                         </div>
                         <div className={styles.featureCard}>
                             <div className={styles.featureIcon}><PenTool size={24} /></div>
                             <h3>Smart Lore Editor</h3>
-                            <p>Write freely. When you type a character's name, Versana subtly underlines it. Hover over it to instantly view their bio, without breaking your flow. Your Co-Author handles the details.</p>
+                            <p>Write freely. When you type a character&apos;s name, Versana subtly underlines it. Hover over it to instantly view their bio, without breaking your flow. Your Co-Author handles the details.</p>
                         </div>
                         <div className={styles.featureCard}>
                             <div className={styles.featureIcon}><LayoutTemplate size={24} /></div>
