@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { BookOpen, Edit2, MessageSquare } from 'lucide-react';
 import { useWorkspace } from '@/context/WorkspaceContext';
+import { usePhase } from '@/context/PhaseContext';
 import styles from './HoverCard.module.css';
 
 export interface EntityData {
@@ -31,7 +32,8 @@ export default function HoverCard({ entity, x, y, visible, onClose, onMouseEnter
     const [isSaving, setIsSaving] = useState(false);
     const cardRef = useRef<HTMLDivElement>(null);
 
-    const { activeWorkspace } = useWorkspace();
+    const { activeWorkspace, setSelectedLoreId, setIsLeftSidebarOpen, setIsRightSidebarOpen } = useWorkspace();
+    const { setActivePhase } = usePhase();
     const isNonFicProject = activeWorkspace?.genre?.toLowerCase().includes('[non-fiction]') ?? false;
 
     let displayType = entity?.type;
@@ -154,13 +156,21 @@ export default function HoverCard({ entity, x, y, visible, onClose, onMouseEnter
                     </>
                 ) : (
                     <>
-                        <button className={styles.actionBtn}>
+                        <button className={styles.actionBtn} onClick={() => {
+                            setActivePhase('lore');
+                            setSelectedLoreId(entity.id);
+                            setIsLeftSidebarOpen(true);
+                            onClose();
+                        }}>
                             <BookOpen size={14} /> Open file
                         </button>
                         <button className={styles.actionBtn} onClick={() => setIsEditing(true)}>
                             <Edit2 size={14} /> Quick Edit
                         </button>
-                        <button className={styles.actionBtn}>
+                        <button className={styles.actionBtn} onClick={() => {
+                            setIsRightSidebarOpen(true);
+                            onClose();
+                        }}>
                             <MessageSquare size={14} /> Ask AI
                         </button>
                     </>
