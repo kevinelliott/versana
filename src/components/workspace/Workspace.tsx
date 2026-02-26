@@ -394,12 +394,19 @@ ${contextText}`;
         const pastContentStr = pastChapters.map(c => `--- Chapter ${c.order_index}: ${c.title} ---\n${extractTextFromTipTap(c.content)}`).join('\n\n');
 
         const systemPrompt = isNonFicProject
-            ? `You are an elite non-fiction writer. Generate a complete draft for the new section roughly titled "${chapterTitle}". Do not include markdown formatting or pleasantries, just output the text paragraph by paragraph. IMPORTANT: Generate a suitable title at the very beginning of your response on the first line, exactly formatted as: TITLE: Your New Title
+            ? `You are an elite non-fiction writer and SME. Generate a complete draft for the new section roughly titled "${chapterTitle}".
 
-Below is the tone and stylistic guidance:
+PARAMETERS:
 - Tone: ${genTone}
 - POV/Style: ${genPOV}
 - Target Audience: ${genAgeRange}
+- Target length: ${chapterLength} (short: ~500 words, medium: ~1500 words, long: ~3000 words).
+
+IMPORTANT RULES:
+1. Generate a suitable, professional title at the very beginning of your response on the first line, exactly formatted as: TITLE: Your New Title
+2. Do not include any other markdown formatting or pleasantries.
+3. Simply output the exact prose paragraph by paragraph.
+4. Smoothly transition from the previous section.
 
 KNOWLEDGE BASE:
 ${contextText}
@@ -408,17 +415,24 @@ SECTION PROGRESSION SO FAR:
 ${summaryStr}
 
 RECENT PREVIOUS SECTION TEXT (for seamless continuation and ensuring you do NOT repeat the same sentence structures or themes):
+---
 ${pastContentStr}
+---`
+            : `You are a master fiction author and elite literary stylist. Generate a complete draft for the new chapter roughly titled "${chapterTitle}".
 
-Target length: ${chapterLength} (short: ~500 words, medium: ~1500 words, long: ~3000 words).`
-            : `You are a master fiction author. Generate a complete draft for the new chapter roughly titled "${chapterTitle}". Do not include markdown formatting or pleasantries, just output the prose paragraph by paragraph. IMPORTANT: Generate a suitable, creative title at the very beginning of your response on the first line, exactly formatting as: TITLE: Your New Title
-
-Below is the tone and stylistic guidance:
+PARAMETERS:
 - Tone: ${genTone}
 - POV: ${genPOV}
 - Audience Age Range: ${genAgeRange}
+- Target length: ${chapterLength} (short: ~500 words, medium: ~1500 words, long: ~3000 words).
 
-Make sure to strictly vary your sentence structures. Avoid repetitive tropes. NEVER start the chapter with a simple "[Character] did [action]" sentence. We need high literary quality, varied sentence length, and engaging hooks.
+IMPORTANT LITERARY RULES (CRITICAL):
+1. Generate a suitable, creative title at the very beginning of your response on the first line, exactly formatted as: TITLE: Your New Title
+2. Do not include markdown formatting, bullet points, or pleasantries. Output final prose paragraph by paragraph.
+3. NEVER start the chapter with a simple "[Character] did [action]" sentence (e.g. "Aris looked out the window." or "Elara sighed.").
+4. VARY YOUR SENTENCE STRUCTURES. Intertwine sensory description, introspection, and atmospheric scene-setting into your opening hook.
+5. Emulate the prose quality of literary fiction or high-end genre fiction, utilizing &quot;Show, Don't Tell&quot; principles. 
+6. Do NOT reuse the same tropes, opening structures, or patterns as the previous chapters. We need a fresh hook (e.g., start with dialogue, in media res, a sweeping atmospheric description, or a philosophical reflection closely tied to the POV character).
 
 CONTEXT MATRIX (LORE BIBLE):
 ${contextText}
@@ -426,10 +440,10 @@ ${contextText}
 OVERALL CHAPTER OUTLINE:
 ${summaryStr}
 
-RECENT PREVIOUS CHAPTER TEXT (for seamless continuation and ensuring you do NOT re-use the same tropes or sentence structures as the previous chapters):
+RECENT PREVIOUS CHAPTER TEXT (Ensure you match the timeline and do not contradict what just happened. Do not repeat the same events.):
+---
 ${pastContentStr}
-
-Target length: ${chapterLength} (short: ~500 words, medium: ~1500 words, long: ~3000 words).`;
+---`;
 
         try {
             const res = await fetch('/api/ai/claude', {
@@ -983,9 +997,29 @@ Target length: ${chapterLength} (short: ~500 words, medium: ~1500 words, long: ~
                                 <button
                                     className={styles.actionBtn}
                                     style={{ background: 'var(--tag-green-text)', color: 'white' }}
-                                    onClick={() => {
+                                    onClick={async () => {
                                         if (editor && previewContent) {
-                                            editor.commands.insertContent(`<p>${previewContent.replace(/\n/g, '<br/>')}</p>`);
+                                            let finalContent = previewContent;
+                                            
+                                            // Parse the generated title out and save it
+                                            const titleMatch = previewContent.match(/^TITLE:\s*(.+)$/m);
+                                            if (titleMatch && titleMatch[1]) {
+                                                const newTitle = titleMatch[1].trim();
+                                                setChapterTitle(newTitle);
+                                                
+                                                // Sync title over to Supabase immediately
+                                                if (activeWorkspace) {
+                                                    await fetch(`/api/chapters/${currentChapterId}`, {
+                                                        method: 'PATCH',
+                                                        headers: { 'Content-Type': 'application/json' },
+                                                        body: JSON.stringify({ title: newTitle })
+                                                    });
+                                                }
+                                                // Strip the title from the inserted content
+                                                finalContent = finalContent.replace(/^TITLE:\s*(.+)$\n*/m, '').trim();
+                                            }
+
+                                            editor.commands.insertContent(`<p>${finalContent.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br/>')}</p>`);
                                             setPreviewContent('');
                                             setIsPreviewing(false);
                                         }
