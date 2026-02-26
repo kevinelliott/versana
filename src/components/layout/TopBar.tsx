@@ -3,6 +3,7 @@ import { BookOpen, Search, Bell, User } from 'lucide-react';
 import Link from 'next/link';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import { usePhase } from '@/context/PhaseContext';
+import ThemeToggle from './ThemeToggle';
 import styles from './TopBar.module.css';
 
 const PHASES = [
@@ -17,7 +18,7 @@ const PHASES = [
 ];
 
 export default function TopBar() {
-    const { activeWorkspace, activeBook, chapters, currentChapterId } = useWorkspace();
+    const { activeWorkspace, activeBook, chapters, currentChapterId, wordCount, readabilityScore } = useWorkspace();
     const { activePhase } = usePhase();
 
     const currentChapter = chapters.find(c => c.id === currentChapterId);
@@ -50,10 +51,11 @@ export default function TopBar() {
 
             <div className={styles.rightSection}>
                 <div className={styles.stats}>
-                    <span>1,204 words</span>
+                    <span>{wordCount.toLocaleString()} words</span>
                     <span className={styles.divider}>•</span>
-                    <span>Readability: A</span>
+                    <span>Readability: {readabilityScore}</span>
                 </div>
+                <ThemeToggle />
                 <button className={styles.iconButton}>
                     <Search size={18} />
                 </button>

@@ -53,6 +53,10 @@ interface WorkspaceContextType {
     setIsFocusMode: React.Dispatch<React.SetStateAction<boolean>>;
     selectedLoreId: string | null;
     setSelectedLoreId: React.Dispatch<React.SetStateAction<string | null>>;
+    wordCount: number;
+    setWordCount: React.Dispatch<React.SetStateAction<number>>;
+    readabilityScore: string;
+    setReadabilityScore: React.Dispatch<React.SetStateAction<string>>;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefined);
@@ -71,6 +75,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     const [activeBook, setActiveBook] = useState<Book | null>(null);
     const [books, setBooks] = useState<Book[]>([]);
     const [selectedLoreId, setSelectedLoreId] = useState<string | null>(null);
+    const [wordCount, setWordCount] = useState<number>(0);
+    const [readabilityScore, setReadabilityScore] = useState<string>('N/A');
 
     useEffect(() => {
         const fetchWorkspace = async () => {
@@ -177,7 +183,9 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
             isFocusMode, setIsFocusMode,
             activeBook, setActiveBook,
             books, setBooks,
-            selectedLoreId, setSelectedLoreId
+            selectedLoreId, setSelectedLoreId,
+            wordCount, setWordCount,
+            readabilityScore, setReadabilityScore
         }}>
             {children}
         </WorkspaceContext.Provider>

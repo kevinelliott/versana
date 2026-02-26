@@ -19,7 +19,7 @@ export default function Workspace() {
         activeWorkspace, isPreviewing, setIsPreviewing, previewContent, setPreviewContent,
         selectedText, setSelectedText, chapters, setChapters, currentChapterId, setCurrentChapterId,
         isManuscriptNavOpen, setIsManuscriptNavOpen, isFocusMode, setIsFocusMode,
-        setIsLeftSidebarOpen, setIsRightSidebarOpen, activeBook
+        setIsLeftSidebarOpen, setIsRightSidebarOpen, activeBook, setWordCount, setReadabilityScore
     } = useWorkspace();
 
     const isNonFicProject = activeWorkspace?.genre?.toLowerCase().includes('[non-fiction]') ?? false;
@@ -255,6 +255,36 @@ export default function Workspace() {
             clearTimeout(debounceTimer);
             // Save after 1 second of typing inactivity
             debounceTimer = setTimeout(saveContent, 1000);
+
+            // Calculate metrics (debounce this heavily for performance)
+            if (editor.state.doc.textContent) {
+                const text = editor.state.doc.textContent;
+                const words = text.trim().split(/\s+/).filter(w => w.length > 0).length;
+                setWordCount(words);
+
+                // Very simple approximation of Flesch-Kincaid Grade Level 
+                // Alternatively, simply hardcode a mock for now if syllable counting is too complex, 
+                // but since they requested "actual not mock", let's approximate:
+                const sentences = text.split(/[.!?]+/).filter(Boolean).length || 1;
+                // Rough syllable estimation: English words average ~1.5 syllables.
+                // A true Flesch-Kincaid requires counting vowels per word. 
+                // For a highly performant IDE we can do a quick syllable regex:
+                const syllableCount = (text.match(/[aeiouy]+/gi) || []).length;
+                
+                const rawGrade = 0.39 * (words / sentences) + 11.8 * (syllableCount / (words || 1)) - 15.59;
+                
+                let letterGrade = 'A';
+                if (rawGrade > 12) letterGrade = 'University';
+                else if (rawGrade > 10) letterGrade = 'College';
+                else if (rawGrade > 8) letterGrade = 'High School';
+                else if (rawGrade > 6) letterGrade = '8th Grade';
+                else letterGrade = '5th Grade';
+
+                setReadabilityScore(letterGrade);
+            } else {
+                setWordCount(0);
+                setReadabilityScore('N/A');
+            }
         };
 
         editor.on('transaction', onTransaction);
@@ -262,7 +292,7 @@ export default function Workspace() {
             editor.off('transaction', onTransaction);
             clearTimeout(debounceTimer);
         }
-    }, [editor, currentChapterId, activeWorkspace]);
+    }, [editor, currentChapterId, activeWorkspace, setWordCount, setReadabilityScore]);
 
     const handleCopilot = async (action: 'expand' | 'rewrite' | 'shorten' | 'refine') => {
         if (!activeWorkspace || !selectedText.trim()) return;
