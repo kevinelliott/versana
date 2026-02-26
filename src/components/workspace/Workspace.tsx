@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
-import { Sparkles, Wand2, MessageSquare, Scissors, Zap, FileText, Plus, GripVertical, History, Layout, Check, X, Loader2, Activity, ChevronLeft, ChevronRight, Maximize2, Minimize2 } from 'lucide-react';
+import { Sparkles, Wand2, MessageSquare, Scissors, Zap, FileText, Plus, GripVertical, History, Layout, Check, X, Loader2, Activity, ChevronLeft, ChevronRight, Maximize2, Minimize2, Search } from 'lucide-react';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import { LoreTag } from './editor/LoreTagExtension';
 import HoverCard, { EntityData } from './HoverCard';
@@ -39,6 +39,7 @@ export default function Workspace() {
     const [showHistory, setShowHistory] = useState(false);
     const [showHeatmap, setShowHeatmap] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    const [isScanningLore, setIsScanningLore] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
 
     const [chapterTitle, setChapterTitle] = useState('');
@@ -233,7 +234,7 @@ export default function Workspace() {
             setIsSaving(true);
             try {
                 const contentJson = editor.getJSON();
-                const textContent = editor.getText();
+
 
                 // 1. Save chapter content
                 await fetch(`/api/chapters/${currentChapterId}`, {
@@ -242,22 +243,8 @@ export default function Workspace() {
                     body: JSON.stringify({ content: contentJson })
                 });
 
-                // 2. Run background NER for Smart Lore Tags extraction
-                if (textContent.trim().length > 50) {
-                    const nerRes = await fetch('/api/ai/ner', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ text: textContent, workspaceId: activeWorkspace.id })
-                    });
-                    if (nerRes.ok) {
-                        const nerData = await nerRes.json();
-                        if (nerData.entities && nerData.entities.length > 0) {
-                            setLoreDatabase(nerData.entities);
-                        }
-                    }
-                }
-
-            } catch (err) {
+                // Background NER has been moved to manual scan mode
+            } catch (err: unknown) {
                 console.error("Auto-save failed:", err);
             } finally {
                 setIsSaving(false);
@@ -453,6 +440,32 @@ Target length: ${chapterLength} (short: ~500 words, medium: ~1500 words, long: ~
             console.error('Failed to generate title', e);
         } finally {
             setIsGeneratingTitle(false);
+        }
+    };
+
+    const handleScanLore = async () => {
+        if (!editor || !activeWorkspace) return;
+        const textContent = editor.getText();
+        if (textContent.trim().length <= 50) return;
+
+        setIsScanningLore(true);
+        try {
+            const nerRes = await fetch('/api/ai/ner', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: textContent, workspaceId: activeWorkspace.id })
+            });
+
+            if (nerRes.ok) {
+                const nerData = await nerRes.json();
+                if (nerData.entities && nerData.entities.length > 0) {
+                    setLoreDatabase(nerData.entities);
+                }
+            }
+        } catch (e) {
+            console.error("Failed to scan for lore", e);
+        } finally {
+            setIsScanningLore(false);
         }
     };
 
@@ -694,6 +707,14 @@ Target length: ${chapterLength} (short: ~500 words, medium: ~1500 words, long: ~
                                     </div>
                                 )}
                             </div>
+                            <button
+                                className={styles.toolBtn}
+                                onClick={handleScanLore}
+                                disabled={isScanningLore}
+                            >
+                                {isScanningLore ? <Loader2 size={16} className="spinner" style={{ marginRight: '0.5rem' }} /> : <Search size={16} style={{ marginRight: '0.5rem' }} />}
+                                Scan Lore
+                            </button>
                             <button
                                 className={styles.toolBtn}
                                 onClick={() => setHideTags(!hideTags)}
