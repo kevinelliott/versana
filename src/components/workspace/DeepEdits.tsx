@@ -143,7 +143,7 @@ export default function DeepEdits() {
     };
 
     return (
-        <div style={{ padding: '2rem 4rem', maxWidth: '1200px', margin: '0 auto', color: 'var(--text-primary)' }}>
+        <div style={{ padding: '2rem', color: 'var(--text-primary)' }}>
             {seedSuccess && (
                 <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10000 }}>
                     <div className="glass-panel" style={{ background: 'var(--bg-primary)', padding: '2rem', borderRadius: '12px', maxWidth: '400px', border: '1px solid var(--border-light)' }}>

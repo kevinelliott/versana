@@ -194,6 +194,19 @@
     line-height: 1.4;
 }
 
+.userMessage {
+    background-color: var(--tag-blue-bg);
+    border: 1px solid var(--border-light);
+    padding: 0.75rem;
+    border-radius: 8px;
+    border-top-right-radius: 2px;
+    font-size: 0.85rem;
+    color: var(--tag-blue-text);
+    line-height: 1.4;
+    align-self: flex-end;
+    max-width: 90%;
+}
+
 .chatInputContainer {
     padding: 1rem;
     border-top: 1px solid var(--border-light);
@@ -229,6 +242,11 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
+}
+
+.sendButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 /* Accordion Specifics */

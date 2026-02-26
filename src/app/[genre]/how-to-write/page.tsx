@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { BookOpen, Sparkles, Database, CheckCircle2 } from 'lucide-react';
 import styles from '../../marketing.module.css';
+import MarketingNav from '@/components/layout/MarketingNav';
 
 const GENRE_CMS_DATA: Record<string, { painPoint: string, feature1: string, feature2: string, sub: string }> = {
     'scifi': {
@@ -90,20 +91,7 @@ export default async function GenreLandingPage(
     return (
         <div className={styles.container}>
             {/* Navigation */}
-            <nav className={styles.nav}>
-                <Link href="/" className={styles.logo} style={{ textDecoration: 'none' }}>
-                    <BookOpen className={styles.logoIcon} size={24} />
-                    <span className={styles.logoText}>Versana</span>
-                </Link>
-                <div className={styles.navLinks}>
-                    <Link href="/features" className={styles.navLink}>Features</Link>
-                    <Link href="/manifesto" className={styles.navLink}>The Manifesto</Link>
-                    <Link href="/pricing" className={styles.navLink}>Pricing</Link>
-                    <Link href="/workspace" className={styles.ctaButtonPrimary}>
-                        Start Writing Free
-                    </Link>
-                </div>
-            </nav>
+            <MarketingNav />
 
             <main>
                 {/* Dynamic SEO Hero */}

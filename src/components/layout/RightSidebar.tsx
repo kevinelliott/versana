@@ -1,32 +1,119 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ToggleLeft, ToggleRight, Sparkles, Send, ChevronDown, ChevronRight, ChevronLeft, Wand2, Zap, Eye, MessageSquare, Wind, Scissors, AlertTriangle, Library, CheckCircle2 } from 'lucide-react';
 import { usePhase } from '@/context/PhaseContext';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import styles from './RightSidebar.module.css';
 
-const CONTEXT_ITEMS = [
-    { id: '1', label: 'Protagonist Profile', active: true, type: 'character' },
-    { id: '2', label: 'Magic System Rules', active: false, type: 'lore' },
-    { id: '3', label: '18th Century London', active: true, type: 'place' },
-    { id: '4', label: 'Secondary Plotline', active: false, type: 'plot' },
-];
-
 export default function RightSidebar() {
     const { activePhase } = usePhase();
-    const [toggles, setToggles] = useState(CONTEXT_ITEMS);
     const [isContextOpen, setIsContextOpen] = useState(true);
     const [isChatOpen, setIsChatOpen] = useState(false); // Collapsed by default to save space
 
     const { activeWorkspace, setIsPreviewing, setPreviewContent, selectedText, isRightSidebarOpen, setIsRightSidebarOpen, isFocusMode } = useWorkspace();
     const isNonFicProject = activeWorkspace?.genre?.toLowerCase().includes('[non-fiction]') ?? false;
 
+    // Remove dummy data and use dynamic state
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [toggles, setToggles] = useState<any[]>([]);
+
+    useEffect(() => {
+        if (!activeWorkspace) return;
+        const fetchLore = async () => {
+            try {
+                const res = await fetch(`/api/lore?workspaceId=${activeWorkspace.id}`);
+                const data = await res.json();
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                setToggles(data.map((l: any) => ({
+                    id: l.id,
+                    label: l.name,
+                    active: true, // all active by default
+                    type: l.type.toLowerCase().replace(/[^a-z0-9]/g, ''),
+                    synopsis: l.synopsis
+                })));
+            } catch (err) {
+                console.error(err);
+            }
+        };
+        fetchLore();
+    }, [activeWorkspace]);
+
     const [beatsText, setBeatsText] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
 
+    // Chat States
+    const [chatMessages, setChatMessages] = useState<{role: 'user'|'assistant', content: string}[]>([]);
+    const [chatInput, setChatInput] = useState('');
+    const [isChatting, setIsChatting] = useState(false);
+    const chatEndRef = React.useRef<HTMLDivElement>(null);
+
+    // Auto-scroll chat
+    useEffect(() => {
+        if (isChatOpen) {
+            chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [chatMessages, isChatOpen]);
+
     const handleToggle = (id: string) => {
         setToggles(toggles.map(t => t.id === id ? { ...t, active: !t.active } : t));
+    };
+
+    const handleChatSubmit = async (e?: React.FormEvent) => {
+        e?.preventDefault();
+        if (!chatInput.trim() || isChatting || !activeWorkspace) return;
+
+        setIsChatting(true);
+        const userMsg = chatInput;
+        setChatInput('');
+        setChatMessages(prev => [...prev, { role: 'user', content: userMsg }]);
+
+        const activeLoreStr = toggles
+            .filter(t => t.active)
+            .map(t => `${t.label} (${t.type}): ${t.synopsis}`)
+            .join('\n');
+            
+        // Provide the currently selected items in the active matrix without dumping everything,
+        // thus optimizing token counts and inspecting content logically.
+        const systemPrompt = isNonFicProject
+            ? `You are an elite business editor assisting the user. Answer their questions directly. You have access to the following selected Knowledge Base contexts. Only use this context if relevant:\n\n${activeLoreStr}`
+            : `You are an elite fiction co-author assisting the user. Answer their questions directly. You have access to the following selected Context Matrix elements (Lore Bible). Only use this context if relevant:\n\n${activeLoreStr}`;
+
+        try {
+            const apiMessages = chatMessages.map(m => ({ role: m.role, content: m.content }));
+            apiMessages.push({ role: 'user', content: userMsg });
+
+            const res = await fetch('/api/ai/claude', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    workspaceId: activeWorkspace.id,
+                    systemPrompt,
+                    messages: apiMessages
+                })
+            });
+
+            if (!res.body) throw new Error('No body');
+
+            setChatMessages(prev => [...prev, { role: 'assistant', content: '' }]);
+            const reader = res.body.getReader();
+            const decoder = new TextDecoder();
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                const chunk = decoder.decode(value, { stream: true });
+                setChatMessages(prev => {
+                    const newArr = [...prev];
+                    newArr[newArr.length - 1].content += chunk;
+                    return newArr;
+                });
+            }
+        } catch (err) {
+            console.error("Chat Error:", err);
+        } finally {
+            setIsChatting(false);
+        }
     };
 
     const handleGenerate = async () => {
@@ -208,20 +295,32 @@ export default function RightSidebar() {
                     {isChatOpen && (
                         <div className={styles.accordionContent} style={{ flex: 1, borderBottom: '1px solid var(--border-light)' }}>
                             <div className={styles.chatArea}>
-                                <div className={styles.aiMessage}>
-                                    {isNonFicProject ? 'Hello! I noticed you are writing Section 4. I currently have the Primary Thesis and Case Study in my active memory context. How can I help?' : 'Hello! I noticed you are writing Chapter 4. I currently have the Protagonist Profile and London setting in my active memory context. How can I help?'}
-                                </div>
+                                {chatMessages.length === 0 && (
+                                    <div className={styles.aiMessage}>
+                                        {isNonFicProject ? 'Hello! I am your AI Co-Pilot. We have selected Knowledge Base context loaded into memory. How can I help?' : 'Hello! I am your AI Co-Pilot. I have your selected Context Matrix loaded into my active memory. How can I help?'}
+                                    </div>
+                                )}
+                                {chatMessages.map((msg, i) => (
+                                    <div key={i} className={msg.role === 'user' ? styles.userMessage : styles.aiMessage}>
+                                        {msg.content}
+                                    </div>
+                                ))}
+                                {isChatting && <div className={styles.aiMessage}><em>Thinking...</em></div>}
+                                <div ref={chatEndRef} />
                             </div>
-                            <div className={styles.chatInputContainer}>
+                            <form className={styles.chatInputContainer} onSubmit={handleChatSubmit} style={{ margin: 0 }}>
                                 <input
                                     type="text"
                                     placeholder={isNonFicProject ? 'Ask about your concepts...' : 'Ask about your lore...'}
                                     className={styles.chatInput}
+                                    value={chatInput}
+                                    onChange={(e) => setChatInput(e.target.value)}
+                                    disabled={isChatting}
                                 />
-                                <button className={styles.sendButton}>
+                                <button type="submit" className={styles.sendButton} disabled={isChatting || !chatInput.trim()}>
                                     <Send size={14} />
                                 </button>
-                            </div>
+                            </form>
                         </div>
                     )}
                 </div>

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { BookOpen, Search, Code, Terminal, ChevronRight, Hash, FileText, Zap, Book, ShieldAlert, Layers } from 'lucide-react';
 import styles from './docs.module.css';
+import ThemeToggle from '@/components/layout/ThemeToggle';
 
 export default function DocumentationPage() {
     const [activeSection, setActiveSection] = useState('quickstart');
@@ -26,6 +27,7 @@ export default function DocumentationPage() {
                 <div className={styles.navLinks}>
                     <Link href="/features" className={styles.navLink}>Platform</Link>
                     <Link href="/pricing" className={styles.navLink}>Pricing</Link>
+                    <ThemeToggle />
                     <Link href="/workspace" className={styles.ctaButtonPrimary}>
                         Launch App
                     </Link>

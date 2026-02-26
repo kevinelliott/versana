@@ -3,28 +3,14 @@ import { BookOpen, Sparkles, Brain, ArrowRight, PenTool, LayoutTemplate } from '
 import styles from './marketing.module.css';
 import ContextVisualizer from '@/components/marketing/ContextVisualizer';
 import GradientOrbs from '@/components/marketing/GradientOrbs';
+import MarketingNav from '@/components/layout/MarketingNav';
 
 export default function MarketingPage() {
     return (
         <div className={styles.container}>
             <GradientOrbs />
             {/* Navigation */}
-            <nav className={styles.nav}>
-                <div className={styles.logo}>
-                    <BookOpen className={styles.logoIcon} size={24} />
-                    <span className={styles.logoText}>Versana</span>
-                </div>
-                <div className={styles.navLinks}>
-                    <Link href="/features" className={styles.navLink}>Features</Link>
-                    <Link href="/pricing" className={styles.navLink}>Pricing</Link>
-                    <Link href="/manifesto" className={styles.navLink}>The Manifesto</Link>
-                    <Link href="/docs" className={styles.navLink}>Docs</Link>
-                    <Link href="/workspace" className={styles.navLink}>Login</Link>
-                    <Link href="/workspace" className={styles.ctaButtonPrimary}>
-                        Start Writing Free
-                    </Link>
-                </div>
-            </nav>
+            <MarketingNav />
 
             <main>
                 {/* Hero Section */}
