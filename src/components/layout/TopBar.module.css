@@ -85,19 +85,3 @@
     background: var(--bg-secondary);
     color: var(--text-primary);
 }
-
-.exportButton {
-    background-color: var(--text-primary);
-    color: var(--bg-primary);
-    border: none;
-    padding: 0.4rem 0.8rem;
-    font-size: 0.85rem;
-    font-weight: 500;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: opacity 0.2s;
-}
-
-.exportButton:hover {
-    opacity: 0.9;
-}

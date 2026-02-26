@@ -4,6 +4,7 @@ import { useWorkspace } from '@/context/WorkspaceContext';
 import { usePhase } from '@/context/PhaseContext';
 import ThemeToggle from './ThemeToggle';
 import UserDropdown from './UserDropdown';
+import ExportDropdown from './ExportDropdown';
 import styles from './TopBar.module.css';
 
 const PHASES = [
@@ -63,9 +64,7 @@ export default function TopBar() {
                     <Bell size={18} />
                 </button>
                 <UserDropdown />
-                <button className={styles.exportButton}>
-                    Export
-                </button>
+                <ExportDropdown />
             </div>
         </header>
     );
