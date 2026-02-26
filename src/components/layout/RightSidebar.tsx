@@ -196,7 +196,7 @@ export default function RightSidebar() {
                 </div>
 
                 {/* Global AI Co-Pilot Accordion */}
-                <div className={styles.aiCopilot}>
+                <div className={`${styles.aiCopilot} ${isChatOpen ? styles.expanded : ''}`}>
                     <div
                         className={styles.accordionHeader}
                         onClick={() => setIsChatOpen(!isChatOpen)}

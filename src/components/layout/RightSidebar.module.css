@@ -156,11 +156,14 @@
 
 /* Chat UI */
 .aiCopilot {
-    flex: 1;
     display: flex;
     flex-direction: column;
     background: var(--bg-primary);
     overflow: hidden;
+}
+
+.expanded {
+    flex: 1;
 }
 
 .chatHeader {
