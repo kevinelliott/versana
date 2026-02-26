@@ -50,6 +50,9 @@ export default function Workspace() {
 
     const [chapterPrompt, setChapterPrompt] = useState('');
     const [chapterLength, setChapterLength] = useState('medium');
+    const [genTone, setGenTone] = useState('Standard');
+    const [genPOV, setGenPOV] = useState('3rd Person Limited');
+    const [genAgeRange, setGenAgeRange] = useState('Adult');
     const [isGeneratingChapter, setIsGeneratingChapter] = useState(false);
 
     const [contextMenu, setContextMenu] = useState<{ x: number, y: number, chapterId: string } | null>(null);
@@ -360,29 +363,63 @@ ${contextText}`;
         setIsPreviewing(true);
         setPreviewContent('');
 
+        // Helper to extract text from previous chapters
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const extractTextFromTipTap = (node: any): string => {
+            if (!node) return '';
+            if (node.type === 'text') return node.text || '';
+            if (node.content && Array.isArray(node.content)) {
+                return node.content.map(extractTextFromTipTap).join(node.type === 'paragraph' ? '\n\n' : '');
+            }
+            return '';
+        };
+
+        const currentOrderIndex = chapters.find(c => c.id === currentChapterId)?.order_index || 999;
+        const pastChapters = chapters.filter(c => c.order_index < currentOrderIndex).sort((a, b) => a.order_index - b.order_index).slice(-2);
+
         // Provide Context Matrix
         const contextText = loreDatabase.map(e => `${e.name} (${e.type}): ${e.synopsis}`).join('\n');
-        const contextStr = Array.isArray(chapters)
+        const summaryStr = Array.isArray(chapters)
             ? chapters.map(c => `Chapter ${c.order_index}: ${c.title}`).join('\n')
             : '';
+            
+        const pastContentStr = pastChapters.map(c => `--- Chapter ${c.order_index}: ${c.title} ---\n${extractTextFromTipTap(c.content)}`).join('\n\n');
 
         const systemPrompt = isNonFicProject
-            ? `You are a master non-fiction writer and domain expert. Using the 'Knowledge Base' and the project's overall section list, generate a complete draft for the new section titled "${chapterTitle}". Do not include markdown formatting or pleasantries, just output the text paragraph by paragraph.
+            ? `You are an elite non-fiction writer. Generate a complete draft for the new section roughly titled "${chapterTitle}". Do not include markdown formatting or pleasantries, just output the text paragraph by paragraph. IMPORTANT: Generate a suitable title at the very beginning of your response on the first line, exactly formatted as: TITLE: Your New Title
+
+Below is the tone and stylistic guidance:
+- Tone: ${genTone}
+- POV/Style: ${genPOV}
+- Target Audience: ${genAgeRange}
 
 KNOWLEDGE BASE:
 ${contextText}
 
 SECTION PROGRESSION SO FAR:
-${contextStr}
+${summaryStr}
+
+RECENT PREVIOUS SECTION TEXT (for seamless continuation and ensuring you do NOT repeat the same sentence structures or themes):
+${pastContentStr}
 
 Target length: ${chapterLength} (short: ~500 words, medium: ~1500 words, long: ~3000 words).`
-            : `You are a master fiction author. Using the 'Context Matrix' (Lore Bible) and the project's overall chapter list, generate a complete draft for the new chapter titled "${chapterTitle}". Do not include markdown formatting or pleasantries, just output the prose paragraph by paragraph.
+            : `You are a master fiction author. Generate a complete draft for the new chapter roughly titled "${chapterTitle}". Do not include markdown formatting or pleasantries, just output the prose paragraph by paragraph. IMPORTANT: Generate a suitable, creative title at the very beginning of your response on the first line, exactly formatting as: TITLE: Your New Title
 
-CONTEXT MATRIX:
+Below is the tone and stylistic guidance:
+- Tone: ${genTone}
+- POV: ${genPOV}
+- Audience Age Range: ${genAgeRange}
+
+Make sure to strictly vary your sentence structures. Avoid repetitive tropes. NEVER start the chapter with a simple "[Character] did [action]" sentence. We need high literary quality, varied sentence length, and engaging hooks.
+
+CONTEXT MATRIX (LORE BIBLE):
 ${contextText}
 
-CHAPTER PROGRESSION SO FAR:
-${contextStr}
+OVERALL CHAPTER OUTLINE:
+${summaryStr}
+
+RECENT PREVIOUS CHAPTER TEXT (for seamless continuation and ensuring you do NOT re-use the same tropes or sentence structures as the previous chapters):
+${pastContentStr}
 
 Target length: ${chapterLength} (short: ~500 words, medium: ~1500 words, long: ~3000 words).`;
 
@@ -393,7 +430,7 @@ Target length: ${chapterLength} (short: ~500 words, medium: ~1500 words, long: ~
                 body: JSON.stringify({
                     workspaceId: activeWorkspace.id,
                     systemPrompt,
-                    messages: [{ role: 'user', content: `Please write "${chapterTitle}". ${chapterPrompt ? `User's guiding instructions: ${chapterPrompt}` : ''}` }]
+                    messages: [{ role: 'user', content: `Please write the draft. ${chapterPrompt ? `User's guiding instructions: ${chapterPrompt}` : ''}` }]
                 })
             });
 
@@ -401,14 +438,36 @@ Target length: ${chapterLength} (short: ~500 words, medium: ~1500 words, long: ~
 
             const reader = res.body.getReader();
             const decoder = new TextDecoder();
-
+            
+            let fullText = '';
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) break;
 
                 const chunk = decoder.decode(value, { stream: true });
+                fullText += chunk;
                 setPreviewContent(prev => prev + chunk);
             }
+            
+            // Post-process to extract title
+            const titleMatch = fullText.match(/^TITLE:\s*([^\n]+)\n+/i) || fullText.match(/^\*TITLE:\s*([^\n\*]+)\*\n+/i);
+            if (titleMatch) {
+                const extractedTitle = titleMatch[1].trim();
+                const remainingText = fullText.replace(/^TITLE:\s*[^\n]+\n+/i, '').replace(/^\*TITLE:\s*[^\n\*]+\*\n+/i, '').trim();
+                
+                setChapterTitle(extractedTitle);
+                setPreviewContent(remainingText);
+                
+                if (currentChapterId) {
+                    setChapters(prev => prev.map(ch => ch.id === currentChapterId ? { ...ch, title: extractedTitle } : ch));
+                    fetch(`/api/chapters/${currentChapterId}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ title: extractedTitle })
+                    });
+                }
+            }
+            
         } catch (err) {
             console.error("Chapter Generation failed:", err);
             setPreviewContent("An error occurred during generation.");
@@ -819,12 +878,31 @@ Target length: ${chapterLength} (short: ~500 words, medium: ~1500 words, long: ~
                                                 value={chapterPrompt}
                                                 onChange={(e) => setChapterPrompt(e.target.value)}
                                             />
-                                            <div className={styles.emptyStateRow}>
+                                            <div className={styles.emptyStateRow} style={{ flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.5rem' }}>
                                                 <select className={styles.emptyStateSelect} value={chapterLength} onChange={(e) => setChapterLength(e.target.value)}>
                                                     <option value="short">Short Section (~500 words)</option>
                                                     <option value="medium">Standard Section (~1500 words)</option>
                                                     <option value="long">Long Section (~3000 words)</option>
                                                 </select>
+                                                <select className={styles.emptyStateSelect} value={genTone} onChange={(e) => setGenTone(e.target.value)}>
+                                                    <option value="Standard">Standard Tone</option>
+                                                    <option value="Dark">Dark & Gritty</option>
+                                                    <option value="Lighthearted">Lighthearted</option>
+                                                    <option value="Action-Packed">Action-Packed</option>
+                                                    <option value="Melancholy">Melancholy</option>
+                                                </select>
+                                                <select className={styles.emptyStateSelect} value={genPOV} onChange={(e) => setGenPOV(e.target.value)}>
+                                                    <option value="3rd Person Limited">3rd Person Limited</option>
+                                                    <option value="1st Person">1st Person</option>
+                                                    <option value="3rd Person Omniscient">3rd Person Omniscient</option>
+                                                </select>
+                                                <select className={styles.emptyStateSelect} value={genAgeRange} onChange={(e) => setGenAgeRange(e.target.value)}>
+                                                    <option value="Adult">Adult Audience</option>
+                                                    <option value="Young Adult">Young Adult (YA)</option>
+                                                    <option value="Middle Grade">Middle Grade</option>
+                                                </select>
+                                            </div>
+                                            <div className={styles.emptyStateRow}>
                                                 <button
                                                     className={styles.actionBtn}
                                                     style={{ background: 'var(--tag-purple-bg)', color: 'var(--tag-purple-text)', border: '1px solid var(--tag-purple-text)', width: 'auto', padding: '0.4rem 1rem' }}
