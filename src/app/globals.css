@@ -56,9 +56,9 @@
     --bg-secondary: #202020;
     --bg-tertiary: #2f2f2f;
 
-    --text-primary: #rgba(255, 255, 255, 0.9);
-    --text-secondary: rgba(255, 255, 255, 0.5);
-    --text-muted: rgba(255, 255, 255, 0.3);
+    --text-primary: rgba(255, 255, 255, 0.9);
+    --text-secondary: rgba(255, 255, 255, 0.65);
+    --text-muted: rgba(255, 255, 255, 0.4);
 
     --border-light: #2a2a2a;
     --border-color: #333333;
