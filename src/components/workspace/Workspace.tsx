@@ -58,6 +58,14 @@ export default function Workspace() {
     const [contextMenu, setContextMenu] = useState<{ x: number, y: number, chapterId: string } | null>(null);
     const [editorContextMenu, setEditorContextMenu] = useState<{ x: number, y: number } | null>(null);
     const [chapterToDelete, setChapterToDelete] = useState<string | null>(null);
+
+    // Modal state for HoverCard actions
+    const [quickEditEntity, setQuickEditEntity] = useState<EntityData | null>(null);
+    const [quickEditSynopsis, setQuickEditSynopsis] = useState('');
+    const [isSavingQuickEdit, setIsSavingQuickEdit] = useState(false);
+    
+    const [askAiEntity, setAskAiEntity] = useState<EntityData | null>(null);
+    const [askAiInput, setAskAiInput] = useState('');
     const [historyItems, setHistoryItems] = useState<{ id: string, time: string, desc: string, revivable?: boolean, chapterId?: string }[]>([
         { id: 'h1', time: 'Today, 2:45 PM', desc: 'AI "Expand Description" applied' },
         { id: 'h2', time: 'Today, 1:12 PM', desc: 'Manual Save' },
@@ -678,6 +686,27 @@ Target length: ${chapterLength} (short: ~500 words, medium: ~1500 words, long: ~
         setHoverState(prev => ({ ...prev, visible: false }));
     };
 
+    const handleSaveQuickEdit = async () => {
+        if (!quickEditEntity) return;
+        setIsSavingQuickEdit(true);
+        try {
+            const res = await fetch(`/api/lore/${quickEditEntity.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ synopsis: quickEditSynopsis })
+            });
+            if (res.ok) {
+                // Optimistic update
+                setLoreDatabase(prev => prev.map(l => l.id === quickEditEntity.id ? { ...l, synopsis: quickEditSynopsis } : l));
+                setQuickEditEntity(null);
+            }
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setIsSavingQuickEdit(false);
+        }
+    };
+
     const handleToggleFocusMode = () => {
         if (!isFocusMode) {
             // Turning ON Focus Mode
@@ -1065,8 +1094,99 @@ Target length: ${chapterLength} (short: ~500 words, medium: ~1500 words, long: ~
                     visible={hoverState.visible}
                     onClose={handleEntityLeave}
                     onMouseEnter={handleEntityEnter}
+                    onQuickEdit={() => {
+                        setQuickEditSynopsis(hoverState.entity?.synopsis || '');
+                        setQuickEditEntity(hoverState.entity);
+                        handleEntityLeave();
+                    }}
+                    onAskAI={() => {
+                        setAskAiInput('');
+                        setAskAiEntity(hoverState.entity);
+                        handleEntityLeave();
+                    }}
                 />
             </div>
+
+            {quickEditEntity && (
+                <div className={styles.modalOverlay} onClick={() => setQuickEditEntity(null)}>
+                    <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
+                        <h2 className={styles.modalTitle}>Quick Edit: {quickEditEntity.name}</h2>
+                        <textarea
+                            style={{
+                                width: '100%',
+                                minHeight: '120px',
+                                padding: '0.75rem',
+                                borderRadius: '4px',
+                                border: '1px solid var(--border-light)',
+                                background: 'var(--bg-primary)',
+                                color: 'var(--text-primary)',
+                                margin: '1rem 0',
+                                fontFamily: 'inherit',
+                                fontSize: '0.9rem',
+                                resize: 'vertical'
+                            }}
+                            value={quickEditSynopsis}
+                            onChange={(e) => setQuickEditSynopsis(e.target.value)}
+                            placeholder="Add synopsis details..."
+                            autoFocus
+                        />
+                        <div className={styles.modalActions}>
+                            <button className={styles.btnCancel} onClick={() => setQuickEditEntity(null)}>Cancel</button>
+                            <button 
+                                className={styles.actionBtn} 
+                                style={{ background: 'var(--tag-green-text)', color: 'white' }}
+                                onClick={handleSaveQuickEdit}
+                                disabled={isSavingQuickEdit}
+                            >
+                                {isSavingQuickEdit ? 'Saving...' : 'Save to Vector DB'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {askAiEntity && (
+                <div className={styles.modalOverlay} onClick={() => setAskAiEntity(null)}>
+                    <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
+                        <h2 className={styles.modalTitle} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <MessageSquare size={18} color="var(--accent-blue)" /> Ask AI about {askAiEntity.name}
+                        </h2>
+                        <div style={{ padding: '1rem', background: 'var(--bg-secondary)', borderRadius: '4px', margin: '1rem 0', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                             {isNonFicProject ? "I'm ready to answer any questions about this concept, framework, or reference data from your Knowledge Base." : "I'm ready to answer any questions about this lore entity based on your Context Matrix."}
+                        </div>
+                        <input 
+                            style={{
+                                width: '100%',
+                                padding: '0.75rem',
+                                borderRadius: '4px',
+                                border: '1px solid var(--border-light)',
+                                background: 'var(--bg-primary)',
+                                color: 'var(--text-primary)',
+                                fontFamily: 'inherit',
+                                fontSize: '0.95rem'
+                            }}
+                            placeholder={`Ask something about ${askAiEntity.name}...`}
+                            value={askAiInput}
+                            onChange={(e) => setAskAiInput(e.target.value)}
+                            autoFocus 
+                        />
+                        <div className={styles.modalActions} style={{ marginTop: '1.5rem' }}>
+                            <button className={styles.btnCancel} onClick={() => setAskAiEntity(null)}>Close</button>
+                            <button 
+                                className={styles.actionBtn} 
+                                style={{ background: 'var(--accent-blue)', color: 'white' }}
+                                onClick={() => {
+                                    setIsRightSidebarOpen(true);
+                                    setAskAiEntity(null);
+                                    // In a full implementation, you'd dispatch askAiInput to the RightSidebar AI Context
+                                }}
+                            >
+                                Send to Co-Pilot <Sparkles size={14} style={{ marginLeft: '0.25rem' }} />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {chapterToDelete && (
                 <div className={styles.modalOverlay} onClick={() => setChapterToDelete(null)}>

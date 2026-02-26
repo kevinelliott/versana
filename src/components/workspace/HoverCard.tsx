@@ -23,16 +23,15 @@ interface HoverCardProps {
     onClose: () => void;
     onMouseEnter?: () => void;
     visible: boolean;
+    onQuickEdit: () => void;
+    onAskAI: () => void;
 }
 
-export default function HoverCard({ entity, x, y, visible, onClose, onMouseEnter }: HoverCardProps) {
+export default function HoverCard({ entity, x, y, visible, onClose, onMouseEnter, onQuickEdit, onAskAI }: HoverCardProps) {
     const [isRendered, setIsRendered] = useState(false);
-    const [isEditing, setIsEditing] = useState(false);
-    const [editedSynopsis, setEditedSynopsis] = useState(entity?.synopsis || '');
-    const [isSaving, setIsSaving] = useState(false);
     const cardRef = useRef<HTMLDivElement>(null);
 
-    const { activeWorkspace, setSelectedLoreId, setIsLeftSidebarOpen, setIsRightSidebarOpen } = useWorkspace();
+    const { activeWorkspace, setSelectedLoreId, setIsLeftSidebarOpen } = useWorkspace();
     const { setActivePhase } = usePhase();
     const isNonFicProject = activeWorkspace?.genre?.toLowerCase().includes('[non-fiction]') ?? false;
 
@@ -46,42 +45,18 @@ export default function HoverCard({ entity, x, y, visible, onClose, onMouseEnter
 
     useEffect(() => {
         if (visible && entity) {
-             
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setIsRendered(true);
-            setEditedSynopsis(entity.synopsis || ''); // Reset draft when opened
         } else {
             const timer = setTimeout(() => {
                 setIsRendered(false);
-                setIsEditing(false); // Reset editing mode on close
             }, 200);
             return () => clearTimeout(timer);
         }
         // Dependency array covers semantic requirements for this simple hook
     }, [visible, entity]);
 
-    const handleSave = async () => {
-        if (!entity) return;
-        setIsSaving(true);
-        try {
-            const res = await fetch(`/api/lore/${entity.id}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ synopsis: editedSynopsis })
-            });
-            if (res.ok) {
-                // Cannot mutate props directly in React.
-                // In a real app we'd dispatch an update to Context or call an API here.
-                entity.synopsis = editedSynopsis; // optimistic update of in-memory object
-            } else {
-                console.error("Failed to update lore");
-            }
-        } catch (e) {
-            console.error("Error updating lore:", e);
-        } finally {
-            setIsSaving(false);
-            setIsEditing(false);
-        }
-    };
+
 
     if (!isRendered || !entity) return null;
 
@@ -104,17 +79,7 @@ export default function HoverCard({ entity, x, y, visible, onClose, onMouseEnter
             </div>
 
             <div className={styles.synopsis}>
-                {isEditing ? (
-                    <textarea
-                        className={styles.quickEditArea}
-                        value={editedSynopsis}
-                        onChange={(e) => setEditedSynopsis(e.target.value)}
-                        placeholder="Add synopsis details..."
-                        autoFocus
-                    />
-                ) : (
-                    entity.synopsis || <span style={{ color: 'var(--text-secondary)', fontStyle: 'italic' }}>No synopsis available. Click Quick Edit to add one.</span>
-                )}
+                {entity.synopsis || <span style={{ color: 'var(--text-secondary)', fontStyle: 'italic' }}>No synopsis available. Click Quick Edit to add one.</span>}
             </div>
 
             <div className={styles.stats}>
@@ -145,36 +110,20 @@ export default function HoverCard({ entity, x, y, visible, onClose, onMouseEnter
             </div>
 
             <div className={styles.actions}>
-                {isEditing ? (
-                    <>
-                        <button className={styles.saveBtnActive} onClick={handleSave} disabled={isSaving}>
-                            <Edit2 size={14} /> {isSaving ? "Syncing..." : "Save to Vector DB"}
-                        </button>
-                        <button className={styles.actionBtn} onClick={() => setIsEditing(false)}>
-                            Cancel
-                        </button>
-                    </>
-                ) : (
-                    <>
-                        <button className={styles.actionBtn} onClick={() => {
-                            setActivePhase('lore');
-                            setSelectedLoreId(entity.id);
-                            setIsLeftSidebarOpen(true);
-                            onClose();
-                        }}>
-                            <BookOpen size={14} /> Open file
-                        </button>
-                        <button className={styles.actionBtn} onClick={() => setIsEditing(true)}>
-                            <Edit2 size={14} /> Quick Edit
-                        </button>
-                        <button className={styles.actionBtn} onClick={() => {
-                            setIsRightSidebarOpen(true);
-                            onClose();
-                        }}>
-                            <MessageSquare size={14} /> Ask AI
-                        </button>
-                    </>
-                )}
+                <button className={styles.actionBtn} onClick={() => {
+                    setActivePhase('lore');
+                    setSelectedLoreId(entity.id);
+                    setIsLeftSidebarOpen(true);
+                    onClose();
+                }}>
+                    <BookOpen size={14} /> Open file
+                </button>
+                <button className={styles.actionBtn} onClick={onQuickEdit}>
+                    <Edit2 size={14} /> Quick Edit
+                </button>
+                <button className={styles.actionBtn} onClick={onAskAI}>
+                    <MessageSquare size={14} /> Ask AI
+                </button>
             </div>
         </div>
     );
