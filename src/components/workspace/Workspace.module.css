@@ -696,3 +696,108 @@
         white-space: nowrap;
     }
 }
+
+/* Bubble Menu Styles */
+.bubbleMenu {
+    display: flex;
+    align-items: center;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    padding: 0.25rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    gap: 0.25rem;
+}
+
+.bubbleBtn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    padding: 0.4rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.bubbleBtn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.bubbleBtnActive {
+    background: var(--bg-hover);
+    border: none;
+    color: var(--text-primary);
+    padding: 0.4rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.bubbleDivider {
+    width: 1px;
+    height: 1.25rem;
+    background: var(--border-light);
+    margin: 0 0.25rem;
+}
+
+.bubbleBtnAi {
+    display: flex;
+    align-items: center;
+    background: var(--tag-purple-bg);
+    border: 1px solid var(--tag-purple-text);
+    color: var(--tag-purple-text);
+    padding: 0.4rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.bubbleBtnAi:hover {
+    opacity: 0.9;
+}
+
+/* Floating Menu Styles */
+.floatingMenu {
+    display: flex;
+    align-items: center;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    padding: 0.25rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    gap: 0.25rem;
+}
+
+.floatingBtn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    padding: 0.3rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.floatingBtn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.floatingBtnActive {
+    background: var(--bg-hover);
+    border: none;
+    color: var(--text-primary);
+    padding: 0.3rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+}

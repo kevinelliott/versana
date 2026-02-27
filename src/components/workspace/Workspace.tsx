@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
+import { BubbleMenu, FloatingMenu } from '@tiptap/react/menus';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import { Sparkles, Wand2, MessageSquare, Scissors, Zap, FileText, Plus, GripVertical, History, Layout, Check, X, Loader2, Activity, ChevronLeft, ChevronRight, Maximize2, Minimize2, Search } from 'lucide-react';
@@ -971,6 +972,58 @@ ${pastContentStr}
                                         </div>
                                     )}
                                     <EditorContent editor={editor} />
+                                    {editor && (
+                                        <BubbleMenu editor={editor} className={styles.bubbleMenu}>
+                                            <button
+                                                onClick={() => editor.chain().focus().toggleBold().run()}
+                                                className={editor.isActive('bold') ? styles.bubbleBtnActive : styles.bubbleBtn}
+                                            >
+                                                Bold
+                                            </button>
+                                            <button
+                                                onClick={() => editor.chain().focus().toggleItalic().run()}
+                                                className={editor.isActive('italic') ? styles.bubbleBtnActive : styles.bubbleBtn}
+                                            >
+                                                Italic
+                                            </button>
+                                            <button
+                                                onClick={() => editor.chain().focus().toggleStrike().run()}
+                                                className={editor.isActive('strike') ? styles.bubbleBtnActive : styles.bubbleBtn}
+                                            >
+                                                Strike
+                                            </button>
+                                            <div className={styles.bubbleDivider} />
+                                            <button
+                                                onClick={() => setSelectedText(editor.state.doc.textBetween(editor.state.selection.from, editor.state.selection.to, ' '))}
+                                                className={styles.bubbleBtnAi}
+                                            >
+                                                <Sparkles size={14} style={{ marginRight: '4px' }} />
+                                                AI Actions
+                                            </button>
+                                        </BubbleMenu>
+                                    )}
+                                    {editor && (
+                                        <FloatingMenu editor={editor} className={styles.floatingMenu}>
+                                            <button
+                                                className={editor.isActive('heading', { level: 1 }) ? styles.floatingBtnActive : styles.floatingBtn}
+                                                onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+                                            >
+                                                H1
+                                            </button>
+                                            <button
+                                                className={editor.isActive('heading', { level: 2 }) ? styles.floatingBtnActive : styles.floatingBtn}
+                                                onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+                                            >
+                                                H2
+                                            </button>
+                                            <button
+                                                className={editor.isActive('bulletList') ? styles.floatingBtnActive : styles.floatingBtn}
+                                                onClick={() => editor.chain().focus().toggleBulletList().run()}
+                                            >
+                                                Bullet List
+                                            </button>
+                                        </FloatingMenu>
+                                    )}
                                 </div>
                                 {showHeatmap && editor && (
                                     <div style={{ flexShrink: 0 }}>
