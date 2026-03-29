@@ -12,22 +12,32 @@ export default function GoalTracker() {
 
     // Default target if none set
     const target = activeBook?.target_word_count || 50000;
+    const initialDate = activeBook?.target_date ? new Date(activeBook.target_date).toISOString().split('T')[0] : '';
+    const [targetDateValue, setTargetDateValue] = useState(initialDate);
     
     useEffect(() => {
         setInputValue(target.toString());
-    }, [target]);
+        if (activeBook?.target_date) {
+            setTargetDateValue(new Date(activeBook.target_date).toISOString().split('T')[0]);
+        }
+    }, [target, activeBook?.target_date]);
 
     const handleSave = async () => {
         if (!activeBook) return;
         const newTarget = parseInt(inputValue, 10);
         if (isNaN(newTarget) || newTarget <= 0) return;
 
+        const body: any = { target_word_count: newTarget };
+        if (targetDateValue) {
+            body.target_date = targetDateValue;
+        }
+
         setIsSaving(true);
         try {
             const res = await fetch(`/api/books/${activeBook.id}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ target_word_count: newTarget })
+                body: JSON.stringify(body)
             });
 
             if (res.ok) {
@@ -66,6 +76,17 @@ export default function GoalTracker() {
                         }}
                         disabled={isSaving}
                     />
+                    <input 
+                        type="date"
+                        value={targetDateValue}
+                        onChange={(e) => setTargetDateValue(e.target.value)}
+                        style={{ width: '110px', background: 'transparent', border: 'none', color: 'var(--text-primary)', outline: 'none', fontSize: '0.85rem' }}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleSave();
+                            if (e.key === 'Escape') setIsEditing(false);
+                        }}
+                        disabled={isSaving}
+                    />
                     <button onClick={handleSave} disabled={isSaving} style={{ background: 'transparent', border: 'none', color: 'var(--accent-blue)', cursor: 'pointer', display: 'flex' }}>
                         <Check size={14} />
                     </button>
@@ -74,7 +95,7 @@ export default function GoalTracker() {
                 <div 
                     onClick={() => setIsEditing(true)}
                     style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}
-                    title={`Goal: ${wordCount.toLocaleString()} / ${target.toLocaleString()} words. Click to edit.`}
+                    title={`Goal: ${wordCount.toLocaleString()} / ${target.toLocaleString()} words. Deadline: ${targetDateValue ? new Date(targetDateValue).toLocaleDateString() : 'None'}. Click to edit.`}
                 >
                     <div style={{ position: 'relative', width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <svg width="22" height="22" style={{ transform: 'rotate(-90deg)' }}>

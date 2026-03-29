@@ -28,6 +28,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
                 ...(updates.is_public !== undefined ? { is_public: updates.is_public } : {}),
                 ...(updates.pen_name_id !== undefined ? { pen_name_id: updates.pen_name_id } : {}),
                 ...(updates.target_word_count !== undefined ? { target_word_count: updates.target_word_count } : {}),
+                ...(updates.target_date !== undefined ? { target_date: updates.target_date } : {}),
                 updated_at: new Date().toISOString()
             })
             .eq('id', id)

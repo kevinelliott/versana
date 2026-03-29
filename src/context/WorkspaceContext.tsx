@@ -22,6 +22,7 @@ export interface Book {
     total_likes?: number;
     pen_name_id?: string;
     target_word_count?: number;
+    target_date?: string;
 }
 
 export interface Chapter {
