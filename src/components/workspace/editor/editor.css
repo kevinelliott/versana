@@ -39,3 +39,17 @@
     background: rgba(60, 130, 246, 0.4);
     color: inherit;
 }
+/* Inline Suggestion Marks styling */
+.inline-suggestion-mark {
+  border-bottom: 2px solid var(--tag-purple-text);
+  background: var(--tag-purple-bg);
+  cursor: pointer;
+  border-radius: 3px;
+  padding: 0 2px;
+  transition: all 0.2s ease;
+}
+
+.inline-suggestion-mark:hover {
+  background: rgba(147, 51, 234, 0.3);
+  box-shadow: 0 0 0 2px rgba(147, 51, 234, 0.4);
+}

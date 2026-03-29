@@ -20,6 +20,7 @@ import { SortableContext, verticalListSortingStrategy, arrayMove, useSortable } 
 import { CSS } from '@dnd-kit/utilities';
 import { LoreTag } from './editor/LoreTagExtension';
 import { CommentMark } from './editor/CommentMarkExtension';
+import { InlineSuggestionMark } from './editor/InlineSuggestionExtension';
 import CommentSidebar from './CommentSidebar';
 import HoverCard, { EntityData } from './HoverCard';
 import PacingHeatmap from './PacingHeatmap';
@@ -79,6 +80,8 @@ export default function Workspace() {
         y: 0,
         visible: false,
     });
+
+    const [isGeneratingInlineEdit, setIsGeneratingInlineEdit] = useState(false);
 
     const [hideTags, setHideTags] = useState(false);
     const [showHistory, setShowHistory] = useState(false);
@@ -282,6 +285,48 @@ export default function Workspace() {
         }
     };
 
+    const handleGenerateInlineEdit = async (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!editor || !currentChapterId || !activeWorkspace) return;
+
+        const { from, to } = editor.state.selection;
+        if (from === to) return;
+
+        const originalText = editor.state.doc.textBetween(from, to, ' ');
+        
+        setIsGeneratingInlineEdit(true);
+        try {
+            const res = await fetch('/api/ai/inline-edit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    text: originalText,
+                    workspaceId: activeWorkspace.id
+                })
+            });
+
+            if (!res.ok) throw new Error('Failed to generate edit');
+
+            const data = await res.json();
+            
+            // Generate pseudo ID
+            const tempId = crypto.randomUUID();
+            
+            // Add mark
+            editor.chain().focus().setInlineSuggestion({ 
+                id: tempId, 
+                suggestion: data.suggested_text, 
+                reason: data.reason 
+            }).run();
+
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setIsGeneratingInlineEdit(false);
+        }
+    };
+
     const handleTakeSnapshot = async (note: string) => {
 		if (!currentChapterId || !editor) return;
 		setIsSaving(true);
@@ -388,6 +433,7 @@ export default function Workspace() {
             Underline,
             LoreTag,
             CommentMark,
+            InlineSuggestionMark,
             ...(syncProvider && yDoc ? [
                 Collaboration.configure({
                     document: yDoc,
@@ -1507,6 +1553,16 @@ IMPORTANT RULES:
                                             >
                                                 <MessageSquare size={14} style={{ marginRight: '4px' }} />
                                                 Add Comment
+                                            </button>
+                                            <div className={styles.bubbleDivider} />
+                                            <button
+                                                onClick={handleGenerateInlineEdit}
+                                                className={styles.bubbleBtnAi}
+                                                disabled={isGeneratingInlineEdit}
+                                                style={{ borderStyle: 'dashed' }}
+                                            >
+                                                {isGeneratingInlineEdit ? <Loader2 size={14} className="spin" style={{ marginRight: '4px' }} /> : <Wand2 size={14} style={{ marginRight: '4px' }} />}
+                                                Quick Edit
                                             </button>
                                             <div className={styles.bubbleDivider} />
                                             <button
