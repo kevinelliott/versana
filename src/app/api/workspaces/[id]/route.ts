@@ -19,13 +19,17 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
         const updates = await req.json();
 
+        const updatePayload: Record<string, string> = {
+            updated_at: new Date().toISOString()
+        };
+
+        if (updates.name !== undefined) updatePayload.name = updates.name;
+        if (updates.genre !== undefined) updatePayload.genre = updates.genre;
+        if (updates.custom_instructions !== undefined) updatePayload.custom_instructions = updates.custom_instructions;
+
         const { data: workspace, error } = await supabase
             .from('workspaces')
-            .update({
-                name: updates.name,
-                genre: updates.genre,
-                updated_at: new Date().toISOString()
-            })
+            .update(updatePayload)
             .eq('id', id)
             .select()
             .single();

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ShieldAlert, Users, Activity, ArrowUpRight, ArrowDownRight, Database, AlertCircle, LineChart } from 'lucide-react';
+import { ShieldAlert, Users, Activity, ArrowUpRight, ArrowDownRight, Database, AlertCircle, LineChart, Loader2 } from 'lucide-react';
 import styles from './AdminDashboard.module.css';
 
 const MOCK_USERS = [
@@ -109,7 +109,19 @@ export default function AdminDashboard() {
                             </thead>
                             <tbody>
                                 {isLoading ? (
-                                    <tr><td colSpan={4} style={{ padding: '2rem', textAlign: 'center' }}>Loading users...</td></tr>
+                                    <tr>
+                                        <td colSpan={4} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                                            <Loader2 size={24} className={styles.spinner} style={{ margin: '0 auto', display: 'block' }} />
+                                            <div style={{ marginTop: '0.5rem', fontSize: '0.9rem' }}>Gathering platform telemetry...</div>
+                                        </td>
+                                    </tr>
+                                ) : displayUsers.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={4} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                                            <Users size={24} style={{ margin: '0 auto 0.5rem auto', display: 'block', opacity: 0.5 }} />
+                                            No active users found.
+                                        </td>
+                                    </tr>
                                 ) : displayUsers.map((user) => (
                                     <tr key={user.id} className={styles.tr}>
                                         <td className={styles.td}>
@@ -211,7 +223,7 @@ export default function AdminDashboard() {
                             <div className={styles.costItem}>
                                 <div className={styles.costModel}>
                                     <Database size={16} color="var(--tag-gold-text)" />
-                                    DALL-E 3 (Nano Banana Pro)
+                                    DALL-E 3 (Image Generation)
                                 </div>
                                 <div className={styles.costAmount}>$1,120.00</div>
                             </div>

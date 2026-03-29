@@ -24,24 +24,12 @@ export async function POST(req: Request) {
             return new Response('Unauthorized', { status: 401 });
         }
 
-        const quota = await checkTokenQuota(userId);
-        if (!quota.allowed) {
-            return new Response('Monthly token quota exceeded. Please upgrade your tier.', { status: 429 });
-        }
+        // Fetch User's current Mana
+        const { data: userRow } = await supabase.from('users').select('mana_balance').eq('id', userId).single();
+        const currentMana = userRow?.mana_balance ?? 50000;
 
-        // Tier Gating Check
-        const { data: profile } = await supabase
-            .from('users')
-            .select('subscription_tier')
-            .eq('id', userId)
-            .single();
-
-        const tier = profile?.subscription_tier || 'free';
-
-        // Currently gating Nano Banana Pro / Image generation to Pro and Master tiers
-        // In dev mode, we allow it
-        if (tier === 'free' && process.env.NODE_ENV !== 'development') {
-            return new Response('Upgrade to Pro or Master to unlock Nano Banana Pro Asset Generation.', { status: 403 });
+        if (currentMana < 5000) {
+            return new Response('Out of API Mana (requires 5000 per generation). Please purchase more tokens.', { status: 402 });
         }
 
         const { prompt, type, style, workspaceId } = await req.json();
@@ -112,8 +100,10 @@ export async function POST(req: Request) {
                             tokens_used: 1, // Represents 1 image
                             cost_usd: 0.040 // Default pricing for DALL-E 3 standard 1024
                         });
+                        
+                        await adminSupabase.from('users').update({ mana_balance: Math.max(0, currentMana - 5000) }).eq('id', userId);
                     } catch (err) {
-                        console.error("Failed to log OpenAI usage:", err);
+                        console.error("Failed to log OpenAI usage or deduct mana:", err);
                     }
                 }
             } else {

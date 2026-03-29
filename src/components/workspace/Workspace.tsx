@@ -5,23 +5,66 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import { BubbleMenu, FloatingMenu } from '@tiptap/react/menus';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
-import { Sparkles, Wand2, MessageSquare, Scissors, Zap, FileText, Plus, GripVertical, History, Layout, Check, X, Loader2, Activity, ChevronLeft, ChevronRight, Maximize2, Minimize2, Search } from 'lucide-react';
+import Image from '@tiptap/extension-image';
+import Underline from '@tiptap/extension-underline';
+import * as Y from 'yjs';
+import Collaboration from '@tiptap/extension-collaboration';
+import CollaborationCursor from '@tiptap/extension-collaboration-cursor';
+import SupabaseProvider from 'y-supabase';
+import { IndexeddbPersistence } from 'y-indexeddb';
+import { createClient } from '@/lib/supabase/client';
+import { Sparkles, ArrowRight, Wand2, MessageSquare, Scissors, Zap, FileText, Plus, GripVertical, History, Layout, Check, X, Loader2, Activity, ChevronLeft, ChevronRight, Maximize2, Minimize2, Search, Image as ImageIcon, Users, TextCursorInput , Type as TypeIcon } from 'lucide-react';
 import { useWorkspace } from '@/context/WorkspaceContext';
+import { DndContext, closestCenter, DragEndEvent, DragStartEvent } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy, arrayMove, useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { LoreTag } from './editor/LoreTagExtension';
+import { CommentMark } from './editor/CommentMarkExtension';
+import CommentSidebar from './CommentSidebar';
 import HoverCard, { EntityData } from './HoverCard';
 import PacingHeatmap from './PacingHeatmap';
+import InviteModal from './InviteModal';
+import TypographyModal from './TypographyModal';
 import styles from './Workspace.module.css';
 import './editor/editor.css'; // We'll need a tiny bit of CSS for TipTap
 
 
 
+
+function SortableChapterItem({ chapter, currentChapterId, setCurrentChapterId, handleContextMenu, wordCount }: any) {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: chapter.id });
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+        zIndex: isDragging ? 999 : 'auto',
+    };
+
+    return (
+        <div
+            ref={setNodeRef}
+            style={style}
+            className={`${styles.chapterItem} ${currentChapterId === chapter.id ? styles.chapterItemActive : ''}`}
+            onClick={() => setCurrentChapterId(chapter.id)}
+            onContextMenu={(e) => handleContextMenu(e, chapter.id)}
+        >
+            <div {...attributes} {...listeners} style={{ cursor: 'grab', display: 'flex', alignItems: 'center' }}>
+                <GripVertical size={14} className={styles.chapterItemIcon} />
+            </div>
+            <FileText size={14} className={styles.chapterItemIcon} />
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{chapter.title}</span>
+            <span style={{ fontSize: '0.7rem', opacity: 0.5, flexShrink: 0 }}>{currentChapterId === chapter.id ? wordCount : (chapter.word_count || 0)}w</span>
+        </div>
+    );
+}
+
 export default function Workspace() {
     const {
-        activeWorkspace, isPreviewing, setIsPreviewing, previewContent, setPreviewContent,
+        activeWorkspace, setActiveWorkspace, isPreviewing, setIsPreviewing, previewContent, setPreviewContent,
         selectedText, setSelectedText, chapters, setChapters, currentChapterId, setCurrentChapterId,
         isManuscriptNavOpen, setIsManuscriptNavOpen, isFocusMode, setIsFocusMode,
-        setIsLeftSidebarOpen, setIsRightSidebarOpen, activeBook, setWordCount, setReadabilityScore,
-        setAiChatInitialPrompt
+        setIsLeftSidebarOpen, setIsRightSidebarOpen, activeBook, wordCount, setWordCount, setReadabilityScore,
+        setAiChatInitialPrompt, isTypewriterMode, setIsTypewriterMode, typography
     } = useWorkspace();
 
     const isNonFicProject = activeWorkspace?.genre?.toLowerCase().includes('[non-fiction]') ?? false;
@@ -42,6 +85,7 @@ export default function Workspace() {
     const [showHeatmap, setShowHeatmap] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [isScanningLore, setIsScanningLore] = useState(false);
+    const [showTypography, setShowTypography] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
 
     const [chapterTitle, setChapterTitle] = useState('');
@@ -56,6 +100,18 @@ export default function Workspace() {
     const [genPOV, setGenPOV] = useState('3rd Person Limited');
     const [genAgeRange, setGenAgeRange] = useState('Adult');
     const [isGeneratingChapter, setIsGeneratingChapter] = useState(false);
+    const [refinePrompt, setRefinePrompt] = useState('');
+    const [isRefining, setIsRefining] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    
+    // Inline Image Generation State
+    const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+    const [imagePrompt, setImagePrompt] = useState('');
+    const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+    const [imageError, setImageError] = useState<string | null>(null);
+
+    // Collaboration & Sharing State
+    const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 
     const [contextMenu, setContextMenu] = useState<{ x: number, y: number, chapterId: string } | null>(null);
     const [editorContextMenu, setEditorContextMenu] = useState<{ x: number, y: number } | null>(null);
@@ -68,11 +124,35 @@ export default function Workspace() {
 
     const [askAiEntity, setAskAiEntity] = useState<EntityData | null>(null);
     const [askAiInput, setAskAiInput] = useState('');
-    const [historyItems, setHistoryItems] = useState<{ id: string, time: string, desc: string, revivable?: boolean, chapterId?: string }[]>([
-        { id: 'h1', time: 'Today, 2:45 PM', desc: 'AI "Expand Description" applied' },
-        { id: 'h2', time: 'Today, 1:12 PM', desc: 'Manual Save' },
-        { id: 'h3', time: 'Yesterday, 4:30 PM', desc: 'Beat-to-Scene Generation' },
-    ]);
+    const [showComments, setShowComments] = useState(false);
+    const [historyItems, setHistoryItems] = useState<{ id: string, created_at: string, snapshot_note: string, content?: any, yjs_state?: any }[]>([]);
+	const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+
+        const handleDragEnd = async (event: DragEndEvent) => {
+        const { active, over } = event;
+        if (over && active.id !== over.id) {
+            const activeChapters = chapters.filter(c => c.order_index >= 0).sort((a,b) => a.order_index - b.order_index);
+            const oldIndex = activeChapters.findIndex((c) => c.id === active.id);
+            const newIndex = activeChapters.findIndex((c) => c.id === over.id);
+            const reordered = arrayMove(activeChapters, oldIndex, newIndex);
+            
+            // Re-assign order_index based on visual position
+            const updated = reordered.map((ch, idx) => ({ ...ch, order_index: idx }));
+            
+            // Merge back with deleted chapters
+            const deleted = chapters.filter(c => c.order_index < 0);
+            setChapters([...updated, ...deleted]);
+            
+            // Sync new order silently
+            for (const ch of updated) {
+                 fetch(`/api/chapters/${ch.id}`, {
+                     method: 'PATCH',
+                     headers: { 'Content-Type': 'application/json' },
+                     body: JSON.stringify({ order_index: ch.order_index })
+                 }).catch(console.error);
+            }
+        }
+    };
 
     const handleContextMenu = (e: React.MouseEvent, chapterId: string) => {
         e.preventDefault();
@@ -111,13 +191,11 @@ export default function Workspace() {
         const ch = chapters.find(c => c.id === chapterId);
         setChapters(prev => prev.map(c => c.id === chapterId ? { ...c, order_index: -1 } : c));
 
-        // Add to history
+        // Mock snapshot note for soft-deleting
         setHistoryItems(prev => [{
             id: `del-${Date.now()}`,
-            time: 'Just now',
-            desc: `Deleted: "${ch?.title}"`,
-            revivable: true,
-            chapterId
+            created_at: new Date().toISOString(),
+            snapshot_note: `Deleted: "${ch?.title}"`,
         }, ...prev]);
 
         if (currentChapterId === chapterId) {
@@ -139,21 +217,188 @@ export default function Workspace() {
 
         setChapters(prev => prev.map(c => c.id === chapterId ? { ...c, order_index: maxOrder + 1 } : c));
 
-        setHistoryItems(prev => prev.filter(h => h.id !== historyId));
         setCurrentChapterId(chapterId);
         setIsSaving(false);
     };
 
+	const fetchSnapshots = async () => {
+		if (!currentChapterId) return;
+		setIsLoadingHistory(true);
+		try {
+			const res = await fetch(`/api/chapters/${currentChapterId}/snapshots`);
+			if (res.ok) {
+				const data = await res.json();
+				setHistoryItems(data);
+			}
+		} catch (err) {
+			console.error(err);
+		} finally {
+			setIsLoadingHistory(false);
+		}
+	};
+
+	useEffect(() => {
+		if (showHistory && currentChapterId) {
+			fetchSnapshots();
+		}
+	}, [showHistory, currentChapterId]);
+
+	const handleAddCommentAction = async (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!editor || !currentChapterId || !activeWorkspace) return;
+        
+        const { from, to } = editor.state.selection;
+        if (from === to) return;
+
+        const text = editor.state.doc.textBetween(from, to, ' ');
+        const body = window.prompt("Enter comment for: '" + text.substring(0, 30) + "...'");
+        if (!body) return;
+
+        // Generate a pseudo-id or let DB handle it, but we need it for the mark right now!
+        const tempId = crypto.randomUUID();
+        
+        // Add Mark
+        editor.chain().focus().setComment(tempId).run();
+        
+        // Post to API
+        try {
+            await fetch(`/api/chapters/${currentChapterId}/comments`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    commentId: tempId,
+                    workspaceId: activeWorkspace.id,
+                    fromPos: from,
+                    toPos: to,
+                    highlightedText: text,
+                    commentBody: body
+                })
+            });
+            // trigger refresh of comments
+            window.dispatchEvent(new CustomEvent('VERSANA_REFRESH_COMMENTS'));
+        } catch (err) {
+            console.error("Failed to post comment", err);
+        }
+    };
+
+    const handleTakeSnapshot = async (note: string) => {
+		if (!currentChapterId || !editor) return;
+		setIsSaving(true);
+		try {
+			const content = editor.getJSON();
+			const res = await fetch(`/api/chapters/${currentChapterId}/snapshots`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ content, note })
+			});
+			if (res.ok) {
+				fetchSnapshots();
+			}
+		} catch (err) {
+			console.error(err);
+		} finally {
+			setIsSaving(false);
+		}
+	};
+
+	const handleRestoreSnapshot = async (snapshotId: string) => {
+		if (!currentChapterId || !editor) return;
+		if (!window.confirm("Are you sure you want to restore this snapshot? This will overwrite your current progress.")) return;
+		
+		try {
+			const res = await fetch(`/api/chapters/${currentChapterId}/snapshots/${snapshotId}`);
+			if (res.ok) {
+				const snapshot = await res.json();
+				if (snapshot && snapshot.content) {
+					editor.commands.setContent(snapshot.content);
+					window.dispatchEvent(new CustomEvent('VERSANA_AUTO_DRAFT'));
+				}
+			}
+		} catch (err) {
+			console.error(err);
+		}
+	};
+
+    const [yDoc, setYDoc] = useState<Y.Doc | null>(null);
+    const [syncProvider, setSyncProvider] = useState<any>(null);
+
+    useEffect(() => {
+        if (!currentChapterId || !activeWorkspace) return;
+
+        console.log("Initializing Yjs and SupabaseProvider for chapter", currentChapterId);
+        const doc = new Y.Doc();
+        setYDoc(doc);
+        const client = createClient();
+
+        const provider = new SupabaseProvider(doc, client, {
+            channel: `workspace-${activeWorkspace.id}-chapter-${currentChapterId}`,
+            id: currentChapterId,
+            tableName: 'chapters',
+            columnName: 'yjs_state',
+            resyncInterval: 5000
+        });
+
+        const indexeddbProvider = new IndexeddbPersistence(
+            `mythos-offline-chapter-${currentChapterId}`,
+            doc
+        );
+
+        const fetchUserForAwareness = async () => {
+            try {
+                const userRes = await fetch('/api/user/profile');
+                if (userRes.ok) {
+                    const u = await userRes.json();
+                    provider.awareness.setLocalStateField('user', {
+                        name: u.full_name || 'Co-Author', 
+                        color: '#' + Math.floor(Math.random()*16777215).toString(16)
+                    });
+                }
+            } catch {
+                provider.awareness.setLocalStateField('user', {
+                    name: 'Co-Author', 
+                    color: '#' + Math.floor(Math.random()*16777215).toString(16)
+                });
+            }
+        };
+        fetchUserForAwareness();
+
+        setSyncProvider(provider);
+
+        return () => {
+            provider.destroy();
+            indexeddbProvider.destroy();
+            doc.destroy();
+        };
+    }, [currentChapterId, activeWorkspace]);
+
     const editor = useEditor({
         extensions: [
             StarterKit,
+            Image.configure({
+                inline: false,
+                allowBase64: true,
+                HTMLAttributes: {
+                    style: 'max-width: 100%; border-radius: 8px; margin: 1.5rem auto; display: block;'
+                }
+            }),
             Placeholder.configure({
                 placeholder: 'Write your masterpiece...',
             }),
+            Underline,
             LoreTag,
+            CommentMark,
+            ...(syncProvider && yDoc ? [
+                Collaboration.configure({
+                    document: yDoc,
+                }),
+                CollaborationCursor.configure({
+                    provider: syncProvider,
+                    user: syncProvider.awareness.getLocalState().user,
+                })
+            ] : [])
         ],
         immediatelyRender: false,
-        content: '', // Will be updated on load
         editorProps: {
             attributes: {
                 class: styles.editorArea,
@@ -192,6 +437,36 @@ export default function Workspace() {
         },
     });
 
+    // Typewriter Mode Effect
+    useEffect(() => {
+        if (!editor || !isTypewriterMode) return;
+
+        const handleTypewriter = () => {
+            const selection = window.getSelection();
+            if (selection && selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                const rect = range.getBoundingClientRect();
+                
+                // Only scroll if we have a valid rect (not 0,0) and the editor is focused
+                if (rect.top !== 0 && editor.isFocused) {
+                    const targetY = window.innerHeight / 2;
+                    const diff = rect.top - targetY;
+                    
+                    const scrollContainer = document.querySelector('main');
+                    if (scrollContainer && Math.abs(diff) > 25) {
+                        scrollContainer.scrollBy({ top: diff, behavior: 'smooth' });
+                    }
+                }
+            }
+        };
+
+        editor.on('selectionUpdate', handleTypewriter);
+        return () => {
+            editor.off('selectionUpdate', handleTypewriter);
+        };
+    }, [editor, isTypewriterMode]);
+
+
     // Fetch chapters for workspace
     useEffect(() => {
         if (!activeWorkspace) return;
@@ -223,12 +498,16 @@ export default function Workspace() {
                 const data = await res.json();
                 setChapterTitle(data.title || 'Untitled Chapter');
 
-                // If the json is empty object or array, fallback to paragraph
-                if (!data.content || Object.keys(data.content).length === 0) {
-                    editor.commands.setContent('<p></p>');
-                } else {
-                    editor.commands.setContent(data.content);
-                }
+                setTimeout(() => {
+                    // Backwards compatibility migration:
+                    // If Yjs state and local indexedDB are both empty, but we have legacy `content` JSON in the DB, 
+                    // we inject it into the editor so Yjs picks it up and pushes it to Supabase.
+                    if (editor.isEmpty || editor.getText().trim() === '') {
+                        if (data.content && Object.keys(data.content).length > 0) {
+                            editor.commands.setContent(data.content);
+                        }
+                    }
+                }, 1000); // Wait 1s for Yjs IndexedDB & Supabase to potentially load
             } catch (err) {
                 console.error("Failed to load chapter content:", err);
             }
@@ -246,10 +525,10 @@ export default function Workspace() {
         const saveContent = async () => {
             setIsSaving(true);
             try {
+                // We save JSON as a read-model explicitly for non-Yjs readers (like AI generation or PDF export)
                 const contentJson = editor.getJSON();
 
-
-                // 1. Save chapter content
+                // 1. Save chapter plain JSON
                 await fetch(`/api/chapters/${currentChapterId}`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
@@ -346,6 +625,18 @@ ${contextText}`;
                 })
             });
 
+            if (!res.ok) {
+                const errText = await res.text().catch(() => null);
+                let errMsg = 'Failed to generate edit';
+                try {
+                    const errJson = JSON.parse(errText || '{}');
+                    if (errJson.error) errMsg = errJson.error;
+                } catch {
+                    if (errText) errMsg = errText;
+                }
+                throw new Error(`⚠️ System Notification: ${errMsg}`);
+            }
+
             if (!res.body) throw new Error('No response body');
 
             const reader = res.body.getReader();
@@ -359,13 +650,23 @@ ${contextText}`;
                 setPreviewContent(prev => prev + chunk);
             }
 
-        } catch (err) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (err: any) {
             console.error("Co-Pilot failed:", err);
-            setPreviewContent("An error occurred during generation.");
+            setPreviewContent(err.message || "An error occurred during generation.");
         } finally {
             setIsGeneratingTitle(false);
         }
     };
+    useEffect(() => {
+        const trigger = () => {
+             // Small delay to ensure state and context have been fully settled
+             setTimeout(() => handleGenerateChapter(), 1000);
+        };
+        window.addEventListener('VERSANA_AUTO_DRAFT', trigger);
+        return () => window.removeEventListener('VERSANA_AUTO_DRAFT', trigger);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeWorkspace, chapters, currentChapterId]);
 
     const handleGenerateChapter = async () => {
         if (!activeWorkspace || isGeneratingChapter) return;
@@ -384,8 +685,10 @@ ${contextText}`;
             return '';
         };
 
-        const currentOrderIndex = chapters.find(c => c.id === currentChapterId)?.order_index || 999;
+        const currentChapter = chapters.find(c => c.id === currentChapterId);
+        const currentOrderIndex = currentChapter?.order_index || 999;
         const pastChapters = chapters.filter(c => c.order_index < currentOrderIndex).sort((a, b) => a.order_index - b.order_index).slice(-2);
+        const currentContentStr = extractTextFromTipTap(currentChapter?.content).trim();
 
         // Provide Context Matrix
         const contextText = loreDatabase.map(e => `${e.name} (${e.type}): ${e.synopsis}`).join('\n');
@@ -415,7 +718,7 @@ ${contextText}
 
 SECTION PROGRESSION SO FAR:
 ${summaryStr}
-
+${currentContentStr ? `\nCURRENT SECTION OUTLINE/BEATS (Strictly incorporate these plot points into your prose):\n${currentContentStr}\n` : ''}
 RECENT PREVIOUS SECTION TEXT (for seamless continuation and ensuring you do NOT repeat the same sentence structures or themes):
 ---
 ${pastContentStr}
@@ -441,7 +744,7 @@ ${contextText}
 
 OVERALL CHAPTER OUTLINE:
 ${summaryStr}
-
+${currentContentStr ? `\nCURRENT CHAPTER NOTES/BEATS (Strictly incorporate these plot points or outlines into your opening hook and prose):\n${currentContentStr}\n` : ''}
 RECENT PREVIOUS CHAPTER TEXT (Ensure you match the timeline and do not contradict what just happened. Do not repeat the same events.):
 ---
 ${pastContentStr}
@@ -457,6 +760,18 @@ ${pastContentStr}
                     messages: [{ role: 'user', content: `Please write the draft. ${chapterPrompt ? `User's guiding instructions: ${chapterPrompt}` : ''}` }]
                 })
             });
+
+            if (!res.ok) {
+                const errText = await res.text().catch(() => null);
+                let errMsg = 'Failed to generate chapter';
+                try {
+                    const errJson = JSON.parse(errText || '{}');
+                    if (errJson.error) errMsg = errJson.error;
+                } catch {
+                    if (errText) errMsg = errText;
+                }
+                throw new Error(`⚠️ System Notification: ${errMsg}`);
+            }
 
             if (!res.body) throw new Error('No response body');
 
@@ -492,12 +807,62 @@ ${pastContentStr}
                 }
             }
 
-        } catch (err) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (err: any) {
             console.error("Chapter Generation failed:", err);
-            setPreviewContent("An error occurred during generation.");
+            setPreviewContent(err.message || "An error occurred during generation.");
         } finally {
             setIsGeneratingChapter(false);
             setChapterPrompt('');
+        }
+    };
+
+    const handleRefineDraft = async () => {
+        if (!activeWorkspace || !previewContent || !refinePrompt) return;
+        setIsRefining(true);
+
+        const systemPrompt = isNonFicProject
+            ? `You are an elite non-fiction editor. Revise the provided draft according to the user's specific request.
+IMPORTANT RULES:
+1. Maintain the exact formatting of the TITLE: Your Title header if it exists.
+2. Return ONLY the fully revised prose paragraph by paragraph. Do not include pleasantries or meta-commentary.`
+            : `You are a master fiction editor. Revise the provided chapter draft according to the user's specific request.
+IMPORTANT RULES:
+1. Maintain the exact formatting of the TITLE: Your Title header if it exists.
+2. Return ONLY the fully revised prose paragraph by paragraph. Do not include pleasantries or meta-commentary.`;
+
+        try {
+            const res = await fetch('/api/ai/claude', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    workspaceId: activeWorkspace.id,
+                    systemPrompt,
+                    messages: [
+                        { role: 'user', content: `Here is the current draft:\n\n${previewContent}\n\nPlease revise it based on this request: ${refinePrompt}` }
+                    ]
+                })
+            });
+
+            if (!res.ok) throw new Error('Refinement failed');
+            if (!res.body) throw new Error('No body');
+
+            const reader = res.body.getReader();
+            const decoder = new TextDecoder();
+            
+            setPreviewContent(''); // Clear to stream the new version
+            
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                setPreviewContent(prev => prev + decoder.decode(value, { stream: true }));
+            }
+        } catch (err: any) {
+            console.error("Refinement failed:", err);
+            setPreviewContent("An error occurred during refinement. " + (err.message || ""));
+        } finally {
+            setIsRefining(false);
+            setRefinePrompt('');
         }
     };
 
@@ -522,6 +887,7 @@ ${pastContentStr}
     const handleGenerateTitle = async () => {
         if (!editor || !currentChapterId) return;
         setIsGeneratingTitle(true);
+        setError(null);
         try {
             const content = editor.getText();
             const res = await fetch('/api/ai/generate-title', {
@@ -535,22 +901,34 @@ ${pastContentStr}
                 })
             });
 
-            if (res.ok) {
-                const data = await res.json();
-                if (data.title) {
-                    setChapterTitle(data.title);
-                    setChapters(prev => prev.map(ch => ch.id === currentChapterId ? { ...ch, title: data.title } : ch));
-
-                    // save to backend immediately
-                    await fetch(`/api/chapters/${currentChapterId}`, {
-                        method: 'PATCH',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ title: data.title })
-                    });
+            if (!res.ok) {
+                const errText = await res.text().catch(() => null);
+                let errMsg = 'Failed to generate title';
+                try {
+                    const errJson = JSON.parse(errText || '{}');
+                    if (errJson.error) errMsg = errJson.error;
+                } catch {
+                    if (errText) errMsg = errText;
                 }
+                throw new Error(`⚠️ System Notification: ${errMsg}`);
             }
-        } catch (e) {
+
+            const data = await res.json();
+            if (data.title) {
+                setChapterTitle(data.title);
+                setChapters(prev => prev.map(ch => ch.id === currentChapterId ? { ...ch, title: data.title } : ch));
+
+                // save to backend immediately
+                await fetch(`/api/chapters/${currentChapterId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title: data.title })
+                });
+            }
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (e: any) {
             console.error('Failed to generate title', e);
+            setError(e.message || "An error occurred");
         } finally {
             setIsGeneratingTitle(false);
         }
@@ -562,21 +940,26 @@ ${pastContentStr}
         if (textContent.trim().length <= 50) return;
 
         setIsScanningLore(true);
+        setError(null);
         try {
-            const nerRes = await fetch('/api/ai/ner', {
+            const res = await fetch('/api/jobs/schedule', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text: textContent, workspaceId: activeWorkspace.id })
+                body: JSON.stringify({ 
+                    jobType: 'lore_ner_scan', 
+                    workspaceId: activeWorkspace.id,
+                    payload: { textLength: textContent.length }
+                })
             });
 
-            if (nerRes.ok) {
-                const nerData = await nerRes.json();
-                if (nerData.entities && nerData.entities.length > 0) {
-                    setLoreDatabase(nerData.entities);
-                }
+            if (!res.ok) {
+                const errText = await res.text().catch(() => null);
+                throw new Error(`Failed to schedule job: ${errText}`);
             }
-        } catch (e) {
-            console.error("Failed to scan for lore", e);
+            // Job is scheduled! The floating pill will track it automatically.
+        } catch (e: any) {
+            console.error("Failed to queue lore scan", e);
+            setError(e.message || "An error occurred");
         } finally {
             setIsScanningLore(false);
         }
@@ -723,6 +1106,50 @@ ${pastContentStr}
         }
     };
 
+    const handleGenerateImage = async () => {
+        if (!activeWorkspace || !imagePrompt.trim() || !editor) return;
+
+        setIsGeneratingImage(true);
+        setImageError(null);
+
+        try {
+            const res = await fetch('/api/ai/generate-asset', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    prompt: imagePrompt,
+                    type: isNonFicProject ? "Informational Graphic" : "Book Illustration",
+                    workspaceId: activeWorkspace.id,
+                    style: isNonFicProject ? "clean vector illustration, minimalist, corporate, white background" : "cinematic lighting, vivid colors, detailed illustration"
+                })
+            });
+
+            if (!res.ok) {
+                const errText = await res.text().catch(() => null);
+                let errMsg = 'Failed to generate image';
+                try {
+                    const errJson = JSON.parse(errText || '{}');
+                    if (errJson.error) errMsg = errJson.error;
+                } catch {
+                    if (errText) errMsg = errText;
+                }
+                throw new Error(`⚠️ System Notification: ${errMsg}`);
+            }
+
+            const data = await res.json();
+            if (data.url) {
+                editor.chain().focus().setImage({ src: data.url }).run();
+                setIsImageModalOpen(false);
+                setImagePrompt('');
+            }
+        } catch (err: unknown) {
+            console.error("Image generation failed:", err);
+            setImageError((err as Error).message || "An error occurred");
+        } finally {
+            setIsGeneratingImage(false);
+        }
+    };
+
     const handleToggleFocusMode = () => {
         if (!isFocusMode) {
             // Turning ON Focus Mode
@@ -743,10 +1170,24 @@ ${pastContentStr}
         <div className={styles.workspaceContainer}>
             {!isFocusMode && (
                 <div className={styles.workspaceGlobalHeader}>
-                    <h1 className={styles.phaseTitle}>
+                    <h1 className={styles.phaseTitle} style={{ flex: 1 }}>
                         <span className={styles.phaseLabel}>Phase 4</span>
                         {isNonFicProject ? 'Drafting & Content' : 'Drafting & Writing'}
                     </h1>
+                    <button 
+                        className={styles.btnPrimary} 
+                        style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                        onClick={() => setIsInviteModalOpen(true)}
+                    >
+                        <Users size={16} /> Share & Co-Author
+                    </button>
+                    <button
+                        className={styles.headerActionBtn}
+                        onClick={handleToggleFocusMode}
+                        title="Focus Mode"
+                    >
+                        {isFocusMode ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+                    </button>
                 </div>
             )}
             <div className={styles.workspace} onClick={hoverState.visible ? handleEntityLeave : undefined}>
@@ -778,18 +1219,20 @@ ${pastContentStr}
                                 </button>
                             </div>
                             <div className={styles.chapterList}>
-                                {chapters.filter(ch => ch.order_index >= 0).map((chapter) => (
-                                    <div
-                                        key={chapter.id}
-                                        className={`${styles.chapterItem} ${currentChapterId === chapter.id ? styles.chapterItemActive : ''}`}
-                                        onClick={() => setCurrentChapterId(chapter.id)}
-                                        onContextMenu={(e) => handleContextMenu(e, chapter.id)}
-                                    >
-                                        <GripVertical size={14} className={styles.chapterItemIcon} />
-                                        <FileText size={14} className={styles.chapterItemIcon} />
-                                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{chapter.title}</span>
-                                    </div>
-                                ))}
+                                <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                                    <SortableContext items={chapters.filter(ch => ch.order_index >= 0).map(c => c.id)} strategy={verticalListSortingStrategy}>
+                                        {chapters.filter(ch => ch.order_index >= 0).map((chapter) => (
+                                            <SortableChapterItem
+                                                key={chapter.id}
+                                                chapter={chapter}
+                                                currentChapterId={currentChapterId}
+                                                setCurrentChapterId={setCurrentChapterId}
+                                                handleContextMenu={handleContextMenu}
+                                                wordCount={wordCount}
+                                            />
+                                        ))}
+                                    </SortableContext>
+                                </DndContext>
                             </div>
                         </div>
                     </div>
@@ -814,26 +1257,44 @@ ${pastContentStr}
                                 >
                                     <History size={16} style={{ marginRight: '0.5rem' }} /> Version History
                                 </button>
+                                <button
+                                    className={styles.toolBtn}
+                                    onClick={() => setShowComments(!showComments)}
+                                    style={showComments ? { background: 'var(--bg-hover)', color: 'var(--text-primary)' } : {}}
+                                >
+                                    <MessageSquare size={16} style={{ marginRight: '0.5rem' }} /> Comments
+                                </button>
                                 {showHistory && (
                                     <div className={styles.historyPanel}>
                                         <div className={styles.historyHeader}>
                                             Document History
                                             <X size={16} style={{ cursor: 'pointer' }} onClick={() => setShowHistory(false)} />
                                         </div>
+										<div style={{ padding: '0.5rem 1rem' }}>
+											<button 
+												className={styles.btnPrimary} 
+												style={{ width: '100%', fontSize: '0.8rem', padding: '0.4rem' }}
+												onClick={() => handleTakeSnapshot('Manual Snapshot')}
+											>
+												<History size={14} style={{ marginRight: '0.4rem', verticalAlign: 'middle' }} /> Take Snapshot
+											</button>
+										</div>
                                         <div className={styles.historyList}>
-                                            {historyItems.map((item) => (
+											{isLoadingHistory && <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-secondary)' }}><Loader2 size={16} className="spinner" /></div>}
+                                            {!isLoadingHistory && historyItems.length === 0 && (
+												<div style={{ padding: '1rem', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>No snapshots yet.</div>
+											)}
+											{historyItems.map((item) => (
                                                 <div key={item.id} className={styles.historyItem}>
-                                                    <div className={styles.historyTime}>{item.time}</div>
+                                                    <div className={styles.historyTime}>{new Date(item.created_at).toLocaleString()}</div>
                                                     <div className={styles.historyDesc} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                        <span>{item.desc}</span>
-                                                        {item.revivable && item.chapterId && (
-                                                            <button
-                                                                style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem', background: 'var(--accent-blue)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-                                                                onClick={() => handleRestoreChapter(item.chapterId!, item.id)}
-                                                            >
-                                                                Restore
-                                                            </button>
-                                                        )}
+                                                        <span>{item.snapshot_note}</span>
+                                                        <button
+                                                            style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem', background: 'transparent', color: 'var(--text-secondary)', border: '1px solid var(--border-light)', borderRadius: '4px', cursor: 'pointer' }}
+                                                            onClick={() => handleRestoreSnapshot(item.id)}
+                                                        >
+                                                            Restore
+                                                        </button>
                                                     </div>
                                                 </div>
                                             ))}
@@ -848,6 +1309,12 @@ ${pastContentStr}
                             >
                                 {isScanningLore ? <Loader2 size={16} className="spinner" style={{ marginRight: '0.5rem' }} /> : <Search size={16} style={{ marginRight: '0.5rem' }} />}
                                 Scan Lore
+                            </button>
+                            <button
+                                className={styles.toolBtn}
+                                onClick={() => setIsImageModalOpen(true)}
+                            >
+                                <ImageIcon size={16} style={{ marginRight: '0.5rem' }} /> Insert Image
                             </button>
                             <button
                                 className={styles.toolBtn}
@@ -870,6 +1337,23 @@ ${pastContentStr}
                                 {isFocusMode ? <Minimize2 size={16} style={{ marginRight: '0.5rem' }} /> : <Maximize2 size={16} style={{ marginRight: '0.5rem' }} />}
                                 {isFocusMode ? 'Exit Focus' : 'Focus Mode'}
                             </button>
+                            <button
+                                className={styles.toolBtn}
+                                onClick={() => setIsTypewriterMode(!isTypewriterMode)}
+                                style={isTypewriterMode ? { background: 'var(--tag-blue-bg)', color: 'var(--tag-blue-text)', border: '1px solid var(--tag-blue-text)' } : {}}
+                            >
+                                <TextCursorInput size={16} style={{ marginRight: '0.5rem' }} /> Typewriter
+                            </button>
+                            <div style={{ position: 'relative' }}>
+                                <button
+                                    className={styles.toolBtn}
+                                    onClick={() => setShowTypography(!showTypography)}
+                                    style={showTypography ? { background: 'var(--tag-blue-bg)', color: 'var(--tag-blue-text)', border: '1px solid var(--tag-blue-text)' } : {}}
+                                >
+                                    <TypeIcon size={16} style={{ marginRight: '0.5rem' }} /> Typography
+                                </button>
+                                {showTypography && <TypographyModal onClose={() => setShowTypography(false)} />}
+                            </div>
                         </div>
 
                         <div className={styles.documentHeader} style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
@@ -911,67 +1395,85 @@ ${pastContentStr}
                                 <div style={{ flex: 1, overflowY: 'auto' }}>
                                     {editor && editor.getText().trim().length === 0 && !isPreviewing && (
                                         <div className={styles.emptyStateGen}>
-                                            <div className={styles.emptyStateTitle}>
-                                                <Wand2 size={16} color="var(--tag-purple-text)" /> AI {isNonFicProject ? 'Section' : 'Chapter'} Generation
+                                            <div className={styles.emptyStateColumn}>
+                                                <div className={styles.emptyStateTitle}>
+                                                    <FileText size={18} color="var(--accent-blue)" /> Start Writing
+                                                </div>
+                                                <div className={styles.emptyStateDesc}>
+                                                    Begin drafting your {isNonFicProject ? 'section' : 'chapter'} manually. New to Versana? We recommend following the 8 Phases in the left panel. Scaffold your universe in Phases 1-3 so the AI can generate a highly-contextualized first draft for you here in Phase 4.
+                                                </div>
+                                                <div style={{ marginTop: 'auto', paddingTop: '1rem' }}>
+                                                    <button
+                                                        className={styles.actionBtn}
+                                                        style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)', border: '1px solid var(--border-light)', width: '100%', padding: '0.6rem 1rem' }}
+                                                        onClick={() => editor.commands.focus()}
+                                                    >
+                                                        Click here to start typing
+                                                    </button>
+                                                </div>
                                             </div>
-                                            <div className={styles.emptyStateDesc}>
-                                                {isNonFicProject ? "This section is currently empty. Start drafting manually, or have Versana generate a first draft based on your Knowledge Base and the flow of prior sections." : "This chapter is currently empty. Start drafting manually, or have Versana generate a first draft based on your Context Matrix and the flow of prior chapters."}
-                                            </div>
-                                            <textarea
-                                                className={styles.emptyStateInput}
-                                                placeholder={isNonFicProject ? "Optional: Guide the generation (e.g., 'Discuss the implications of a high-carb diet...')" : "Optional: Guide the generation (e.g., 'Aris investigates the old fort and is ambushed by mechs...')"}
-                                                value={chapterPrompt}
-                                                onChange={(e) => setChapterPrompt(e.target.value)}
-                                            />
-                                            <div className={styles.emptyStateRow} style={{ flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                                                <select className={styles.emptyStateSelect} value={chapterLength} onChange={(e) => setChapterLength(e.target.value)}>
-                                                    <option value="short">Short Section (~500 words)</option>
-                                                    <option value="medium">Standard Section (~1500 words)</option>
-                                                    <option value="long">Long Section (~3000 words)</option>
-                                                </select>
-                                                <select className={styles.emptyStateSelect} value={genTone} onChange={(e) => setGenTone(e.target.value)}>
-                                                    <option value="Standard">Standard Tone</option>
-                                                    <option value="Dark">Dark & Gritty</option>
-                                                    <option value="Lighthearted">Lighthearted</option>
-                                                    <option value="Action-Packed">Action-Packed</option>
-                                                    <option value="Melancholy">Melancholy</option>
-                                                </select>
-                                                <select className={styles.emptyStateSelect} value={genPOV} onChange={(e) => setGenPOV(e.target.value)}>
-                                                    <option value="3rd Person Limited">3rd Person Limited</option>
-                                                    <option value="1st Person">1st Person</option>
-                                                    <option value="3rd Person Omniscient">3rd Person Omniscient</option>
-                                                </select>
-                                                <select className={styles.emptyStateSelect} value={genAgeRange} onChange={(e) => setGenAgeRange(e.target.value)}>
-                                                    <option value="Adult">Adult Audience</option>
-                                                    <option value="Young Adult">Young Adult (YA)</option>
-                                                    <option value="Middle Grade">Middle Grade</option>
-                                                </select>
-                                            </div>
-                                            <div className={styles.emptyStateRow}>
-                                                <button
-                                                    className={styles.actionBtn}
-                                                    style={{ background: 'var(--tag-purple-bg)', color: 'var(--tag-purple-text)', border: '1px solid var(--tag-purple-text)', width: 'auto', padding: '0.4rem 1rem' }}
-                                                    onClick={handleGenerateChapter}
-                                                    disabled={isGeneratingChapter}
-                                                >
-                                                    {isGeneratingChapter ? <Loader2 size={14} className={styles.spinner} /> : <Sparkles size={14} />}
-                                                    {isGeneratingChapter ? 'Generating...' : `Generate AI ${isNonFicProject ? 'Section' : 'Chapter'}`}
-                                                </button>
-                                                <button
-                                                    className={styles.actionBtn}
-                                                    style={{ background: 'var(--tag-blue-bg)', color: 'var(--tag-blue-text)', border: '1px solid var(--tag-blue-text)', width: 'auto', padding: '0.4rem 1rem' }}
-                                                    onClick={() => {
-                                                        const seedText = `<p>The snow fell heavy over the battlements of the old fort. Captain Aris tightened his grip on the plasma rifle, the freezing wind biting at his exposed cheeks. He knew the Hegemony would be sending their mechs tonight. It was inevitable.</p><p>As he looked out over the tundras of <lore-tag data-id="123" data-entity-name="Kryok" data-aliases="[&quot;Ice Planet&quot;]" data-entity-type="place" data-synopsis="A frozen wasteland planet at the edge of the galaxy." data-status="Discovered" data-entity-str="{&quot;id&quot;:&quot;123&quot;,&quot;name&quot;:&quot;Kryok&quot;,&quot;aliases&quot;:[&quot;Ice Planet&quot;],&quot;type&quot;:&quot;place&quot;,&quot;synopsis&quot;:&quot;A frozen wasteland planet at the edge of the galaxy.&quot;,&quot;status&quot;:&quot;Discovered&quot;}">Kryok</lore-tag>, he thought about the ancient datacore hidden beneath the ice. The fate of the entire galaxy rested on protecting it from the <lore-tag data-id="456" data-entity-name="Hegemony" data-aliases="[&quot;Empire&quot;]" data-entity-type="faction" data-synopsis="An authoritarian interstellar empire." data-status="Discovered" data-entity-str="{&quot;id&quot;:&quot;456&quot;,&quot;name&quot;:&quot;Hegemony&quot;,&quot;aliases&quot;:[&quot;Empire&quot;],&quot;type&quot;:&quot;faction&quot;,&quot;synopsis&quot;:&quot;An authoritarian interstellar empire.&quot;,&quot;status&quot;:&quot;Discovered&quot;}">Hegemony's</lore-tag> grasp.</p><p>"Incoming signals," beeped his wrist-com. It was time.</p>`;
-                                                        editor.commands.setContent(seedText);
-                                                        setChapterPrompt('Aris investigates the old fort and is ambushed by mechs');
-                                                    }}
-                                                >
-                                                    Seed Chapter 4 (Demo)
-                                                </button>
+
+                                            <div className={styles.emptyStateColumn}>
+                                                <div className={styles.emptyStateTitle}>
+                                                    <Wand2 size={18} color="var(--tag-purple-text)" /> AI First Draft
+                                                </div>
+                                                <div className={styles.emptyStateDesc}>
+                                                    Let Versana generate a structurally sound first draft based on your {isNonFicProject ? 'Knowledge Base' : 'Context Matrix'}.
+                                                </div>
+                                                <textarea
+                                                    className={styles.emptyStateInput}
+                                                    placeholder={isNonFicProject ? "e.g., 'Discuss the implications of a high-carb diet...'" : "e.g., 'Aris investigates the old fort and is ambushed by mechs...'"}
+                                                    value={chapterPrompt}
+                                                    onChange={(e) => setChapterPrompt(e.target.value)}
+                                                    style={{ minHeight: '60px', marginBottom: '0.5rem' }}
+                                                />
+                                                <div className={styles.emptyStateRow}>
+                                                    <select className={styles.emptyStateSelect} value={chapterLength} onChange={(e) => setChapterLength(e.target.value)}>
+                                                        <option value="short">Short (~500 words)</option>
+                                                        <option value="medium">Standard (~1500 words)</option>
+                                                        <option value="long">Long (~3000 words)</option>
+                                                    </select>
+                                                    <select className={styles.emptyStateSelect} value={genTone} onChange={(e) => setGenTone(e.target.value)}>
+                                                        <option value="Standard">Standard Tone</option>
+                                                        <option value="Dark">Dark & Gritty</option>
+                                                        <option value="Lighthearted">Lighthearted</option>
+                                                        <option value="Action-Packed">Action-Packed</option>
+                                                        <option value="Melancholy">Melancholy</option>
+                                                    </select>
+                                                </div>
+                                                <div style={{ marginTop: 'auto', paddingTop: '1rem' }}>
+                                                    <button
+                                                        className={styles.actionBtn}
+                                                        style={{ background: 'var(--tag-purple-bg)', color: 'var(--tag-purple-text)', border: '1px solid var(--tag-purple-text)', width: '100%', padding: '0.6rem 1rem' }}
+                                                        onClick={handleGenerateChapter}
+                                                        disabled={isGeneratingChapter}
+                                                    >
+                                                        {isGeneratingChapter ? <Loader2 size={16} className="spin" /> : <Sparkles size={16} />}
+                                                        {isGeneratingChapter ? 'Generating...' : `Generate Draft`}
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     )}
-                                    <EditorContent editor={editor} />
+                                    {wordCount === 0 && !isGeneratingChapter && (
+                                        <div style={{ padding: '3rem 2rem', textAlign: 'center', color: 'var(--text-secondary)', background: 'var(--bg-secondary)', borderRadius: '12px', border: '1px dashed var(--border-color)', margin: '2rem 3rem' }}>
+                                            <Sparkles size={32} style={{ margin: '0 auto 1rem', opacity: 0.5, color: 'var(--tag-blue-text)' }} />
+                                            <h3 style={{ fontSize: '1.2rem', marginBottom: '0.5rem', color: 'var(--text-primary)' }}>This chapter is empty</h3>
+                                            <p style={{ maxWidth: '450px', margin: '0 auto', fontSize: '0.95rem', lineHeight: 1.5 }}>
+                                                Start typing below to draft your chapter manually, or generate an AI draft above. For best results, build out your {isNonFicProject ? 'Knowledge Base' : 'Lore Bible'} in Phase 3 first.
+                                            </p>
+                                        </div>
+                                    )}
+                                    <div style={{
+                                        fontFamily: typography.fontFamily === 'serif' ? '"EB Garamond", "Georgia", serif' : typography.fontFamily === 'sans' ? '"Inter", system-ui, sans-serif' : 'monospace',
+                                        fontSize: `${typography.fontSize}px`,
+                                        lineHeight: typography.lineHeight,
+                                        maxWidth: `${typography.maxWidth}px`,
+                                        margin: '0 auto',
+                                        transition: 'all 0.3s ease'
+                                    }}>
+                                        <EditorContent editor={editor} />
+                                    </div>
                                     {editor && (
                                         <BubbleMenu editor={editor} className={styles.bubbleMenu}>
                                             <button
@@ -992,9 +1494,28 @@ ${pastContentStr}
                                             >
                                                 Strike
                                             </button>
+                                            <button
+                                                onClick={() => editor.chain().focus().toggleUnderline().run()}
+                                                className={editor.isActive('underline') ? styles.bubbleBtnActive : styles.bubbleBtn}
+                                            >
+                                                Underline
+                                            </button>
                                             <div className={styles.bubbleDivider} />
                                             <button
-                                                onClick={() => setSelectedText(editor.state.doc.textBetween(editor.state.selection.from, editor.state.selection.to, ' '))}
+                                                onClick={handleAddCommentAction}
+                                                className={styles.bubbleBtn}
+                                            >
+                                                <MessageSquare size={14} style={{ marginRight: '4px' }} />
+                                                Add Comment
+                                            </button>
+                                            <div className={styles.bubbleDivider} />
+                                            <button
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    setSelectedText(editor.state.doc.textBetween(editor.state.selection.from, editor.state.selection.to, ' '));
+                                                    setEditorContextMenu({ x: e.clientX, y: e.clientY });
+                                                }}
                                                 className={styles.bubbleBtnAi}
                                             >
                                                 <Sparkles size={14} style={{ marginRight: '4px' }} />
@@ -1022,8 +1543,28 @@ ${pastContentStr}
                                             >
                                                 Bullet List
                                             </button>
+                                            <button
+                                                className={editor.isActive('orderedList') ? styles.floatingBtnActive : styles.floatingBtn}
+                                                onClick={() => editor.chain().focus().toggleOrderedList().run()}
+                                            >
+                                                Numbered List
+                                            </button>
+                                            <button
+                                                className={editor.isActive('blockquote') ? styles.floatingBtnActive : styles.floatingBtn}
+                                                onClick={() => editor.chain().focus().toggleBlockquote().run()}
+                                            >
+                                                Quote
+                                            </button>
+                                            <button
+                                                className={styles.floatingBtnAi}
+                                                style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--tag-purple-text)' }}
+                                                onClick={() => setIsImageModalOpen(true)}
+                                            >
+                                                <ImageIcon size={14} /> AI Art
+                                            </button>
                                         </FloatingMenu>
                                     )}
+
                                 </div>
                                 {showHeatmap && editor && (
                                     <div style={{ flexShrink: 0 }}>
@@ -1033,11 +1574,32 @@ ${pastContentStr}
                             </div>
                         )}
                     </div>
+                
+                    {showComments && currentChapterId && (
+                        <CommentSidebar 
+                            currentChapterId={currentChapterId} 
+                            onResolve={(commentId) => {
+                                if (editor) {
+                                    editor.chain().focus().unsetComment(commentId).run();
+                                }
+                                fetch(`/api/chapters/${currentChapterId}/comments`, {
+                                    method: 'PATCH',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ commentId, resolved: true })
+                                });
+                            }} 
+                        />
+                    )}
 
                     {isPreviewing && (
                         <div className={styles.previewPane}>
                             <div className={styles.previewHeader}>
-                                <div className={styles.previewTitle}><Sparkles size={18} /> AI Draft Preview</div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                    <div className={styles.previewTitle}><Sparkles size={18} /> AI Draft Preview</div>
+                                    <div style={{ fontSize: '0.75rem', color: 'var(--tag-purple-text)', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                                        <Zap size={12} /> Guided by your Phase 2 Beats
+                                    </div>
+                                </div>
                                 <button className={styles.toolBtn} onClick={() => setIsPreviewing(false)} style={{ border: 'none' }}><X size={16} /></button>
                             </div>
                             <div className={styles.previewContent}>
@@ -1086,29 +1648,54 @@ ${pastContentStr}
                                     style={{ background: 'transparent', border: '1px solid var(--border-light)', color: 'var(--text-secondary)' }}
                                     onClick={() => {
                                         setPreviewContent('');
+                                        setIsRefining(false);
+                                        setRefinePrompt('');
                                         setIsPreviewing(false);
                                     }}
                                 >
                                     Reject
                                 </button>
                             </div>
+                            {/* Refine Draft Loop */}
+                            {previewContent && !isGeneratingChapter && (
+                                <div style={{ borderTop: '1px solid var(--border-color)', marginTop: '0.5rem', paddingTop: '1rem', display: 'flex', gap: '0.5rem' }}>
+                                    <input 
+                                        type="text" 
+                                        placeholder="e.g. 'Make it scarier' or 'Expand on the sensory details'" 
+                                        className={styles.emptyStateInput} 
+                                        style={{ flex: 1, minHeight: 'auto', padding: '0.5rem 0.75rem', marginBottom: 0 }}
+                                        value={refinePrompt}
+                                        onChange={e => setRefinePrompt(e.target.value)}
+                                        onKeyDown={e => {
+                                            if (e.key === 'Enter' && refinePrompt.trim()) {
+                                                handleRefineDraft();
+                                            }
+                                        }}
+                                        disabled={isRefining}
+                                    />
+                                    <button 
+                                        className={styles.actionBtn} 
+                                        onClick={handleRefineDraft} 
+                                        disabled={!refinePrompt.trim() || isRefining}
+                                        style={{ whiteSpace: 'nowrap', border: '1px solid var(--tag-blue-text)', background: 'var(--tag-blue-bg)', color: 'var(--tag-blue-text)' }}
+                                    >
+                                        {isRefining ? <Loader2 size={16} className="spin" /> : <Sparkles size={16} />}
+                                        Refine Draft
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
 
                 {contextMenu && (
-                    <div style={{
-                        position: 'fixed',
-                        left: contextMenu.x,
-                        top: contextMenu.y,
-                        background: 'var(--bg-primary)',
-                        border: '1px solid var(--border-light)',
-                        boxShadow: 'var(--shadow-md)',
-                        zIndex: 1000,
-                        borderRadius: '6px',
-                        padding: '0.25rem 0',
-                        minWidth: '150px'
-                    }}>
+                    <div 
+                        className={styles.contextMenu}
+                        style={{
+                            left: contextMenu.x,
+                            top: contextMenu.y
+                        }}
+                    >
                         <button
                             className={styles.contextMenuItem}
                             style={{ color: 'var(--accent-terracotta)' }}
@@ -1120,18 +1707,13 @@ ${pastContentStr}
                 )}
 
                 {editorContextMenu && (
-                    <div style={{
-                        position: 'fixed',
-                        left: editorContextMenu.x,
-                        top: editorContextMenu.y,
-                        background: 'var(--bg-primary)',
-                        border: '1px solid var(--border-light)',
-                        boxShadow: 'var(--shadow-md)',
-                        zIndex: 1000,
-                        borderRadius: '6px',
-                        padding: '0.25rem 0',
-                        minWidth: '150px'
-                    }}>
+                    <div 
+                        className={styles.contextMenu}
+                        style={{
+                            left: editorContextMenu.x,
+                            top: editorContextMenu.y
+                        }}
+                    >
                         <button
                             className={styles.contextMenuItem}
                             onMouseDown={(e) => e.preventDefault()}
@@ -1161,6 +1743,40 @@ ${pastContentStr}
                             }}
                         >
                             <Zap size={14} /> Expand
+                        </button>
+                        <button
+                            className={styles.contextMenuItem}
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => {
+                                closeContextMenu();
+                                if (editor) {
+                                    const { from, to } = editor.state.selection;
+                                    const text = editor.state.doc.textBetween(from, to, ' ');
+                                    // Normally we would pop a little UI asking for their comment string before confirming it.
+                                    // For a slick demo flow, let's just trigger a generic JS prompt if they are testing
+                                    const body = window.prompt("Enter your comment on: '" + text.substring(0, 30) + "...'");
+                                    if (body) {
+                                        const commentId = crypto.randomUUID();
+                                        editor.chain().focus().setComment(commentId).run();
+                                        fetch(`/api/chapters/${currentChapterId}/comments`, {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({
+                                                commentId,
+                                                workspaceId: activeWorkspace?.id,
+                                                fromPos: from,
+                                                toPos: to,
+                                                highlightedText: text,
+                                                commentBody: body
+                                            })
+                                        }).then(() => {
+                                            setShowComments(true);
+                                        });
+                                    }
+                                }
+                            }}
+                        >
+                            <MessageSquare size={14} /> Add Comment
                         </button>
                         <button
                             className={styles.contextMenuItem}
@@ -1276,6 +1892,55 @@ ${pastContentStr}
                 </div>
             )}
 
+            {isImageModalOpen && (
+                <div className={styles.modalOverlay} onClick={() => setIsImageModalOpen(false)}>
+                    <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
+                        <h2 className={styles.modalTitle} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <ImageIcon size={18} color="var(--accent-blue)" /> {isNonFicProject ? 'Generate Diagram/Graphic' : 'Generate Asset/Illustration'}
+                        </h2>
+                        <div style={{ padding: '1rem', background: 'var(--bg-secondary)', borderRadius: '4px', margin: '1rem 0', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                            {isNonFicProject ? "Describe the graphic you want to generate. Powered by DALL-E 3." : "Describe the character, item, or place. Powered by DALL-E 3."}
+                        </div>
+                        <textarea
+                            style={{
+                                width: '100%',
+                                padding: '0.75rem',
+                                borderRadius: '4px',
+                                border: '1px solid var(--border-light)',
+                                background: 'var(--bg-primary)',
+                                color: 'var(--text-primary)',
+                                fontFamily: 'inherit',
+                                fontSize: '0.95rem',
+                                minHeight: '80px',
+                                resize: 'vertical'
+                            }}
+                            placeholder={isNonFicProject ? "e.g. A minimalist timeline showing exponential growth..." : "e.g. A sketch of an ornate dwarven battleaxe..."}
+                            value={imagePrompt}
+                            onChange={(e) => setImagePrompt(e.target.value)}
+                            disabled={isGeneratingImage}
+                            autoFocus
+                        />
+                        {imageError && (
+                            <div style={{ padding: '0.75rem', marginTop: '0.5rem', background: 'var(--tag-red-bg)', color: 'var(--tag-red-text)', borderRadius: '4px', fontSize: '0.85rem' }}>
+                                {imageError}
+                            </div>
+                        )}
+                        <div className={styles.modalActions} style={{ marginTop: '1.5rem' }}>
+                            <button className={styles.btnCancel} disabled={isGeneratingImage} onClick={() => setIsImageModalOpen(false)}>Cancel</button>
+                            <button
+                                className={styles.actionBtn}
+                                style={{ background: 'var(--accent-blue)', color: 'white', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                                onClick={handleGenerateImage}
+                                disabled={isGeneratingImage || !imagePrompt.trim()}
+                            >
+                                {isGeneratingImage ? <Loader2 size={16} className="spin" /> : <Wand2 size={16} />}
+                                {isGeneratingImage ? 'Generating...' : 'Generate Image'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {chapterToDelete && (
                 <div className={styles.modalOverlay} onClick={() => setChapterToDelete(null)}>
                     <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
@@ -1292,6 +1957,7 @@ ${pastContentStr}
                     </div>
                 </div>
             )}
+            <InviteModal isOpen={isInviteModalOpen} onClose={() => setIsInviteModalOpen(false)} />
         </div>
     );
 }

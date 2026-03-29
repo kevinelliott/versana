@@ -22,4 +22,44 @@
     overflow-y: auto;
     position: relative;
     background-color: var(--bg-primary);
+    transition: all 0.4s ease-in-out;
+}
+
+/* Focus Mode Transitions */
+.topBarWrapper {
+    transition: all 0.4s ease-in-out;
+    max-height: 100px; /* arbitrary max height */
+    opacity: 1;
+    overflow: hidden;
+}
+
+.leftSidebarWrapper {
+    transition: all 0.4s ease-in-out;
+    width: auto;
+    max-width: 300px;
+    opacity: 1;
+    overflow: hidden;
+}
+
+.rightSidebarWrapper {
+    transition: all 0.4s ease-in-out;
+    width: auto;
+    max-width: 350px;
+    opacity: 1;
+    overflow: hidden;
+}
+
+.focusMode .topBarWrapper {
+    max-height: 0;
+    opacity: 0;
+}
+
+.focusMode .leftSidebarWrapper {
+    max-width: 0;
+    opacity: 0;
+}
+
+.focusMode .rightSidebarWrapper {
+    max-width: 0;
+    opacity: 0;
 }

@@ -70,7 +70,7 @@ export async function POST(req: Request) {
         if (countErr) throw countErr;
 
         if ((count || 0) >= limit) {
-            return NextResponse.json({ error: `You have reached your limit of ${limit} active book projects for the ${tier} tier.` }, { status: 403 });
+            return NextResponse.json({ error: `You have reached your limit of ${limit} active universes for the ${tier} tier.` }, { status: 403 });
         }
 
         const body = await req.json();

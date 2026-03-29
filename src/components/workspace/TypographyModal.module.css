@@ -1,0 +1,68 @@
+.typographyModal {
+    position: absolute;
+    top: 40px;
+    right: 0;
+    width: 280px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    padding: 1rem;
+    z-index: 1000;
+}
+
+.modalHeader {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--border-light);
+    padding-bottom: 0.5rem;
+}
+
+.section {
+    margin-bottom: 1rem;
+}
+
+.label {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.buttonRow {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.fontBtn {
+    flex: 1;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    color: var(--text-secondary);
+    border-radius: 4px;
+    padding: 0.5rem 0;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.85rem;
+}
+
+.fontBtn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.fontBtn.active {
+    background: var(--accent-blue);
+    color: var(--bg-primary);
+    border-color: var(--accent-blue);
+}
+
+.slider {
+    width: 100%;
+    margin-top: 0.25rem;
+    accent-color: var(--accent-blue);
+}

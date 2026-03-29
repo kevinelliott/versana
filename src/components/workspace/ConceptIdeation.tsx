@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sparkles, BrainCircuit, Send, Loader2, Save } from 'lucide-react';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import { usePhase } from '@/context/PhaseContext';
@@ -34,11 +34,21 @@ export default function ConceptIdeation() {
     // Hooks for What-If Engine
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const [messages, setMessages] = useState<ChatMessage[]>([{
-        id: 'init',
-        role: 'ai',
-        content: "I am the What-If Engine. Tell me your basic premise, and I will push the boundaries of your narrative by asking challenging 'What if?' questions."
-    }]);
+    const [messages, setMessages] = useState<ChatMessage[]>([]);
+
+    useEffect(() => {
+        if (activeWorkspace && messages.length === 0) {
+            const isNonFic = activeWorkspace.genre?.toLowerCase().includes('[non-fiction]');
+            const greeting = isNonFic 
+                ? `Welcome to your new project, **${activeWorkspace.name}**! I am the Socratic Engine. Tell me your core thesis, and I will rigorously pressure-test your arguments.`
+                : `Welcome to your new universe, **${activeWorkspace.name}**! I am the What-If Engine. To get started, just tell me a sentence or two about the kind of story you want to write, and I'll help you flesh it out.`;
+            
+            setMessages([{ id: 'init', role: 'ai', content: greeting }]);
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeWorkspace]);
+
+    const isEmptyState = concepts.length === 0 && messages.length <= 1 && !seedPrompt && !input;
 
     const handleGenerateConcepts = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -56,7 +66,15 @@ export default function ConceptIdeation() {
             });
 
             if (!res.ok) {
-                throw new Error('Failed to generate concepts.');
+                const errText = await res.text().catch(() => null);
+                let errMsg = 'Failed to generate concepts.';
+                try {
+                    const errJson = JSON.parse(errText || '{}');
+                    if (errJson.error) errMsg = errJson.error;
+                } catch {
+                    if (errText) errMsg = errText;
+                }
+                throw new Error(`⚠️ System Notification: ${errMsg}`);
             }
 
             const data = await res.json();
@@ -65,7 +83,7 @@ export default function ConceptIdeation() {
             }
         } catch (err: unknown) {
             console.error("Seed generator error:", err);
-            setSeedError("An error occurred. Please try again.");
+            setSeedError((err as Error).message || "An error occurred. Please try again.");
         } finally {
             setIsGenerating(false);
         }
@@ -131,7 +149,17 @@ export default function ConceptIdeation() {
                 })
             });
 
-            if (!res.ok || !res.body) throw new Error('Failed to stream response');
+            if (!res.ok || !res.body) {
+                const errText = await res.text().catch(() => null);
+                let errMsg = 'Failed to connect to What-If Engine.';
+                try {
+                    const errJson = JSON.parse(errText || '{}');
+                    if (errJson.error) errMsg = errJson.error;
+                } catch {
+                    if (errText) errMsg = errText;
+                }
+                throw new Error(`⚠️ System Notification: ${errMsg}`);
+            }
 
             const reader = res.body.getReader();
             const decoder = new TextDecoder();
@@ -162,10 +190,9 @@ export default function ConceptIdeation() {
                 }
             }
 
-        } catch (err) {
-            console.error("Chat error:", err);
+        } catch (err: unknown) {
             setMessages(prev => prev.map(m =>
-                m.id === aiMsgId ? { ...m, content: "An error occurred connecting to the What-If Engine." } : m
+                m.id === aiMsgId ? { ...m, content: (err as Error).message || `An error occurred connecting to the ${isNonFicProject ? 'Socratic' : 'What-If'} Engine.` } : m
             ));
         } finally {
             setIsLoading(false);
@@ -180,11 +207,27 @@ export default function ConceptIdeation() {
                     {isNonFicProject ? 'Topic & Thesis' : 'Concept & Ideation'}
                 </h1>
                 <p className={workspaceStyles.phaseSubtitle}>
-                    {isNonFicProject ? 'Develop your core topic and pressure-test your thesis with the What-If Engine.' : 'Generate core premise ideas and pressure-test them with the What-If Engine.'}
+                    {isNonFicProject ? 'Develop your core topic and pressure-test your thesis with the Socratic Engine.' : 'Generate core premise ideas and pressure-test them with the What-If Engine.'}
                 </p>
             </div>
 
             <div className={`${workspaceStyles.workspace} ${styles.contentWrapper}`}>
+                {isEmptyState && (
+                    <div className={styles.emptyStateBanner}>
+                        <div className={styles.emptyStateIconWrapper}>
+                            <Sparkles className={styles.emptyStateIcon} size={32} />
+                        </div>
+                        <h2 className={styles.emptyStateTitle}>
+                            {isNonFicProject ? "Every Great Book Starts With a Question" : "Every Great Story Starts With a Spark"}
+                        </h2>
+                        <p className={styles.emptyStateDesc}>
+                            {isNonFicProject
+                                ? "Use the generative tools below to brainstorm angles for your topic. The AI Seed Generator will help you scaffold initial ideas, while the Socratic Engine will rigorously pressure-test your arguments."
+                                : "Use the generative tools below to brainstorm your core premise. The AI Seed Generator will help you scaffold initial hooks, while the What-If Engine will push your narrative boundaries."}
+                        </p>
+                    </div>
+                )}
+
                 <section className={styles.seedSection}>
                     <h2 className={styles.sectionTitle}>
                         <Sparkles className={styles.icon} size={22} />
@@ -210,30 +253,54 @@ export default function ConceptIdeation() {
                         </div>
                     )}
 
+                    {!isEmptyState && concepts.length === 0 && !isGenerating && (
+                        <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'var(--bg-secondary)', borderRadius: '8px', borderLeft: '4px solid var(--tag-purple-bg)' }}>
+                            <h4 style={{ fontSize: '0.9rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-primary)' }}>
+                                <Sparkles size={14} color="var(--tag-purple-text)" /> How to Build Your Foundation
+                            </h4>
+                            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                                {isNonFicProject
+                                    ? "Pro-Tip: Generate multiple thesis hooks. When you find one you like, click 'Save to Knowledge Base'. This saves the concept and automatically pushes you to Phase 2 to begin outlining it."
+                                    : "Pro-Tip: Generate multiple narrative hooks. When you find one you like, click 'Save to Lore Bible'. This saves the concept and automatically pushes you to Phase 2 to begin structuring your beats."}
+                            </p>
+                        </div>
+                    )}
+
                     {concepts.length > 0 && (
                         <div className={styles.resultsGrid}>
                             {concepts.map(concept => (
                                 <div key={concept.id} className={styles.conceptCard}>
                                     <h3 className={styles.conceptTitle}>{concept.title}</h3>
                                     <p className={styles.conceptDesc}>{concept.description}</p>
-                                    <button
-                                        style={{ marginTop: '1rem', background: 'transparent', border: '1px solid var(--border-light)', color: 'var(--text-secondary)', padding: '0.4rem 0.8rem', borderRadius: '4px', fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
-                                        onClick={() => handleSaveConceptToLore(concept)}
-                                    >
-                                        <Save size={14} /> Save to {isNonFicProject ? 'Knowledge Base' : 'Lore Bible'}
-                                    </button>
+                                    <div style={{ marginTop: '1rem' }}>
+                                        <button
+                                            style={{ background: 'transparent', border: '1px solid var(--border-light)', color: 'var(--text-secondary)', padding: '0.4rem 0.8rem', borderRadius: '4px', fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                                            onClick={() => handleSaveConceptToLore(concept)}
+                                        >
+                                            <Save size={14} /> Save to {isNonFicProject ? 'Knowledge Base' : 'Lore Bible'}
+                                        </button>
+                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+                                            Saves concept and advances to Phase 2
+                                        </div>
+                                    </div>
                                 </div>
                             ))}
                         </div>
                     )}
                 </section>
 
-                {/* What-If Engine */}
+                {/* What-If / Socratic Engine */}
                 <section className={styles.whatIfSection}>
                     <h2 className={styles.sectionTitle}>
                         <BrainCircuit className={styles.icon} size={22} />
-                        The What-If Engine
+                        {isNonFicProject ? 'The Socratic Engine' : 'The What-If Engine'}
                     </h2>
+                    
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1rem', marginTop: '-0.5rem', lineHeight: 1.5 }}>
+                        {isNonFicProject
+                            ? "Provide a core thesis or claim. The Socratic Engine will ruthlessly pressure-test your logic to ensure your arguments are sound before you begin full-scale outlining."
+                            : "Provide a basic premise. The What-If Engine will push your narrative boundaries, subvert standard tropes, and instantly help you increase the stakes of your story foundation."}
+                    </p>
 
                     <div className={styles.chatContainer}>
                         {messages.map(msg => (

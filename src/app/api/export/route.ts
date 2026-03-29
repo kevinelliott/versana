@@ -1,5 +1,6 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server';
 import epub from 'epub-gen-memory';
+import PDFDocument from 'pdfkit';
 import { Document, Packer, Paragraph, TextRun } from "docx";
 import { generateHTML } from '@tiptap/html';
 import StarterKit from '@tiptap/starter-kit';
@@ -11,7 +12,7 @@ export async function GET(req: Request) {
         const { searchParams } = new URL(req.url);
         const workspaceId = searchParams.get('workspaceId');
         const bookId = searchParams.get('bookId');
-        const format = searchParams.get('format'); // 'epub' or 'docx'
+        const format = searchParams.get('format'); // 'epub' or 'docx' or 'pdf'
 
         if (!workspaceId || !bookId || !format) {
             return new Response('Missing parameters', { status: 400 });
@@ -128,6 +129,60 @@ export async function GET(req: Request) {
             const headers = new Headers();
             headers.set('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
             headers.set('Content-Disposition', `attachment; filename="${fallbackTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_manuscript.docx"`);
+
+            return new Response(buffer as unknown as BodyInit, { status: 200, headers });
+        } else if (format === 'pdf') {
+            const doc = new PDFDocument({
+                size: [432, 648], // 6x9 inches in points (6 * 72, 9 * 72)
+                margins: { top: 54, bottom: 54, left: 54, right: 54 } // 0.75" margins
+            });
+
+            const chunks: Buffer[] = [];
+            doc.on('data', (chunk) => chunks.push(chunk));
+
+            const pdfPromise = new Promise<Buffer>((resolve) => {
+                doc.on('end', () => resolve(Buffer.concat(chunks)));
+            });
+
+            // Title Page
+            doc.moveDown(10);
+            doc.font('Times-Bold').fontSize(24).text(fallbackTitle, { align: 'center' });
+            doc.moveDown(1);
+            doc.font('Times-Roman').fontSize(14).text(`by ${fallbackAuthor}`, { align: 'center' });
+
+            // Chapters
+            for (const [index, ch] of chapters.entries()) {
+                doc.addPage();
+                doc.font('Times-Bold').fontSize(18).text(ch.title || `Chapter ${index + 1}`, { align: 'center' });
+                doc.moveDown(2);
+                doc.font('Times-Roman').fontSize(11);
+
+                if (ch.content) {
+                    const contentBlocks = ch.content.content || [];
+                    for (const block of contentBlocks) {
+                        if (block.type === 'paragraph') {
+                            const text = block.content ? block.content.map((c: Record<string, unknown>) => typeof c.text === 'string' ? c.text : '').join('') : '';
+                            if (text.trim().length > 0) {
+                                doc.text(text, {
+                                    align: 'justify',
+                                    indent: 24, // Paragraph indent
+                                    paragraphGap: 0,
+                                    lineGap: 4
+                                });
+                            } else {
+                                doc.moveDown();
+                            }
+                        }
+                    }
+                }
+            }
+
+            doc.end();
+            const buffer = await pdfPromise;
+
+            const headers = new Headers();
+            headers.set('Content-Type', 'application/pdf');
+            headers.set('Content-Disposition', `attachment; filename="${fallbackTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf"`);
 
             return new Response(buffer as unknown as BodyInit, { status: 200, headers });
         }

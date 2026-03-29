@@ -45,17 +45,29 @@ export default function ExpansionEngine({ onExportToKanban }: ExpansionEnginePro
                 })
             });
 
+            if (!res.ok) {
+                const errText = await res.text().catch(() => null);
+                let errMsg = 'Failed to expand the text.';
+                try {
+                    const errJson = JSON.parse(errText || '{}');
+                    if (errJson.error) errMsg = errJson.error;
+                } catch {
+                    if (errText) errMsg = errText;
+                }
+                throw new Error(`⚠️ System Notification: ${errMsg}`);
+            }
+
             const data = await res.json();
-            if (res.ok && data.expandedOutline) {
+            if (data.expandedOutline) {
                 setExpandedBeats(data.expandedOutline);
                 setSummary(data.summaryOfChanges);
                 setHasExported(false);
             } else {
-                setError(data.error || 'Failed to expand the text.');
+                setError('Failed to expand the text.');
             }
-        } catch (err) {
+        } catch (err: unknown) {
             console.error("Expansion engine error", err);
-            setError('A network error occurred.');
+            setError((err as Error).message || 'A network error occurred.');
         } finally {
             setIsExpanding(false);
         }

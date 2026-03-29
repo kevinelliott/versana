@@ -34,7 +34,7 @@ const TOOLS = [
     {
         id: 'asset-generator',
         title: 'Standalone Asset Generator',
-        description: 'Generate character portraits, mood boards, or architecture reference concepts using Nano Banana Pro.',
+        description: 'Generate character portraits, mood boards, or architecture reference concepts using Versana AI.',
         icon: <ImageIcon size={24} color="var(--accent-blue)" />,
         tag: 'Visuals',
         tagClass: styles.tagResearch

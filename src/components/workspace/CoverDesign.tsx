@@ -25,6 +25,7 @@ export default function CoverDesign() {
     const [isGenerating, setIsGenerating] = useState(false);
     const [isRefining, setIsRefining] = useState(false);
     const [layoutMode, setLayoutMode] = useState<'classic' | 'modern' | 'cinematic'>('classic');
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         if (activeWorkspace?.board_state?.cover_design && !isLoaded) {
@@ -69,6 +70,7 @@ export default function CoverDesign() {
 
     const handleGenerateCover = async () => {
         setIsGenerating(true);
+        setError(null);
         try {
             const res = await fetch('/api/ai/generate-asset', {
                 method: 'POST',
@@ -80,10 +82,22 @@ export default function CoverDesign() {
                     style: `${artStyle} art style, ${mood} mood, ${palette} color palette`
                 })
             });
+            if (!res.ok) {
+                const errText = await res.text().catch(() => null);
+                let errMsg = 'Failed to generate cover art';
+                try {
+                    const errJson = JSON.parse(errText || '{}');
+                    if (errJson.error) errMsg = errJson.error;
+                } catch {
+                    if (errText) errMsg = errText;
+                }
+                throw new Error(`⚠️ System Notification: ${errMsg}`);
+            }
             const data = await res.json();
             if (data.url) setCoverImageUrl(data.url);
-        } catch (e) {
+        } catch (e: any) {
             console.error("Failed to generate cover art", e);
+            setError(e.message || "An error occurred");
         } finally {
             setIsGenerating(false);
         }
@@ -91,6 +105,7 @@ export default function CoverDesign() {
 
     const handleRefinePrompt = async () => {
         setIsRefining(true);
+        setError(null);
         try {
             // Fetch lore
             const loreRes = await fetch(`/api/lore?workspaceId=${activeWorkspace?.id}`);
@@ -109,6 +124,18 @@ export default function CoverDesign() {
                 })
             });
 
+            if (!res.ok) {
+                const errText = await res.text().catch(() => null);
+                let errMsg = 'Failed to refine prompt';
+                try {
+                    const errJson = JSON.parse(errText || '{}');
+                    if (errJson.error) errMsg = errJson.error;
+                } catch {
+                    if (errText) errMsg = errText;
+                }
+                throw new Error(`⚠️ System Notification: ${errMsg}`);
+            }
+
             if (!res.body) throw new Error('No body');
 
             const reader = res.body.getReader();
@@ -122,8 +149,9 @@ export default function CoverDesign() {
                 const chunk = decoder.decode(value, { stream: true });
                 setPrompt(prev => prev + chunk);
             }
-        } catch (e) {
+        } catch (e: any) {
             console.error(e);
+            setError(e.message || "An error occurred");
         } finally {
             setIsRefining(false);
         }
@@ -207,6 +235,12 @@ export default function CoverDesign() {
                                 </select>
                             </div>
                         </div>
+
+                        {error && (
+                            <div style={{ color: 'var(--bg-primary)', background: 'var(--accent-terracotta)', padding: '1rem', borderRadius: '6px', fontSize: '0.9rem', marginBottom: '1rem', marginTop: '1rem' }}>
+                                {error}
+                            </div>
+                        )}
 
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                             <button

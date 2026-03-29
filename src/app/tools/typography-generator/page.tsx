@@ -10,10 +10,12 @@ export default function TypographyGenerator() {
     const [theme, setTheme] = useState('Sci-Fi Fantasy');
     const [resultUrl, setResultUrl] = useState<string | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     const generateTypography = async () => {
         setIsGenerating(true);
         setResultUrl(null);
+        setError(null);
 
         try {
             const res = await fetch('/api/ai/generate-asset', {
@@ -26,12 +28,26 @@ export default function TypographyGenerator() {
                 })
             });
 
+            if (!res.ok) {
+                const errText = await res.text().catch(() => null);
+                let errMsg = 'Failed to generate typography asset';
+                try {
+                    const errJson = JSON.parse(errText || '{}');
+                    if (errJson.error) errMsg = errJson.error;
+                } catch {
+                    if (errText) errMsg = errText;
+                }
+                throw new Error(`⚠️ System Notification: ${errMsg}`);
+            }
+
             const data = await res.json();
             if (data.url) {
                 setResultUrl(data.url);
             }
-        } catch (e) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (e: any) {
             console.error("Failed to generate typography asset:", e);
+            setError(e.message || "An error occurred during generation.");
         } finally {
             setIsGenerating(false);
         }
@@ -107,6 +123,12 @@ export default function TypographyGenerator() {
                                     </select>
                                 </div>
                             </div>
+
+                            {error && (
+                                <div style={{ color: 'var(--bg-primary)', background: 'var(--accent-terracotta)', padding: '1rem', borderRadius: '6px', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+                                    {error}
+                                </div>
+                            )}
 
                             <button
                                 style={{

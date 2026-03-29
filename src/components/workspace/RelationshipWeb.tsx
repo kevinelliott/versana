@@ -1,20 +1,9 @@
 'use client';
 
 import React, { useState, useCallback, useEffect } from 'react';
-import ReactFlow, {
-    Background,
-    Controls,
-    MiniMap,
-    useNodesState,
-    useEdgesState,
-    addEdge,
-    Connection,
-    Edge,
-    Node,
-    MarkerType
-} from 'reactflow';
+import ReactFlow, { Background, Controls, MiniMap, useNodesState, useEdgesState, addEdge, Connection, Edge, Node, MarkerType } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { Users, Info, MessageSquare, ArrowLeft, Send } from 'lucide-react';
+import { Users, Info, MessageSquare, ArrowLeft, Send, Sparkles, Database, Loader2, Save } from 'lucide-react';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import styles from './RelationshipWeb.module.css';
 
@@ -86,6 +75,12 @@ export default function RelationshipWeb() {
     const [messages, setMessages] = useState<{ id: string, role: string, content: string }[]>([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [isGenerating, setIsGenerating] = useState(false);
+
+    // Edit state
+    const [isEditingNode, setIsEditingNode] = useState(false);
+    const [editSynopsis, setEditSynopsis] = useState('');
+    const [isSavingEdit, setIsSavingEdit] = useState(false);
 
     const isNonFicProject = activeWorkspace?.genre?.toLowerCase().includes('[non-fiction]') ?? false;
 
@@ -111,7 +106,17 @@ export default function RelationshipWeb() {
                 })
             });
 
-            if (!res.ok) throw new Error("API response error");
+            if (!res.ok) {
+                const errText = await res.text().catch(() => null);
+                let errMsg = 'API response error';
+                try {
+                    const errJson = JSON.parse(errText || '{}');
+                    if (errJson.error) errMsg = errJson.error;
+                } catch {
+                    if (errText) errMsg = errText;
+                }
+                throw new Error(errMsg);
+            }
 
             const reader = res.body?.getReader();
             const decoder = new TextDecoder();
@@ -133,9 +138,9 @@ export default function RelationshipWeb() {
                     return newArray;
                 });
             }
-        } catch (err) {
+        } catch (err: unknown) {
             console.error("Chat Error:", err);
-            setMessages(prev => [...prev, { id: Date.now().toString(), role: 'assistant', content: 'Connection error while communicating with character.' }]);
+            setMessages(prev => [...prev, { id: Date.now().toString(), role: 'assistant', content: `⚠️ System Notification: ${(err as Error).message || 'Connection error while communicating with character.'}` }]);
         } finally {
             setIsLoading(false);
         }
@@ -146,7 +151,74 @@ export default function RelationshipWeb() {
     const onNodeClick = (_: React.MouseEvent, node: Node) => {
         setSelectedNodeId(node.id);
         setIsChatting(false);
+        setIsEditingNode(false);
         setMessages([]); // reset chat for new character
+    };
+
+    const handleAutoGenerate = async () => {
+        if (!activeWorkspace) return;
+        setIsGenerating(true);
+        try {
+            const res = await fetch(`/api/lore?workspaceId=${activeWorkspace.id}`);
+            if (!res.ok) throw new Error("Failed to fetch lore");
+            const data = await res.json();
+            
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const newNodes: Node[] = data.map((item: any, i: number) => {
+                const typeStr = (item.type || '').toLowerCase();
+                const isProtag = typeStr.includes('protagonist') || typeStr.includes('thesis');
+                const isAntag = typeStr.includes('antagonist') || typeStr.includes('counter') || typeStr.includes('villain');
+                return {
+                    id: item.id,
+                    type: 'default',
+                    data: { label: item.name, loreData: item },
+                    position: { x: 250 + (i % 3) * 200, y: 150 + Math.floor(i / 3) * 150 },
+                    className: `${styles.charNode} ${isProtag ? styles.charNodeProtag : isAntag ? styles.charNodeAntag : styles.charNodeAlly}`
+                };
+            });
+            setNodes(newNodes);
+            setEdges([]);
+        } catch (err) {
+            console.error("Failed to auto-generate:", err);
+            alert("Failed to pull from database.");
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
+    const handleSaveNodeEdit = async () => {
+        const selNode = nodes.find(n => n.id === selectedNodeId);
+        if (!selNode || !activeWorkspace || !selNode.data.loreData) return;
+        
+        setIsSavingEdit(true);
+        try {
+            const res = await fetch('/api/lore', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id: selNode.id,
+                    workspaceId: activeWorkspace.id,
+                    name: selNode.data.label,
+                    type: selNode.data.loreData.type,
+                    synopsis: editSynopsis
+                })
+            });
+            if (!res.ok) throw new Error("Failed to save changes");
+            
+            // Update local state
+            setNodes(nds => nds.map(n => {
+                if (n.id === selNode.id) {
+                    return { ...n, data: { ...n.data, loreData: { ...n.data.loreData, synopsis: editSynopsis } } };
+                }
+                return n;
+            }));
+            setIsEditingNode(false);
+        } catch (err) {
+            console.error("Failed to save edit:", err);
+            alert("Save failed");
+        } finally {
+            setIsSavingEdit(false);
+        }
     };
 
     // Load state
@@ -210,6 +282,35 @@ export default function RelationshipWeb() {
 
             <div className={styles.workspaceArea}>
                 <div className={styles.flowWrapper}>
+                    {nodes.length <= 4 && (
+                        <div className={styles.onboardingBanner}>
+                            <div className={styles.onboardingBannerIcon}>
+                                <Users size={24} />
+                            </div>
+                            <div className={styles.onboardingBannerContent}>
+                                <h3>Welcome to the {isNonFicProject ? 'Conceptual Map' : 'Character Lab'}</h3>
+                                <p>
+                                    Use this space to visualize connections between your {isNonFicProject ? 'core arguments, processes, and concepts' : 'characters, factions, and locations'}.
+                                    Drag across the canvas to pan, scroll to zoom, and drag handles between nodes to create relationships.
+                                </p>
+                                <div className={styles.onboardingBannerActions}>
+                                    <button
+                                        onClick={handleAutoGenerate}
+                                        disabled={isGenerating}
+                                        style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'var(--tag-purple-bg)', color: 'var(--tag-purple-text)', border: '1px solid var(--tag-purple-text)', padding: '0.4rem 0.8rem', borderRadius: '4px', fontSize: '0.85rem', cursor: isGenerating ? 'not-allowed' : 'pointer' }}
+                                    >
+                                        {isGenerating ? <Loader2 size={14} className="spin" /> : <Sparkles size={14} />} Auto-Generate from DB
+                                    </button>
+                                    <button
+                                        style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'transparent', color: 'var(--text-primary)', border: '1px solid var(--border-light)', padding: '0.4rem 0.8rem', borderRadius: '4px', fontSize: '0.85rem', cursor: 'pointer' }}
+                                    >
+                                        <Database size={14} /> Add from Database
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     <ReactFlow
                         nodes={nodes}
                         edges={edges}
@@ -315,27 +416,49 @@ export default function RelationshipWeb() {
                                         </div>
 
                                         <div style={{ marginTop: '1.5rem' }}>
-                                            <strong>AI Synopsis:</strong>
-                                            <p style={{ marginTop: '0.5rem', fontSize: '0.85rem' }}>
-                                                {isNonFicProject ? (
-                                                    selectedNode.data.label === 'Captain Aris' ?
-                                                        "A primary driver of growth in the modern technological landscape. Exploring this concept involves analyzing key drivers." :
-                                                        "Entity details stored in Vector Database. Select 'Chat with Concept' to dive deeper."
-                                                ) : (
-                                                    selectedNode.data.label === 'Captain Aris' ?
-                                                        "A hardened veteran of the Hegemony Wars. Aris is driven by a deep sense of guilt over the colonies abandoned during the retreat. Currently leading a splinter crew on a stolen frigate." :
-                                                        "Entity details stored in Vector Database. Select 'Chat with Character' to dive deeper."
-                                                )}
-                                            </p>
+                                            <strong>{isNonFicProject ? 'Knowledge Base' : 'Lore Database'} Synopsis:</strong>
+                                            {isEditingNode ? (
+                                                <textarea
+                                                    value={editSynopsis}
+                                                    onChange={e => setEditSynopsis(e.target.value)}
+                                                    style={{ width: '100%', minHeight: '120px', marginTop: '0.5rem', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border-light)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', resize: 'vertical' }}
+                                                />
+                                            ) : (
+                                                <p style={{ marginTop: '0.5rem', fontSize: '0.85rem' }}>
+                                                    {selectedNode.data.loreData?.synopsis 
+                                                        ? selectedNode.data.loreData.synopsis 
+                                                        : 'Character profile mapped, but no synopsis details exist in the database yet.'}
+                                                </p>
+                                            )}
                                         </div>
 
-                                        <button className={styles.actionBtn} onClick={() => setIsChatting(true)}>
-                                            <MessageSquare size={16} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />
-                                            {isNonFicProject ? 'Chat with Concept' : 'Chat with Persona'}
-                                        </button>
-                                        <button className={styles.actionBtn} style={{ marginTop: '0.5rem', background: 'transparent' }}>
-                                            {isNonFicProject ? 'Edit Knowledge Base' : 'Edit Lore Database'}
-                                        </button>
+                                        {!isEditingNode ? (
+                                            <>
+                                                <button className={styles.actionBtn} onClick={() => setIsChatting(true)}>
+                                                    <MessageSquare size={16} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />
+                                                    {isNonFicProject ? 'Chat with Concept' : 'Chat with Persona'}
+                                                </button>
+                                                {selectedNode.data.loreData && (
+                                                    <button 
+                                                        className={styles.actionBtn} 
+                                                        style={{ marginTop: '0.5rem', background: 'transparent' }} 
+                                                        onClick={() => { setIsEditingNode(true); setEditSynopsis(selectedNode.data.loreData?.synopsis || ''); }}
+                                                    >
+                                                        {isNonFicProject ? 'Edit Knowledge Base' : 'Edit Lore Database'}
+                                                    </button>
+                                                )}
+                                            </>
+                                        ) : (
+                                            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+                                                <button className={styles.actionBtn} style={{ flex: 1, background: 'transparent', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }} onClick={() => setIsEditingNode(false)} disabled={isSavingEdit}>
+                                                    Cancel
+                                                </button>
+                                                <button className={styles.actionBtn} style={{ flex: 1 }} onClick={handleSaveNodeEdit} disabled={isSavingEdit}>
+                                                    {isSavingEdit ? <Loader2 size={16} className="spin" /> : <Save size={16} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />}
+                                                    Save Edit
+                                                </button>
+                                            </div>
+                                        )}
                                     </>
                                 )}
                             </div>

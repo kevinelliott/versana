@@ -25,7 +25,7 @@ export default function PricingPage() {
                             <li><Check size={16} /> <strong>Permanent Story Bible Memory</strong></li>
                             <li><Check size={16} /> 250,000 AI words / month</li>
                         </ul>
-                        <Link href="/workspace" className={styles.pricingBtnOutline}>Start 7-Day Trial</Link>
+                        <Link href="/signup?plan=pro" className={styles.pricingBtnOutline}>Start 7-Day Trial</Link>
                     </div>
 
                     <div className={`${styles.pricingCard} ${styles.pricingCardFeatured}`}>
@@ -40,7 +40,7 @@ export default function PricingPage() {
                             <li><Check size={16} /> Market Research & Visual Boards</li>
                             <li><Check size={16} /> Advanced Co-Pilot features</li>
                         </ul>
-                        <Link href="/workspace" className={styles.pricingBtnPrimary}>Start Pro Trial</Link>
+                        <Link href="/signup?plan=pro" className={styles.pricingBtnPrimary}>Start Pro Trial</Link>
                     </div>
 
                     <div className={styles.pricingCard}>
@@ -54,7 +54,7 @@ export default function PricingPage() {
                             <li><Check size={16} /> Professional Cover Design Engine</li>
                             <li><Check size={16} /> Instant eBook Export</li>
                         </ul>
-                        <Link href="/workspace" className={styles.pricingBtnOutline}>Go Master</Link>
+                        <Link href="/signup?plan=master" className={styles.pricingBtnOutline}>Go Master</Link>
                     </div>
                 </div>
 
@@ -70,7 +70,7 @@ export default function PricingPage() {
                     </div>
                     <div className={styles.freeTierAction} style={{ flex: 1, alignItems: 'flex-end' }}>
                         <div className={styles.price}>$0<span>/mo</span></div>
-                        <Link href="/workspace" className={styles.pricingBtnOutline} style={{ width: '100%', maxWidth: '200px', padding: '0.6rem' }}>Get Started Free</Link>
+                        <Link href="/signup?plan=free" className={styles.pricingBtnOutline} style={{ width: '100%', maxWidth: '200px', padding: '0.6rem' }}>Get Started Free</Link>
                     </div>
                 </div>
 

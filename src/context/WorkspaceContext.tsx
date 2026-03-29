@@ -6,6 +6,7 @@ export interface Workspace {
     id: string;
     name: string;
     genre: string | null;
+    custom_instructions?: string | null;
     board_state?: Record<string, unknown>;
 }
 
@@ -14,6 +15,13 @@ export interface Book {
     workspace_id: string;
     title: string;
     genre: string | null;
+    blurb: string;
+    cover_image_url: string;
+    is_public?: boolean;
+    total_views?: number;
+    total_likes?: number;
+    pen_name_id?: string;
+    target_word_count?: number;
 }
 
 export interface Chapter {
@@ -21,9 +29,17 @@ export interface Chapter {
     workspace_id: string;
     title: string;
     content: Record<string, unknown> | null; // TipTap JSON
+    word_count: number;
     order_index: number;
     created_at: string;
     updated_at: string;
+}
+
+export interface TypographySettings {
+    fontFamily: 'serif' | 'sans' | 'mono';
+    fontSize: number;
+    lineHeight: number;
+    maxWidth: number;
 }
 
 interface WorkspaceContextType {
@@ -49,8 +65,16 @@ interface WorkspaceContextType {
     setActiveBook: (book: Book | null) => void;
     books: Book[];
     setBooks: React.Dispatch<React.SetStateAction<Book[]>>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    contextToggles: any[];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    setContextToggles: React.Dispatch<React.SetStateAction<any[]>>;
+    isContextMatrixDetached: boolean;
+    setIsContextMatrixDetached: React.Dispatch<React.SetStateAction<boolean>>;
     isFocusMode: boolean;
     setIsFocusMode: React.Dispatch<React.SetStateAction<boolean>>;
+    isTypewriterMode: boolean;
+    setIsTypewriterMode: React.Dispatch<React.SetStateAction<boolean>>;
     selectedLoreId: string | null;
     setSelectedLoreId: React.Dispatch<React.SetStateAction<string | null>>;
     wordCount: number;
@@ -59,6 +83,10 @@ interface WorkspaceContextType {
     setReadabilityScore: React.Dispatch<React.SetStateAction<string>>;
     aiChatInitialPrompt: string | null;
     setAiChatInitialPrompt: React.Dispatch<React.SetStateAction<string | null>>;
+    needsOnboarding: boolean;
+    setNeedsOnboarding: React.Dispatch<React.SetStateAction<boolean>>;
+    typography: TypographySettings;
+    setTypography: React.Dispatch<React.SetStateAction<TypographySettings>>;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefined);
@@ -73,13 +101,39 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState<boolean>(true);
     const [isManuscriptNavOpen, setIsManuscriptNavOpen] = useState<boolean>(true);
     const [isRightSidebarOpen, setIsRightSidebarOpen] = useState<boolean>(true);
+    const [isContextMatrixDetached, setIsContextMatrixDetached] = useState<boolean>(false);
     const [isFocusMode, setIsFocusMode] = useState<boolean>(false);
+    const [isTypewriterMode, setIsTypewriterMode] = useState<boolean>(false);
     const [activeBook, setActiveBook] = useState<Book | null>(null);
     const [books, setBooks] = useState<Book[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [contextToggles, setContextToggles] = useState<any[]>([]);
     const [selectedLoreId, setSelectedLoreId] = useState<string | null>(null);
     const [wordCount, setWordCount] = useState<number>(0);
     const [readabilityScore, setReadabilityScore] = useState<string>('N/A');
     const [aiChatInitialPrompt, setAiChatInitialPrompt] = useState<string | null>(null);
+    const [needsOnboarding, setNeedsOnboarding] = useState<boolean>(false);
+    
+    // Load typography from localStorage
+    const [typography, setTypography] = useState<TypographySettings>(() => {
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('versana_typography');
+            if (saved) return JSON.parse(saved);
+        }
+        return {
+            fontFamily: 'serif',
+            fontSize: 18,
+            lineHeight: 1.6,
+            maxWidth: 800
+        };
+    });
+
+    // Save typography on change
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('versana_typography', JSON.stringify(typography));
+        }
+    }, [typography]);
 
     useEffect(() => {
         const fetchWorkspace = async () => {
@@ -87,7 +141,11 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
                 const res = await fetch('/api/workspaces/active');
                 if (res.ok) {
                     const data = await res.json();
-                    setActiveWorkspace(data);
+                    if (data.noWorkspaces) {
+                        setNeedsOnboarding(true);
+                    } else {
+                        setActiveWorkspace(data);
+                    }
                 } else if (res.status === 401) {
                     // Not authenticated
                     console.log('User not authenticated, skipping workspace fetch.');
@@ -99,6 +157,31 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
         fetchWorkspace();
     }, []);
+
+    // Load initial context toggles when workspace changes
+    useEffect(() => {
+        if (!activeWorkspace) {
+            setContextToggles([]);
+            return;
+        }
+        const fetchLore = async () => {
+            try {
+                const res = await fetch(`/api/lore?workspaceId=${activeWorkspace.id}`);
+                const data = await res.json();
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                setContextToggles(data.map((l: any) => ({
+                    id: l.id,
+                    label: l.name,
+                    active: true, // all active by default
+                    type: l.type.toLowerCase().replace(/[^a-z0-9]/g, ''),
+                    synopsis: l.synopsis
+                })));
+            } catch (err) {
+                console.error(err);
+            }
+        };
+        fetchLore();
+    }, [activeWorkspace]);
 
     // Load Books when Workspace changes
     useEffect(() => {
@@ -172,6 +255,18 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeWorkspace, activeBook]);
 
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Cmd+Shift+F toggles Focus Mode
+            if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'f') {
+                e.preventDefault();
+                setIsFocusMode(prev => !prev);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
+
     return (
         <WorkspaceContext.Provider value={{
             activeWorkspace, setActiveWorkspace,
@@ -183,13 +278,18 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
             isLeftSidebarOpen, setIsLeftSidebarOpen,
             isManuscriptNavOpen, setIsManuscriptNavOpen,
             isRightSidebarOpen, setIsRightSidebarOpen,
+            isContextMatrixDetached, setIsContextMatrixDetached,
             isFocusMode, setIsFocusMode,
+            isTypewriterMode, setIsTypewriterMode,
             activeBook, setActiveBook,
             books, setBooks,
+            contextToggles, setContextToggles,
             selectedLoreId, setSelectedLoreId,
             wordCount, setWordCount,
             readabilityScore, setReadabilityScore,
-            aiChatInitialPrompt, setAiChatInitialPrompt
+            aiChatInitialPrompt, setAiChatInitialPrompt,
+            needsOnboarding, setNeedsOnboarding,
+            typography, setTypography
         }}>
             {children}
         </WorkspaceContext.Provider>

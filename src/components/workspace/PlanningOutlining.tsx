@@ -2,12 +2,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
-import { LayoutList, BookOpen, Users, Plus, LayoutTemplate, GitMerge } from 'lucide-react';
+import { LayoutList, BookOpen, Users, Plus, LayoutTemplate, GitMerge, Clock, FileWarning, Play, Zap } from 'lucide-react';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import styles from './PlanningOutlining.module.css';
 import workspaceStyles from './Workspace.module.css';
 import RelationshipWeb from './RelationshipWeb';
 import ExpansionEngine from './ExpansionEngine';
+import PlotTimeline from './PlotTimeline';
+import WorldBuilder from './WorldBuilder';
+import CharacterLab from './CharacterLab';
 
 // Type definitions for our Kanban state
 interface CardData {
@@ -30,16 +33,11 @@ interface BoardData {
 }
 
 const initialData: BoardData = {
-    cards: {
-        'c1': { id: 'c1', title: 'The Inciting Incident', description: 'Aris receives the distress signal from the lost colony of Xol.', tags: ['Plot'] },
-        'c2': { id: 'c2', title: 'Introduce Mira', description: 'Show Mira jury-rigging the hyperdrive right before they have to jump.', tags: ['Character', 'Setting'] },
-        'c3': { id: 'c3', title: 'The First Threshold', description: 'The crew votes to abandon their corporate mandate and investigate the signal.', tags: ['Plot'] },
-        'c4': { id: 'c4', title: 'Arrival at Xol', description: 'The atmosphere is stripped. First signs of the mechanized threat.', tags: ['Setting'] },
-    },
+    cards: {},
     columns: {
         'col-ideas': { id: 'col-ideas', title: 'Lore Inbox (Hooks)', cardIds: [] },
-        'col-1': { id: 'col-1', title: 'Act I (Setup)', cardIds: ['c2', 'c1', 'c3'] },
-        'col-2': { id: 'col-2', title: 'Act II A (Rising Action)', cardIds: ['c4'] },
+        'col-1': { id: 'col-1', title: 'Act I (Setup)', cardIds: [] },
+        'col-2': { id: 'col-2', title: 'Act II A (Rising Action)', cardIds: [] },
         'col-3': { id: 'col-3', title: 'Act II B (The Turn)', cardIds: [] },
         'col-4': { id: 'col-4', title: 'Act III (Resolution)', cardIds: [] },
     },
@@ -461,38 +459,66 @@ export default function PlanningOutlining() {
 
                 <div className={styles.tabNav} style={{ marginTop: '1.5rem' }}>
                     <button
-                        className={`${styles.tabBtn} ${activeTab === String('kanban') ? styles.tabActive : ''}`}
+                        className={`${styles.tabBtn} ${activeTab === 'kanban' ? styles.tabActive : ''}`}
                         onClick={() => setActiveTab('kanban')}
                     >
-                        <LayoutList size={16} /> {isNonFicProject ? 'Kanban Outline' : 'Kanban Beats'}
+                        <LayoutList size={16} /> {isNonFicProject ? 'Article/Section Pipeline' : 'Beat Board'}
                     </button>
-                    {!isNonFicProject && (
-                        <button
-                            className={`${styles.tabBtn} ${activeTab === String('relationships') ? styles.tabActive : ''}`}
-                            onClick={() => setActiveTab('relationships')}
-                        >
-                            <Users size={16} /> Relationship Web
-                        </button>
-                    )}
                     <button
-                        className={`${styles.tabBtn} ${activeTab === String('notes') ? styles.tabActive : ''}`}
-                        onClick={() => setActiveTab('notes')}
+                        className={`${styles.tabBtn} ${activeTab === 'timeline' ? styles.tabActive : ''}`}
+                        onClick={() => setActiveTab('timeline')}
                     >
-                        <BookOpen size={16} /> Notes
+                        <Clock size={16} /> {isNonFicProject ? 'Historical/Process Outline' : 'Plot Timeline'}
                     </button>
                     <button
-                        className={`${styles.tabBtn} ${activeTab === String('expansion') ? styles.tabActive : ''}`}
+                        className={`${styles.tabBtn} ${activeTab === 'world' ? styles.tabActive : ''}`}
+                        onClick={() => setActiveTab('world')}
+                    >
+                        <BookOpen size={16} /> {isNonFicProject ? 'Concept Map' : 'World & Places Builder'}
+                    </button>
+                    <button
+                        className={`${styles.tabBtn} ${activeTab === 'characters' ? styles.tabActive : ''}`}
+                        onClick={() => setActiveTab('characters')}
+                    >
+                        <Users size={16} /> {isNonFicProject ? 'Concept Profiles' : 'Character Lab'}
+                    </button>
+                    <button
+                        className={`${styles.tabBtn} ${activeTab === 'relationships' ? styles.tabActive : ''}`}
+                        onClick={() => setActiveTab('relationships')}
+                    >
+                        <Users size={16} /> {isNonFicProject ? 'Conceptual Diagram' : 'Relationship Web'}
+                    </button>
+                    <button
+                        className={`${styles.tabBtn} ${activeTab === 'expansion' ? styles.tabActive : ''}`}
                         onClick={() => setActiveTab('expansion')}
                     >
-                        <GitMerge size={16} /> Expansion Engine
+                        <GitMerge size={16} /> {isNonFicProject ? 'Argument Engine' : 'Expansion Engine'}
                     </button>
                 </div>
             </div>
 
             <div className={workspaceStyles.workspace} style={{ display: 'flex', flexDirection: 'column', flexGrow: 1, minHeight: 0 }}>
+                {activeTab === 'characters' && (
+                    <div style={{ flexGrow: 1, marginTop: '1rem', overflowY: 'auto', border: '1px solid var(--border-light)', borderRadius: '8px' }}>
+                        <CharacterLab />
+                    </div>
+                )}
+
                 {activeTab === 'relationships' && (
                     <div style={{ flexGrow: 1, marginTop: '1rem' }}>
                         <RelationshipWeb />
+                    </div>
+                )}
+
+                {activeTab === 'world' && (
+                    <div style={{ flexGrow: 1, marginTop: '1rem', overflowY: 'auto', border: '1px solid var(--border-light)', borderRadius: '8px' }}>
+                        <WorldBuilder />
+                    </div>
+                )}
+
+                {activeTab === 'timeline' && (
+                    <div style={{ flexGrow: 1, marginTop: '1rem', overflowY: 'auto' }}>
+                        <PlotTimeline />
                     </div>
                 )}
 
@@ -531,35 +557,74 @@ export default function PlanningOutlining() {
                                 </div>
                             </div>
 
-                            <div className={styles.boardScroll} style={{ paddingLeft: '1.5rem' }}>
-                                {board.columnOrder.map((columnId) => {
-                                    const column = board.columns[columnId];
-                                    const cards = column.cardIds.map(cardId => board.cards[cardId]);
+                            <div className={styles.boardScroll} style={{ paddingLeft: '1.5rem', flexDirection: 'column' }}>
 
-                                    return (
-                                        <div key={column.id} className={styles.column}>
-                                            <div className={styles.columnHeader}>
-                                                <h3 className={styles.columnTitle}>{column.title}</h3>
-                                                <span className={styles.columnBadge}>{cards.length} {isNonFicProject ? 'sections' : 'beats'}</span>
+                                <div style={{ marginBottom: '1.5rem', padding: '1rem 1.5rem', background: 'var(--tag-blue-bg)', border: '1px solid var(--tag-blue-text)', borderRadius: '8px', flexShrink: 0 }}>
+                                    <h4 style={{ color: 'var(--tag-blue-text)', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <Zap size={16} /> Workflow Pro-Tip
+                                    </h4>
+                                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: 1.5, margin: 0 }}>
+                                        Drag {isNonFicProject ? 'sections' : 'beats'} from the board and drop them directly onto your Chapters in the left sidebar. <strong style={{ color: 'var(--text-primary)' }}>In Phase 4, the Draft Generation AI will automatically read those assigned cards to write the scene exactly how you outlined it.</strong>
+                                    </p>
+                                </div>
+
+                                {Object.values(board.cards).length <= 4 && (
+                                    <div className={styles.onboardingBanner} style={{ width: '100%', maxWidth: '800px' }}>
+                                        <div className={styles.onboardingBannerIcon}>
+                                            <Play size={24} />
+                                        </div>
+                                        <div className={styles.onboardingBannerContent}>
+                                            <h3>Welcome to {isNonFicProject ? 'Article/Section Planning' : 'Beat Mapping'}</h3>
+                                            <p>
+                                                This is where you outline the core {isNonFicProject ? 'arguments and structure' : 'events and emotional beats'} of your project before drafting. Drag &amp; drop {isNonFicProject ? 'sections' : 'beats'} between acts to re-arrange the flow, or assign them directly to manuscript chapters on the left.
+                                            </p>
+                                            <div className={styles.onboardingBannerActions}>
+                                                <button
+                                                    onClick={loadTemplate}
+                                                    style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'var(--accent-primary)', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '4px', fontSize: '0.85rem', cursor: 'pointer' }}
+                                                >
+                                                    <LayoutTemplate size={14} /> Start with a Template
+                                                </button>
+                                                <button
+                                                    onClick={() => handleAddBeat('col-ideas')}
+                                                    style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'transparent', color: 'var(--text-primary)', border: '1px solid var(--border-light)', padding: '0.5rem 1rem', borderRadius: '4px', fontSize: '0.85rem', cursor: 'pointer' }}
+                                                >
+                                                    <Plus size={14} /> Add Manual {isNonFicProject ? 'Section' : 'Beat'}
+                                                </button>
                                             </div>
+                                        </div>
+                                    </div>
+                                )}
 
-                                            <Droppable droppableId={column.id}>
-                                                {(provided) => (
-                                                    <div
-                                                        className={styles.cardList}
-                                                        ref={provided.innerRef}
-                                                        {...provided.droppableProps}
-                                                    >
-                                                        {cards.map((card, index) => (
-                                                            <Draggable key={card.id} draggableId={card.id} index={index}>
-                                                                {(provided, snapshot) => (
-                                                                    <div
-                                                                        className={`${styles.card} ${snapshot.isDragging ? styles.cardDragging : ''}`}
-                                                                        ref={provided.innerRef}
-                                                                        {...provided.draggableProps}
-                                                                        {...provided.dragHandleProps}
-                                                                    >
-                                                                        <h4 className={styles.cardTitle}>{card.title}</h4>
+                                <div style={{ display: 'flex', gap: '1.5rem', flexGrow: 1, minHeight: 0 }}>
+                                    {board.columnOrder.map((columnId) => {
+                                        const column = board.columns[columnId];
+                                        const cards = column.cardIds.map(cardId => board.cards[cardId]);
+
+                                        return (
+                                            <div key={column.id} className={styles.column}>
+                                                <div className={styles.columnHeader}>
+                                                    <h3 className={styles.columnTitle}>{column.title}</h3>
+                                                    <span className={styles.columnBadge}>{cards.length} {isNonFicProject ? 'sections' : 'beats'}</span>
+                                                </div>
+
+                                                <Droppable droppableId={column.id}>
+                                                    {(provided) => (
+                                                        <div
+                                                            className={styles.cardList}
+                                                            ref={provided.innerRef}
+                                                            {...provided.droppableProps}
+                                                        >
+                                                            {cards.map((card, index) => (
+                                                                <Draggable key={card.id} draggableId={card.id} index={index}>
+                                                                    {(provided, snapshot) => (
+                                                                        <div
+                                                                            className={`${styles.card} ${snapshot.isDragging ? styles.cardDragging : ''}`}
+                                                                            ref={provided.innerRef}
+                                                                            {...provided.draggableProps}
+                                                                            {...provided.dragHandleProps}
+                                                                        >
+                                                                            <h4 className={styles.cardTitle}>{card.title}</h4>
                                                                         <p className={styles.cardDesc}>{card.description}</p>
 
                                                                         <div className={styles.cardFooter}>
@@ -592,6 +657,7 @@ export default function PlanningOutlining() {
                                         </div>
                                     );
                                 })}
+                                </div>
                             </div>
                         </div>
                     </DragDropContext>

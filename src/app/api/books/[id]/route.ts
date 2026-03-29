@@ -22,7 +22,12 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         const { data: book, error } = await supabase
             .from('books')
             .update({
-                title: updates.title,
+                ...(updates.title !== undefined ? { title: updates.title } : {}),
+                ...(updates.blurb !== undefined ? { blurb: updates.blurb } : {}),
+                ...(updates.cover_image_url !== undefined ? { cover_image_url: updates.cover_image_url } : {}),
+                ...(updates.is_public !== undefined ? { is_public: updates.is_public } : {}),
+                ...(updates.pen_name_id !== undefined ? { pen_name_id: updates.pen_name_id } : {}),
+                ...(updates.target_word_count !== undefined ? { target_word_count: updates.target_word_count } : {}),
                 updated_at: new Date().toISOString()
             })
             .eq('id', id)

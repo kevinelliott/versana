@@ -57,10 +57,25 @@ export async function POST(req: Request) {
             }
         }
 
-        const { workspaceId, title, genre, type, prompt, count } = await req.json();
+        const { workspaceId, title, genre, type, prompt, count, creativeParameters } = await req.json();
 
         if (!workspaceId || !title) {
             return NextResponse.json({ error: 'workspaceId and title required' }, { status: 400 });
+        }
+
+        // Tier check logic
+        const { data: userProfile } = await supabase.from('users').select('subscription_tier').eq('id', userId).single();
+        const tier = userProfile?.subscription_tier || 'free';
+
+        let maxBooks = 1;
+        if (tier === 'pro') maxBooks = 5;
+        if (tier === 'master') maxBooks = 99999;
+
+        const adminDb = process.env.NODE_ENV === 'development' ? createAdminClient() : supabase;
+        const { count: bookCount } = await adminDb.from('books').select('*', { count: 'exact', head: true }).eq('workspace_id', workspaceId);
+
+        if ((bookCount || 0) >= maxBooks) {
+            return NextResponse.json({ error: `Book limit of ${maxBooks} reached for your current tier (${tier.toUpperCase()}). Please upgrade your plan.` }, { status: 403 });
         }
 
         const { data: newBook, error: createError } = await supabase
@@ -84,10 +99,14 @@ export async function POST(req: Request) {
 
                     const isNonFic = workspace?.genre?.toLowerCase().includes('[non-fiction]');
                     const loreContext = lore?.map((l: Record<string, string>) => `${l.entity_name} (${l.entity_type}): ${l.synopsis}`).join('\n') || 'No context provided.';
+                    
+                    const toneInstructions = creativeParameters 
+                        ? `\n\nCRITICAL DIRECTIVES:\n- Tone/Voice: ${creativeParameters.storyTone}\n- Focus: ${creativeParameters.pacingArc}\n- Target Draft Length per Chapter: ${creativeParameters.chapterLength} words (approximate).`
+                        : '';
 
                     const systemPrompt = isNonFic
-                        ? `Act as an expert non-fiction editor. Book Title: "${title}". Workspace: "${workspace?.name}". Knowledge Base: \n${loreContext}\n\nTask: Based on the provided prompt, generate a structural outline for a new book.`
-                        : `Act as an expert fiction author. Book Title: "${title}". Universe: "${workspace?.name}". Lore: \n${loreContext}\n\nTask: Based on the provided prompt, generate a chapter-by-chapter outline for a new book.`;
+                        ? `Act as an expert non-fiction editor. Book Title: "${title}". Workspace: "${workspace?.name}". Knowledge Base: \n${loreContext}${toneInstructions}\n\nTask: Based on the provided prompt, generate a structural outline for a new book.`
+                        : `Act as an expert fiction author. Book Title: "${title}". Universe: "${workspace?.name}". Lore: \n${loreContext}${toneInstructions}\n\nTask: Based on the provided prompt, generate a chapter-by-chapter outline for a new book.`;
 
                     const targetCount = count || 5;
 
@@ -114,27 +133,38 @@ export async function POST(req: Request) {
                         }));
                         await supabase.from('chapters').insert(chapterInserts);
                     } else if (type === 'generate') {
-                        const chapterPromises = object.chapters.map(async (ch, i) => {
-                            const { text } = await generateText({
-                                model: anthropic('claude-3-haiku-20240307'),
-                                prompt: `${systemPrompt}\n\nWrite the complete prose/content for the following section/chapter. Do not include titles or pleasantries, just the content.\n\nChapter/Section Title: ${ch.title}\nChapter/Section Summary: ${ch.description}\n\nMake it at least 2 paragraphs of high-quality content based heavily on the Knowledge Base / Lore provided earlier.`,
+                        // Process in staggered batches of 4 to avoid rate limits
+                        const batchSize = 4;
+                        const resolvedChapters = [];
+                        
+                        for (let i = 0; i < object.chapters.length; i += batchSize) {
+                            const batch = object.chapters.slice(i, i + batchSize);
+                            
+                            const promises = batch.map(async (ch, idx) => {
+                                const globalIndex = i + idx;
+                                const { text } = await generateText({
+                                    model: anthropic('claude-3-haiku-20240307'),
+                                    prompt: `${systemPrompt}\n\nWrite the complete prose/content for the following section/chapter. Do not include titles or pleasantries, just the content.\n\nChapter/Section Title: ${ch.title}\nChapter/Section Summary: ${ch.description}\n\nCRITICAL: You are mandated to generate extensive prose. Your target length is roughly ${creativeParameters?.chapterLength || '2000'} words of deeply engaging text. Do not stop early. Expand deeply on the Knowledge Base / Lore provided earlier to fill this length organically without padding.`,
+                                });
+
+                                const paragraphs = text.split('\n\n').filter(p => p.trim() !== '').map(p => ({
+                                    type: "paragraph",
+                                    content: [{ type: "text", text: p.trim() }]
+                                }));
+
+                                return {
+                                    workspace_id: workspaceId,
+                                    book_id: newBook.id,
+                                    title: ch.title,
+                                    order_index: globalIndex,
+                                    content: { type: "doc", content: paragraphs }
+                                };
                             });
+                            
+                            const results = await Promise.all(promises);
+                            resolvedChapters.push(...results);
+                        }
 
-                            const paragraphs = text.split('\n\n').filter(p => p.trim() !== '').map(p => ({
-                                type: "paragraph",
-                                content: [{ type: "text", text: p.trim() }]
-                            }));
-
-                            return {
-                                workspace_id: workspaceId,
-                                book_id: newBook.id,
-                                title: ch.title,
-                                order_index: i,
-                                content: { type: "doc", content: paragraphs }
-                            };
-                        });
-
-                        const resolvedChapters = await Promise.all(chapterPromises);
                         await supabase.from('chapters').insert(resolvedChapters);
                     }
                 } catch (aiErr) {

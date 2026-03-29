@@ -478,3 +478,111 @@
         gap: 1.5rem;
     }
 }
+
+/* SETTINGS FORMS */
+.settingsGroup {
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.settingsGroup:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.settingsTitle {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.formLabel {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.formInput {
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.formInput:focus {
+    border-color: var(--accent-blue);
+}
+
+.btnPrimary {
+    background: var(--accent-blue);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    transition: opacity 0.2s;
+}
+
+.btnPrimary:hover {
+    opacity: 0.9;
+}
+
+.btnPrimary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.themeSelector {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+
+.themeOption {
+    border: 2px solid var(--border-light);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    background: var(--bg-primary);
+    transition: all 0.2s;
+    color: var(--text-secondary);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.themeOption svg {
+    margin-bottom: 0.5rem;
+}
+
+.themeOption:hover {
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+.themeOption.active {
+    border-color: var(--accent-blue);
+    color: var(--accent-blue);
+    background: var(--tag-blue-bg);
+}

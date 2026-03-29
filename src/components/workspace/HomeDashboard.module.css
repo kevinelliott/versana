@@ -1,0 +1,274 @@
+.dashboardContainer {
+    padding: 3rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+    color: var(--text-primary);
+    overflow-y: auto;
+    height: 100vh;
+}
+
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+.emptyState h2 {
+    font-size: 1.5rem;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.header {
+    margin-bottom: 2.5rem;
+}
+
+.header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem;
+    letter-spacing: -0.02em;
+}
+
+.subtitle {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    margin: 0;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+}
+
+.wideCard {
+    grid-column: 1 / -1;
+}
+
+.card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+}
+
+.cardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.cardHeader h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-primary);
+}
+
+.cardHeader h3 svg {
+    color: var(--accent-blue);
+}
+
+.badge {
+    background: var(--bg-hover);
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 12px;
+    font-weight: 600;
+}
+
+/* Goal Display */
+.goalDisplay {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    flex: 1;
+}
+
+.ringWrapper {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    flex-shrink: 0;
+}
+
+.ringSvg {
+    transform: rotate(-90deg);
+}
+
+.ringBg {
+    fill: none;
+    stroke: var(--border-light);
+    stroke-width: 8;
+}
+
+.ringProgress {
+    fill: none;
+    stroke-width: 8;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1s ease-out;
+}
+
+.ringValue {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.goalStats {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    flex: 1;
+}
+
+.statLine {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.statLine:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.statLabel {
+    color: var(--text-secondary);
+}
+
+.statValue {
+    font-weight: 600;
+}
+
+.muted {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin: auto 0;
+    text-align: center;
+}
+
+/* Actions Grid */
+.actionGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    flex: 1;
+}
+
+.actionBtn {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.actionBtn:hover:not(:disabled) {
+    border-color: var(--accent-blue);
+    background: var(--bg-hover);
+    transform: translateY(-2px);
+}
+
+.actionBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.actionBtn span {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.actionBtn strong {
+    font-size: 1rem;
+    color: var(--text-primary);
+}
+
+/* List Items */
+.listContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.listItem {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    background: var(--bg-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.listItem:hover {
+    border-color: var(--accent-blue);
+    background: var(--bg-hover);
+}
+
+.listIcon {
+    color: var(--text-secondary);
+    flex-shrink: 0;
+}
+
+.listContent {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.listContent h4 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.listContent span {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.listAction {
+    color: var(--accent-blue);
+    opacity: 0;
+    transform: translateX(-10px);
+    transition: all 0.2s ease;
+}
+
+.listItem:hover .listAction {
+    opacity: 1;
+    transform: translateX(0);
+}

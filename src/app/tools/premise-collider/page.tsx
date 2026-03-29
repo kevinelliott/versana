@@ -31,7 +31,15 @@ export default function PremiseCollider() {
             });
 
             if (!res.ok) {
-                throw new Error('Failed to collide the concepts.');
+                const errText = await res.text().catch(() => null);
+                let errMsg = 'Failed to collide the concepts.';
+                try {
+                    const errJson = JSON.parse(errText || '{}');
+                    if (errJson.error) errMsg = errJson.error;
+                } catch {
+                    if (errText) errMsg = errText;
+                }
+                throw new Error(`⚠️ System Notification: ${errMsg}`);
             }
 
             const data = await res.json();

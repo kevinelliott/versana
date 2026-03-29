@@ -1,0 +1,145 @@
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(2px);
+}
+
+.modalContent {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    padding: 2rem;
+    width: 800px;
+    max-width: 95vw;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+}
+
+.modalHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.modalTitle {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 0.5rem 0;
+}
+
+.modalDesc {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.closeBtn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.closeBtn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.phasesGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.phaseCard {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    border-radius: 8px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.phaseCard:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    border-color: var(--accent-blue);
+}
+
+.iconBox {
+    background: var(--tag-purple-bg);
+    color: var(--tag-purple-text);
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.phaseText h3 {
+    margin: 0 0 0.4rem 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.phaseText p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+.modalActions {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-light);
+}
+
+.actionBtn {
+    background: var(--tag-purple-bg);
+    color: var(--tag-purple-text);
+    border: 1px solid var(--tag-purple-text);
+    padding: 0.6rem 2rem;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.actionBtn:hover {
+    background: var(--tag-purple-text);
+    color: var(--bg-primary);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .phasesGrid {
+        grid-template-columns: 1fr;
+    }
+}

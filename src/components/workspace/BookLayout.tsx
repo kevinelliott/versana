@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Settings2, Download, Image as ImageIcon, Sparkles } from 'lucide-react';
+import { Settings2, Download, Image as ImageIcon, Sparkles, Loader2 } from 'lucide-react';
 import styles from './BookLayout.module.css';
 import workspaceStyles from './Workspace.module.css';
 import { useWorkspace } from '@/context/WorkspaceContext';
@@ -18,6 +18,7 @@ export default function BookLayout() {
 
     const [isGeneratingMatter, setIsGeneratingMatter] = useState(false);
     const [isGeneratingInsert, setIsGeneratingInsert] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     const [generatedOrnamentUrl, setGeneratedOrnamentUrl] = useState<string | null>(null);
     const [generatedDropCapUrl, setGeneratedDropCapUrl] = useState<string | null>(null);
@@ -28,6 +29,7 @@ export default function BookLayout() {
     const handleGenerateMatter = async () => {
         if (!activeBook) return;
         setIsGeneratingMatter(true);
+        setError(null);
         try {
             // Send requests to generate front-matter chapters sequentially to preserve order
             const matters = [
@@ -36,14 +38,26 @@ export default function BookLayout() {
                 { title: "About the Author" }
             ];
             for (let i = 0; i < matters.length; i++) {
-                await fetch('/api/chapters', {
+                const res = await fetch('/api/chapters', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ bookId: activeBook.id, workspaceId: activeWorkspace?.id, title: matters[i].title, orderIndex: -(matters.length - i) }) // Negative order to put at front
                 });
+                if (!res.ok) {
+                    const errText = await res.text().catch(() => null);
+                    let errMsg = 'Failed to generate front matter';
+                    try {
+                        const errJson = JSON.parse(errText || '{}');
+                        if (errJson.error) errMsg = errJson.error;
+                    } catch {
+                        if (errText) errMsg = errText;
+                    }
+                    throw new Error(`⚠️ System Notification: ${errMsg}`);
+                }
             }
-        } catch (e) {
+        } catch (e: any) {
             console.error(e);
+            setError(e.message || "An error occurred");
         } finally {
             setIsGeneratingMatter(false);
         }
@@ -51,6 +65,7 @@ export default function BookLayout() {
 
     const handleGenerateInsert = async () => {
         setIsGeneratingInsert(true);
+        setError(null);
         try {
             const res = await fetch('/api/ai/generate-asset', {
                 method: 'POST',
@@ -63,10 +78,22 @@ export default function BookLayout() {
                     workspaceId: activeWorkspace?.id
                 })
             });
+            if (!res.ok) {
+                const errText = await res.text().catch(() => null);
+                let errMsg = 'Failed to generate insert';
+                try {
+                    const errJson = JSON.parse(errText || '{}');
+                    if (errJson.error) errMsg = errJson.error;
+                } catch {
+                    if (errText) errMsg = errText;
+                }
+                throw new Error(`⚠️ System Notification: ${errMsg}`);
+            }
             const data = await res.json();
             if (data.url) setGeneratedInsertUrl(data.url);
-        } catch (e) {
+        } catch (e: any) {
             console.error("Failed to generate insert", e);
+            setError(e.message || "An error occurred");
         } finally {
             setIsGeneratingInsert(false);
         }
@@ -74,6 +101,7 @@ export default function BookLayout() {
 
     const handleGenerateAssets = async () => {
         setIsGenerating(true);
+        setError(null);
         try {
             if (ornamentEnabled) {
                 const res = await fetch('/api/ai/generate-asset', {
@@ -85,6 +113,17 @@ export default function BookLayout() {
                         workspaceId: activeWorkspace?.id
                     })
                 });
+                if (!res.ok) {
+                    const errText = await res.text().catch(() => null);
+                    let errMsg = 'Failed to generate ornament';
+                    try {
+                        const errJson = JSON.parse(errText || '{}');
+                        if (errJson.error) errMsg = errJson.error;
+                    } catch {
+                        if (errText) errMsg = errText;
+                    }
+                    throw new Error(`⚠️ System Notification: ${errMsg}`);
+                }
                 const data = await res.json();
                 if (data.url) setGeneratedOrnamentUrl(data.url);
             }
@@ -99,11 +138,23 @@ export default function BookLayout() {
                         workspaceId: activeWorkspace?.id
                     })
                 });
+                if (!res.ok) {
+                    const errText = await res.text().catch(() => null);
+                    let errMsg = 'Failed to generate dropcap';
+                    try {
+                        const errJson = JSON.parse(errText || '{}');
+                        if (errJson.error) errMsg = errJson.error;
+                    } catch {
+                        if (errText) errMsg = errText;
+                    }
+                    throw new Error(`⚠️ System Notification: ${errMsg}`);
+                }
                 const data = await res.json();
                 if (data.url) setGeneratedDropCapUrl(data.url);
             }
-        } catch (e) {
+        } catch (e: any) {
             console.error("Failed to generate assets", e);
+            setError(e.message || "An error occurred");
         } finally {
             setIsGenerating(false);
         }
@@ -122,6 +173,12 @@ export default function BookLayout() {
             <div className={`${workspaceStyles.workspace} ${styles.gridContainer}`}>
                 {/* Left Sidebar: Controls */}
                 <div className={styles.controlsPanel}>
+                    {error && (
+                        <div style={{ color: 'var(--bg-primary)', background: 'var(--accent-terracotta)', padding: '1rem', borderRadius: '6px', fontSize: '0.9rem', marginBottom: '1rem' }}>
+                            {error}
+                        </div>
+                    )}
+
                     <div className={styles.controlSection}>
                         <h3 className={styles.sectionTitle}>
                             <Settings2 size={18} /> Typographic Settings
@@ -224,7 +281,7 @@ export default function BookLayout() {
                             onClick={handleGenerateAssets}
                             disabled={isGenerating}
                         >
-                            <ImageIcon size={16} /> {isGenerating ? 'Generating via Nano Banana Pro...' : 'Generate Assets (Nano Banana Pro)'}
+                            <ImageIcon size={16} /> {isGenerating ? 'Generating via Versana AI...' : 'Generate Assets (Versana AI)'}
                         </button>
                     </div>
 
@@ -257,7 +314,7 @@ export default function BookLayout() {
                             onClick={handleGenerateInsert}
                             disabled={isGeneratingInsert}
                         >
-                            {isGeneratingInsert ? 'Generating Layout Insert...' : 'Generate Full-Page Insert'}
+                            {isGeneratingInsert ? <><Loader2 size={16} className="spinner" /> Generating Layout Insert...</> : 'Generate Full-Page Insert'}
                         </button>
                     </div>
 
@@ -276,9 +333,22 @@ export default function BookLayout() {
                         </button>
                         <button
                             className={styles.actionBtn}
-                            onClick={() => window.print()}
+                            onClick={() => activeWorkspace && activeBook && window.open(`/api/export?workspaceId=${activeWorkspace.id}&bookId=${activeBook.id}&format=docx`, '_blank')}
                         >
-                            Export as Print PDF
+                            Export as Word (DOCX)
+                        </button>
+                        <button
+                            className={styles.actionBtn}
+                            onClick={() => activeWorkspace && activeBook && window.open(`/api/export?workspaceId=${activeWorkspace.id}&bookId=${activeBook.id}&format=pdf`, '_blank')}
+                        >
+                            Export as PDF
+                        </button>
+                        <button
+                            className={styles.actionBtn}
+                            onClick={() => window.print()}
+                            style={{ background: 'transparent', border: '1px solid var(--border-light)', color: 'var(--text-secondary)' }}
+                        >
+                            Browser Print Preview
                         </button>
                     </div>
                 </div>
@@ -290,7 +360,11 @@ export default function BookLayout() {
                         style={{
                             fontFamily: font === 'Garamond' ? '"EB Garamond", serif' :
                                 font === 'Baskerville' ? '"Libre Baskerville", serif' :
-                                    '"Palatino Linotype", "Book Antiqua", Palatino, serif'
+                                    '"Palatino Linotype", "Book Antiqua", Palatino, serif',
+                            maxWidth: trimSize === '5x8' ? '500px' : trimSize === '5.5x8.5' ? '550px' : '600px',
+                            minHeight: trimSize === '5x8' ? '800px' : trimSize === '5.5x8.5' ? '850px' : '900px',
+                            padding: trimSize === '5x8' ? '3rem' : trimSize === '5.5x8.5' ? '3.5rem' : '4rem',
+                            transition: 'all 0.3s ease'
                         }}
                     >
                         <div
@@ -321,7 +395,7 @@ export default function BookLayout() {
                         </p>
 
                         <p className={styles.pageText}>
-                            {isNonFicProject ? 'In a pivotal study conducted by the Harvard Business Review, over 400 executives were surveyed on their strategic planning cadences. The results were astounding. Less than 12% maintained a rigid commitment to their 5-year visions when faced with immediate market volatility.' : '&quot;They&apos;re coming from the eastern ridge,&quot; shouted Mira, pointing toward the jagged peaks. She wiped frost from her visor, her expression grim. &quot;The scanners are picking up heavy armor. Mechanized infantry.&quot;'}
+                            {isNonFicProject ? 'In a pivotal study conducted by the Harvard Business Review, over 400 executives were surveyed on their strategic planning cadences. The results were astounding. Less than 12% maintained a rigid commitment to their 5-year visions when faced with immediate market volatility.' : "\"They're coming from the eastern ridge,\" shouted Mira, pointing toward the jagged peaks. She wiped frost from her visor, her expression grim. \"The scanners are picking up heavy armor. Mechanized infantry.\""}
                         </p>
 
                         <p className={styles.pageText}>
@@ -336,11 +410,11 @@ export default function BookLayout() {
                         )}
 
                         <p className={styles.pageTextNoIndent}>
-                            {isNonFicProject ? 'Consider the case of Apollo Systems. In 2018, they faced total market disruption from smaller, leaner startups. Instead of abandoning their enterprise-grade roadmap to chase trend-driven features, they doubled down on their core infrastructure.' : 'The first explosion rattled the foundation of the fort. Dust fell from the ancient stone ceiling, coating Aris&apos;s armor in a fine, gray powder. The sound was deafening, a concussive wave that vibrated through their boots. The siege had begun.'}
+                            {isNonFicProject ? 'Consider the case of Apollo Systems. In 2018, they faced total market disruption from smaller, leaner startups. Instead of abandoning their enterprise-grade roadmap to chase trend-driven features, they doubled down on their core infrastructure.' : "The first explosion rattled the foundation of the fort. Dust fell from the ancient stone ceiling, coating Aris's armor in a fine, gray powder. The sound was deafening, a concussive wave that vibrated through their boots. The siege had begun."}
                         </p>
 
                         <p className={styles.pageText}>
-                            {isNonFicProject ? 'By 2022, when those agile startups struggled with technical debt and failing scale, Apollo Systems acquired three of their largest competitors. Their foundation proved to be the ultimate competitive moat.' : '&quot;Hold the line!&quot; Aris bellowed over the comms channel. &quot;Nobody fires until I give the order!&quot;'}
+                            {isNonFicProject ? 'By 2022, when those agile startups struggled with technical debt and failing scale, Apollo Systems acquired three of their largest competitors. Their foundation proved to be the ultimate competitive moat.' : "\"Hold the line!\" Aris bellowed over the comms channel. \"Nobody fires until I give the order!\""}
                         </p>
 
                         {generatedInsertUrl && (

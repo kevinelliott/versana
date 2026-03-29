@@ -18,9 +18,9 @@ export default function MarketingNav() {
                 <Link href="/pricing" className={styles.navLink}>Pricing</Link>
                 <Link href="/manifesto" className={styles.navLink}>The Manifesto</Link>
                 <Link href="/docs" className={styles.navLink}>Docs</Link>
-                <Link href="/workspace" className={styles.navLink}>Login</Link>
+                <Link href="/login" className={styles.navLink}>Login</Link>
                 <ThemeToggle />
-                <Link href="/workspace" className={styles.ctaButtonPrimary}>
+                <Link href="/signup" className={styles.ctaButtonPrimary}>
                     Start Writing Free
                 </Link>
             </div>

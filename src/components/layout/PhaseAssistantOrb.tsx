@@ -8,29 +8,29 @@ import styles from './PhaseAssistantOrb.module.css';
 
 const FIC_TIPS: Record<string, string> = {
     '1': "Welcome to Ideation! Try using the What-If Engine to push your premise into darker or more unexpected territory.",
-    '2': "You're Outlining. Drag cards around the Save the Cat beat board. Try mapping character alliances in the Relationship Web.",
-    '3': "Research Phase. When you find a good article via the World-Wide Web search, hit 'Save to Lore Bible' to persist it to your Context Matrix.",
-    '4': "You're Drafting! Highlight any text to bring up the Editorial Co-pilot for rewrites, or open the Draft & Preview pane to review AI generated scenes.",
-    '5': "Deep Edits. Run a full manuscript scan to detect plot holes, character inconsistencies, and pacing issues before moving to Layout.",
-    '6': "Formatting Phase. Adjust your trim size and fonts, and generate AI chapter ornamentation before exporting your ePub.",
-    '7': "Cover Design. Versana will read your manuscript to generate an optimal Nano Banana Pro image prompt!",
-    '8': "Publishing Prep. Let's extract your BISAC codes and generate your Amazon Blurb based on your final story.",
+    '2': "Outlining. Pro-Tip: Drag Beats directly onto your Chapters. In Phase 4, the Draft Generation AI will strictly read those Beats to write the scene!",
+    '3': "Research. Everything saved to your Lore Bible here becomes the absolute ground-truth for your Fact-Checker later in Phase 5.",
+    '4': "Drafting! The AI reads the Beats you assigned in Phase 2 to write the scene. Highlight any text to bring up the Editorial Co-pilot for targeted rewrites.",
+    '5': "Deep Edits. The Logic Fact-Checker strictly cross-references your drafted text against the Character and World lore you built in Phase 3.",
+    '6': "Formatting Phase. Adjust your trim size and fonts, and generate AI chapter ornamentation before exporting your ePub or PDF.",
+    '7': "Cover Design. Versana reads your Phase 3 Lore Bible to generate an optimal Midjourney prompt for your cover art.",
+    '8': "Publishing Prep. Versana synthesizes your entire Context Matrix to write a compelling Amazon Blurb and extract BISAC metadata!",
 };
 
 const NON_FIC_TIPS: Record<string, string> = {
-    '1': "Welcome to Ideation! Try using the Socratic Engine to refine your core thesis.",
-    '2': "You're Outlining. Drag cards to structure your argument. Group concepts in the Conceptual Map.",
-    '3': "Research Phase. Find academic sources or statistics and hit 'Save to Knowledge Base' to persist to your project.",
-    '4': "You're Drafting! Highlight any text to bring up the Editorial Co-pilot for rewrites, or open the Draft & Preview pane to review generated sections.",
-    '5': "Review & Fact-Checking. Run an audit to verify logic constraints and structural integrity.",
-    '6': "Formatting Phase. Adjust your typographic settings and generate diagrams before exporting your PDF.",
-    '7': "Cover Design. Versana will conceptualize your core argument as a striking professional book cover.",
-    '8': "Publishing Prep. Extract SEO keywords and let AI write a compelling back-cover synopsis for your audience.",
+    '1': "Welcome to Ideation! Try using the Socratic Engine to stress-test your core thesis.",
+    '2': "Outlining. Pro-Tip: Drag Sections directly onto your Chapters. In Phase 4, the AI will build its arguments based entirely on these mapped sections.",
+    '3': "Research. Data and case studies saved to your Knowledge Base here become the absolute ground-truth for your Fact-Checker in Phase 5.",
+    '4': "Drafting! The AI builds arguments strictly based on the Sections you assigned in Phase 2. Highlight text to use the Editorial Co-pilot.",
+    '5': "Deep Edits. The Audit tool strictly cross-references your drafted arguments against the facts and data you saved in Phase 3.",
+    '6': "Formatting Phase. Adjust your typographic settings and layout before exporting your PDF or Word document.",
+    '7': "Cover Design. Versana translates your core thesis into a striking professional book cover prompt.",
+    '8': "Publishing Prep. Extract SEO keywords and let AI write a compelling back-cover synopsis based on your manuscript data.",
 };
 
 export default function PhaseAssistantOrb() {
     const { activePhase } = usePhase();
-    const { activeWorkspace } = useWorkspace();
+    const { activeWorkspace, isRightSidebarOpen } = useWorkspace();
     const isNonFicProject = activeWorkspace?.genre?.toLowerCase().includes('[non-fiction]') ?? false;
     const tips = isNonFicProject ? NON_FIC_TIPS : FIC_TIPS;
 
@@ -61,7 +61,13 @@ export default function PhaseAssistantOrb() {
     };
 
     return (
-        <div className={styles.orbContainer}>
+        <div 
+            className={styles.orbContainer}
+            style={{ 
+                right: isRightSidebarOpen ? 'calc(350px + 2rem)' : '2rem', 
+                transition: 'right 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)' 
+            }}
+        >
             {isOpen && (
                 <div className={styles.chatBubble}>
                     <div className={styles.bubbleHeader}>

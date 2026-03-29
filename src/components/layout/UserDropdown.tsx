@@ -1,14 +1,18 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { User, LogOut, Settings, CreditCard, ChevronDown } from 'lucide-react';
+import { User, LogOut, Settings, CreditCard, ChevronDown, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 import styles from './UserDropdown.module.css';
 
 export default function UserDropdown() {
     const [isOpen, setIsOpen] = useState(false);
     const [profile, setProfile] = useState<{ full_name: string; email: string; subscription_tier: string } | null>(null);
+    const [isSigningOut, setIsSigningOut] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const router = useRouter();
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -36,6 +40,13 @@ export default function UserDropdown() {
     }, []);
 
     const toggleDropdown = () => setIsOpen(!isOpen);
+
+    const handleSignOut = async () => {
+        setIsSigningOut(true);
+        const supabase = createClient();
+        await supabase.auth.signOut();
+        router.push('/login');
+    };
 
     if (!profile) {
         return (
@@ -77,8 +88,9 @@ export default function UserDropdown() {
                     </div>
                     <div className={styles.divider} />
                     <div className={styles.menu}>
-                        <button className={`${styles.menuItem} ${styles.logout}`} onClick={() => alert("Sign out handled via Supabase Auth")}>
-                            <LogOut size={16} /> Sign Out
+                        <button className={`${styles.menuItem} ${styles.logout}`} onClick={handleSignOut} disabled={isSigningOut}>
+                            {isSigningOut ? <Loader2 size={16} className="spin" /> : <LogOut size={16} />} 
+                            {isSigningOut ? 'Signing out...' : 'Sign Out'}
                         </button>
                     </div>
                 </div>

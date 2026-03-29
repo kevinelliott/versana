@@ -1,0 +1,1 @@
+ALTER TABLE public.books ADD COLUMN IF NOT EXISTS is_public BOOLEAN DEFAULT false;

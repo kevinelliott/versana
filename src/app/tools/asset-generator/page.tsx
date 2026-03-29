@@ -11,11 +11,13 @@ export default function AssetGenerator() {
     const [resultUrl, setResultUrl] = useState<string | null>(null);
     const [enhancedPrompt, setEnhancedPrompt] = useState<string | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     const generateAsset = async () => {
         setIsGenerating(true);
         setResultUrl(null);
         setEnhancedPrompt(null);
+        setError(null);
 
         try {
             const res = await fetch('/api/ai/generate-asset', {
@@ -28,6 +30,18 @@ export default function AssetGenerator() {
                 })
             });
 
+            if (!res.ok) {
+                const errText = await res.text().catch(() => null);
+                let errMsg = 'Failed to generate asset';
+                try {
+                    const errJson = JSON.parse(errText || '{}');
+                    if (errJson.error) errMsg = errJson.error;
+                } catch {
+                    if (errText) errMsg = errText;
+                }
+                throw new Error(`⚠️ System Notification: ${errMsg}`);
+            }
+
             const data = await res.json();
             if (data.url) {
                 setResultUrl(data.url);
@@ -35,8 +49,10 @@ export default function AssetGenerator() {
             if (data.promptUsed) {
                 setEnhancedPrompt(data.promptUsed);
             }
-        } catch (e) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (e: any) {
             console.error("Failed to generate asset:", e);
+            setError(e.message || "An error occurred during generation.");
         } finally {
             setIsGenerating(false);
         }
@@ -113,6 +129,12 @@ export default function AssetGenerator() {
                                     </select>
                                 </div>
                             </div>
+
+                            {error && (
+                                <div style={{ color: 'var(--bg-primary)', background: 'var(--accent-terracotta)', padding: '1rem', borderRadius: '6px', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+                                    {error}
+                                </div>
+                            )}
 
                             <button
                                 style={{

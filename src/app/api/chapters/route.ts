@@ -26,7 +26,7 @@ export async function GET(req: Request) {
 
         const { data: chapters, error } = await supabase
             .from('chapters')
-            .select('id, title, order_index, updated_at')
+            .select('id, title, order_index, updated_at, word_count')
             .eq('book_id', bookId)
             .order('order_index', { ascending: true });
 

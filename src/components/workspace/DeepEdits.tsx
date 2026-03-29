@@ -1,9 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Activity, ShieldCheck, CheckSquare, RefreshCw, Zap, Layers, Bug } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Activity, ShieldCheck, CheckSquare, RefreshCw, Zap, Layers, Bug, AlertCircle } from 'lucide-react';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import styles from './Workspace.module.css';
+import deepEditsStyles from './DeepEdits.module.css';
+import PacingHeatmap from './PacingHeatmap';
 
 export default function DeepEdits() {
     const { chapters, activeWorkspace } = useWorkspace();
@@ -17,8 +19,25 @@ export default function DeepEdits() {
     const [factCheckType, setFactCheckType] = useState<'logic' | 'physics'>('logic');
     const [factCheckResults, setFactCheckResults] = useState<{ title: string, status: string, explanation: string }[] | null>(null);
     const [seedSuccess, setSeedSuccess] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     const isNonFicProject = activeWorkspace?.genre?.toLowerCase().includes('[non-fiction]') ?? false;
+
+    const fullText = useMemo(() => {
+        let text = '';
+        for (const ch of chapters) {
+            if (ch.content) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const flattenNodes = (node: any): string => {
+                    if (node.type === 'text') return node.text || '';
+                    if (node.content && Array.isArray(node.content)) return node.content.map(flattenNodes).join('') + '\n';
+                    return '';
+                };
+                text += flattenNodes(ch.content) + '\n\n';
+            }
+        }
+        return text;
+    }, [chapters]);
 
     const handleAnalyze = async () => {
         if (!activeWorkspace) return;
@@ -63,19 +82,24 @@ export default function DeepEdits() {
                 body: JSON.stringify({ text: fullText, lore, workspaceId: activeWorkspace.id })
             });
 
-            if (res.ok) {
-                const data = await res.json();
-                setAnalysisResult(data);
-            } else {
-                console.error("Deep Edit Error:", await res.text());
-                setAnalysisResult({
-                    pacing: "Error: Could not analyze manuscript.",
-                    characters: "Error...",
-                    grammar: "Error..."
-                });
+            if (!res.ok) {
+                const errText = await res.text().catch(() => null);
+                let errMsg = 'Failed to analyze manuscript';
+                try {
+                    const errJson = JSON.parse(errText || '{}');
+                    if (errJson.error) errMsg = errJson.error;
+                } catch {
+                    if (errText) errMsg = errText;
+                }
+                throw new Error(`⚠️ System Notification: ${errMsg}`);
             }
-        } catch (e) {
+
+            const data = await res.json();
+            setAnalysisResult(data);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (e: any) {
             console.error("Deep Edits Error:", e);
+            setError(e.message || "An error occurred");
         } finally {
             setIsAnalyzing(false);
         }
@@ -85,6 +109,7 @@ export default function DeepEdits() {
         if (!activeWorkspace) return;
         setIsFactChecking(true);
         setFactCheckResults(null);
+        setError(null);
         try {
             const loreRes = await fetch(`/api/lore?workspaceId=${activeWorkspace.id}`);
             const lore = await loreRes.json();
@@ -92,18 +117,27 @@ export default function DeepEdits() {
             const res = await fetch('/api/ai/fact-check', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ lore, checkType: factCheckType })
+                body: JSON.stringify({ lore, checkType: factCheckType, workspaceId: activeWorkspace.id })
             });
 
-            if (res.ok) {
-                const data = await res.json();
-                setFactCheckResults(data.findings);
-            } else {
-                console.error("Fact-Check Error:", await res.text());
-                setFactCheckResults([]);
+            if (!res.ok) {
+                const errText = await res.text().catch(() => null);
+                let errMsg = 'Failed to fact-check';
+                try {
+                    const errJson = JSON.parse(errText || '{}');
+                    if (errJson.error) errMsg = errJson.error;
+                } catch {
+                    if (errText) errMsg = errText;
+                }
+                throw new Error(`⚠️ System Notification: ${errMsg}`);
             }
-        } catch (e) {
+
+            const data = await res.json();
+            setFactCheckResults(data.findings);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (e: any) {
             console.error("Fact-Check Error:", e);
+            setError(e.message || "An error occurred");
         } finally {
             setIsFactChecking(false);
         }
@@ -177,6 +211,12 @@ export default function DeepEdits() {
             <div className={styles.workspace} style={{ display: 'grid', gridTemplateColumns: '1fr 350px', gap: '2rem' }}>
                 <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-light)', borderRadius: '12px', padding: '1rem 2rem 2rem', minHeight: '400px', display: 'flex', flexDirection: 'column' }}>
 
+                    {error && (
+                        <div style={{ color: 'var(--bg-primary)', background: 'var(--accent-terracotta)', padding: '1rem', borderRadius: '6px', fontSize: '0.9rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <AlertCircle size={16} /> {error}
+                        </div>
+                    )}
+
                     <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', borderBottom: '1px solid var(--border-light)', paddingBottom: '0.5rem' }}>
                         <button
                             onClick={() => setActiveTab('deep_edit')}
@@ -193,27 +233,15 @@ export default function DeepEdits() {
                     {activeTab === 'deep_edit' && (
                         <>
                             {!analysisResult && !isAnalyzing && (
-                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-secondary)' }}>
-                                    <ShieldCheck size={48} style={{ opacity: 0.5, marginBottom: '1rem' }} />
-                                    <h3>Ready for Deep Scan</h3>
-                                    <p style={{ textAlign: 'center', maxWidth: '400px', marginTop: '0.5rem' }}>
+                                <div className={deepEditsStyles.emptyStateContainer}>
+                                    <div className={`${deepEditsStyles.emptyIconWrapper} ${deepEditsStyles.purple}`}>
+                                        <ShieldCheck size={32} color="var(--tag-purple-text)" />
+                                    </div>
+                                    <h3 className={deepEditsStyles.emptyStateTitle}>Ready for Deep Scan</h3>
+                                    <p className={deepEditsStyles.emptyStateDesc}>
                                         {isNonFicProject ? 'Scan your entire manuscript against your Knowledge Base to find structural weaknesses, tone inconsistencies, and unsupported claims.' : 'Scan your entire manuscript against the Context Matrix to find continuity errors, plot holes, and structural weaknesses.'}
                                     </p>
-                                    <button
-                                        onClick={handleAnalyze}
-                                        style={{
-                                            marginTop: '2rem',
-                                            padding: '0.75rem 1.5rem',
-                                            background: 'var(--tag-purple-bg)',
-                                            color: 'var(--tag-purple-text)',
-                                            border: '1px solid var(--tag-purple-text)',
-                                            borderRadius: '6px',
-                                            fontWeight: 600,
-                                            cursor: 'pointer',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '0.5rem'
-                                        }}>
+                                    <button onClick={handleAnalyze} className={deepEditsStyles.primaryActionBtn}>
                                         <Activity size={18} /> Begin Full Manuscript Analysis
                                     </button>
                                 </div>
@@ -236,8 +264,13 @@ export default function DeepEdits() {
                                     </h2>
 
                                     <div style={{ marginBottom: '1.5rem', padding: '1rem', background: 'var(--bg-primary)', borderRadius: '8px', borderLeft: '4px solid var(--tag-blue-text)' }}>
-                                        <h4 style={{ color: 'var(--tag-blue-text)', marginBottom: '0.5rem' }}>{isNonFicProject ? 'Flow & Structure' : 'Pacing & Structure'}</h4>
-                                        <p style={{ fontSize: '0.95rem', lineHeight: 1.6 }}>{analysisResult.pacing}</p>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                                            <h4 style={{ color: 'var(--tag-blue-text)' }}>{isNonFicProject ? 'Flow & Structure' : 'Pacing & Structure'}</h4>
+                                        </div>
+                                        <p style={{ fontSize: '0.95rem', lineHeight: 1.6, marginBottom: '1rem' }}>{analysisResult.pacing}</p>
+                                        <div style={{ padding: '0.5rem', background: 'var(--bg-secondary)', borderRadius: '6px', border: '1px solid var(--border-light)' }}>
+                                            <PacingHeatmap text={fullText} />
+                                        </div>
                                     </div>
 
                                     <div style={{ marginBottom: '1.5rem', padding: '1rem', background: 'var(--bg-primary)', borderRadius: '8px', borderLeft: '4px solid var(--tag-gold-text)' }}>
@@ -261,38 +294,30 @@ export default function DeepEdits() {
                     {activeTab === 'fact_check' && (
                         <>
                             {!factCheckResults && !isFactChecking && (
-                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-secondary)', minHeight: '300px' }}>
-                                    <Zap size={48} style={{ opacity: 0.5, marginBottom: '1rem', color: 'var(--tag-gold-text)' }} />
-                                    <h3>Audit {isNonFicProject ? 'Project Content' : 'World Logic'}</h3>
-                                    <p style={{ textAlign: 'center', maxWidth: '400px', marginTop: '0.5rem' }}>
+                                <div className={deepEditsStyles.emptyStateContainer}>
+                                    <div className={`${deepEditsStyles.emptyIconWrapper} ${deepEditsStyles.gold}`}>
+                                        <Zap size={32} color="var(--tag-gold-text)" />
+                                    </div>
+                                    <h3 className={deepEditsStyles.emptyStateTitle}>Audit {isNonFicProject ? 'Project Content' : 'World Logic'}</h3>
+                                    <p className={deepEditsStyles.emptyStateDesc}>
                                         {isNonFicProject ? 'Cross-reference your arguments and data points internally within your Knowledge Base.' : 'Cross-reference your magic systems and geography against known physics and logic constraints internally within your Lore Bible.'}
                                     </p>
+                                    <p style={{ marginTop: '0.75rem', fontSize: '0.85rem', color: 'var(--tag-gold-text)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
+                                        <ShieldCheck size={14} /> Only facts stored in Phase 3 will be used as ground truth.
+                                    </p>
 
-                                    <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem', marginBottom: '1rem' }}>
-                                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                                    <div className={deepEditsStyles.radioGroup}>
+                                        <label className={deepEditsStyles.radioLabel}>
                                             <input type="radio" name="checkType" value="logic" checked={factCheckType === 'logic'} onChange={() => setFactCheckType('logic')} />
                                             {isNonFicProject ? 'Structural Logic' : 'Narrative Logic'}
                                         </label>
-                                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                                        <label className={deepEditsStyles.radioLabel}>
                                             <input type="radio" name="checkType" value="physics" checked={factCheckType === 'physics'} onChange={() => setFactCheckType('physics')} />
                                             {isNonFicProject ? 'Domain Constraints' : 'Hard Science / Physics'}
                                         </label>
                                     </div>
 
-                                    <button
-                                        onClick={handleFactCheck}
-                                        style={{
-                                            padding: '0.75rem 1.5rem',
-                                            background: '#fef3c7',
-                                            color: '#b45309',
-                                            border: '1px solid #fde68a',
-                                            borderRadius: '6px',
-                                            fontWeight: 600,
-                                            cursor: 'pointer',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '0.5rem'
-                                        }}>
+                                    <button onClick={handleFactCheck} className={`${deepEditsStyles.auditActionBtn} dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-400`}>
                                         <Layers size={18} /> Run Audit on {isNonFicProject ? 'Knowledge Base' : 'Context Matrix'}
                                     </button>
 
@@ -365,7 +390,12 @@ export default function DeepEdits() {
 
                             {factCheckResults && factCheckResults.length === 0 && (
                                 <div style={{ textAlign: 'center', color: 'var(--text-secondary)', marginTop: '4rem' }}>
-                                    {isNonFicProject ? 'Your Knowledge Base looks perfectly consistent!' : 'Your Context Matrix looks perfectly consistent!'}
+                                    <div style={{ marginBottom: '1.5rem', fontSize: '1.1rem' }}>
+                                        {isNonFicProject ? 'Your Knowledge Base looks perfectly consistent!' : 'Your Context Matrix looks perfectly consistent!'}
+                                    </div>
+                                    <button onClick={() => setFactCheckResults(null)} style={{ background: 'transparent', border: '1px solid var(--border-light)', padding: '0.5rem 1rem', borderRadius: '4px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                                        Clear Results
+                                    </button>
                                 </div>
                             )}
                         </>

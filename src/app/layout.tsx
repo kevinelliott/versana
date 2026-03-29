@@ -1,8 +1,14 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import "./globals.css";
 import { ThemeProvider } from '@/components/layout/ThemeProvider';
+import BackgroundJobTracker from '@/components/layout/BackgroundJobTracker';
+
+export const viewport: Viewport = {
+  themeColor: '#0d0d12',
+};
 
 export const metadata: Metadata = {
+  manifest: "/manifest.json",
   title: {
     template: '%s | Versana',
     default: 'Versana - AI Co-Writer for Fiction Authors',
@@ -40,6 +46,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           {children}
+          <BackgroundJobTracker />
         </ThemeProvider>
       </body>
     </html>

@@ -34,6 +34,14 @@ export async function POST(req: Request) {
             return new Response('Monthly token quota exceeded. Please upgrade your tier.', { status: 429 });
         }
 
+        // Fetch User's current Mana
+        const { data: userRow } = await supabase.from('users').select('mana_balance').eq('id', userId).single();
+        const currentMana = userRow?.mana_balance ?? 50000; // default grant if column read fails
+
+        if (currentMana <= 0) {
+            return new Response('Out of API Mana. Please purchase more tokens in your Profile Settings.', { status: 402 });
+        }
+
         console.log("ANTHROPIC_API_KEY:", process.env.ANTHROPIC_API_KEY ? "EXISTS" : "UNDEFINED");
 
         if (!process.env.ANTHROPIC_API_KEY && process.env.NODE_ENV === 'development') {
@@ -61,9 +69,17 @@ export async function POST(req: Request) {
             });
         }
 
+        let finalSystemPrompt = systemPrompt || 'You are an expert fiction co-writer assisting the author. Use the provided Context Matrix to ensure continuity.';
+
+        // Inject Custom Workspace Directives if available
+        const { data: workspace } = await supabase.from('workspaces').select('custom_instructions').eq('id', workspaceId).single();
+        if (workspace?.custom_instructions) {
+            finalSystemPrompt += `\n\n=== AUTHOR DIRECTIVES (STRICT RULES) ===\n${workspace.custom_instructions}\n========================================\n`;
+        }
+
         const result = streamText({
             model: anthropic('claude-3-haiku-20240307'),
-            system: systemPrompt || 'You are an expert fiction co-writer assisting the author. Use the provided Context Matrix to ensure continuity.',
+            system: finalSystemPrompt,
             messages,
             onFinish: async ({ usage }) => {
                 if (usage && userId) {
@@ -79,8 +95,12 @@ export async function POST(req: Request) {
                                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                 cost_usd: (((usage as any).promptTokens ?? (usage as any).inputTokens ?? 0) * 0.25 / 1000000) + (((usage as any).completionTokens ?? (usage as any).outputTokens ?? 0) * 1.25 / 1000000)
                             });
+                        
+                        // Deduct Mana
+                        const totalUsed = usage.totalTokens || 0;
+                        await adminSupabase.from('users').update({ mana_balance: Math.max(0, currentMana - totalUsed) }).eq('id', userId);
                     } catch (err) {
-                        console.error("Failed to log usage:", err);
+                        console.error("Failed to log usage or deduct mana:", err);
                     }
                 }
             }

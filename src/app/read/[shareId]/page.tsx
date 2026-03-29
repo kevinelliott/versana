@@ -2,8 +2,13 @@ import { BookOpen, Share2, Sparkles, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { createAdminClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
+import ReaderEngagement from '@/components/workspace/ReaderEngagement';
 
-export default async function MiniSite({ params }: { params: { shareId: string } }) {
+export const runtime = 'edge';
+export const revalidate = 60; // 60-second ISR cache
+
+export default async function MiniSite(props: { params: Promise<{ shareId: string }> }) {
+    const params = await props.params;
     const supabase = createAdminClient();
 
     // 1. Fetch Book
@@ -145,6 +150,7 @@ export default async function MiniSite({ params }: { params: { shareId: string }
                                 <div style={{ fontWeight: 600, marginTop: '0.25rem' }}>{readTime}</div>
                             </div>
                         </div>
+                        <ReaderEngagement bookId={book.id} initialViews={book.total_views || 0} initialLikes={book.total_likes || 0} />
                     </div>
 
                     {/* Right: Synopsis & Excerpt */}

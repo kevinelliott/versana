@@ -2,6 +2,7 @@
 
 import AppLayout from "@/components/layout/AppLayout";
 import Workspace from "@/components/workspace/Workspace";
+import HomeDashboard from "@/components/workspace/HomeDashboard";
 import ConceptIdeation from "@/components/workspace/ConceptIdeation";
 import PlanningOutlining from "@/components/workspace/PlanningOutlining";
 import ResearchAssistant from '@/components/workspace/ResearchAssistant';
@@ -11,13 +12,19 @@ import PublishPrep from '@/components/workspace/PublishPrep';
 import DeepEdits from '@/components/workspace/DeepEdits';
 import KnowledgeBase from '@/components/workspace/KnowledgeBase';
 import { PhaseProvider, usePhase } from "@/context/PhaseContext";
-import { WorkspaceProvider } from "@/context/WorkspaceContext";
+import { WorkspaceProvider, useWorkspace } from "@/context/WorkspaceContext";
+import OnboardingWizard from '@/components/workspace/OnboardingWizard';
 
 function MainContent() {
   const { activePhase } = usePhase();
+  const { needsOnboarding } = useWorkspace();
 
   let CurrentView;
   switch (activePhase) {
+    case '0':
+    case 'dashboard':
+      CurrentView = <HomeDashboard />;
+      break;
     case '1':
       CurrentView = <ConceptIdeation />;
       break;
@@ -54,7 +61,12 @@ function MainContent() {
       );
   }
 
-  return <AppLayout>{CurrentView}</AppLayout>;
+  return (
+    <AppLayout>
+      {CurrentView}
+      {needsOnboarding && <OnboardingWizard />}
+    </AppLayout>
+  );
 }
 
 export default function Home() {

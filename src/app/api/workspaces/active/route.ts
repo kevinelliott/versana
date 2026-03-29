@@ -32,19 +32,9 @@ export async function GET() {
         let workspace = workspaceData;
 
         if (!workspace) {
-            // Create a default workspace if none exists
-            const { data: newWorkspace, error: createError } = await supabase
-                .from('workspaces')
-                .insert({
-                    user_id: userId,
-                    name: 'The Obsidian Crown',
-                    genre: 'Sci-Fi Fantasy'
-                })
-                .select()
-                .single();
-
-            if (createError) throw createError;
-            workspace = newWorkspace;
+            // Signal to the frontend that this user has no workspaces
+            // and needs to go through the First-Time Onboarding Flow.
+            return Response.json({ noWorkspaces: true });
         }
 
         return Response.json(workspace);

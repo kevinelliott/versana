@@ -20,7 +20,15 @@ export default function MythosCreator() {
             });
 
             if (!res.ok) {
-                throw new Error('Failed to generate mythos');
+                const errText = await res.text().catch(() => null);
+                let errMsg = 'Failed to generate mythos';
+                try {
+                    const errJson = JSON.parse(errText || '{}');
+                    if (errJson.error) errMsg = errJson.error;
+                } catch {
+                    if (errText) errMsg = errText;
+                }
+                throw new Error(`⚠️ System Notification: ${errMsg}`);
             }
 
             const data = await res.json();

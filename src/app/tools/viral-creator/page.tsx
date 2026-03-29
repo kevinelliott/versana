@@ -21,7 +21,15 @@ export default function ViralCreator() {
             });
 
             if (!res.ok) {
-                throw new Error('Failed to generate asset');
+                const errText = await res.text().catch(() => null);
+                let errMsg = 'Failed to generate asset';
+                try {
+                    const errJson = JSON.parse(errText || '{}');
+                    if (errJson.error) errMsg = errJson.error;
+                } catch {
+                    if (errText) errMsg = errText;
+                }
+                throw new Error(`⚠️ System Notification: ${errMsg}`);
             }
 
             const data = await res.json();

@@ -7,11 +7,14 @@ import {
     Rocket, LibraryBig, CheckSquare,
     ChevronDown, ChevronRight, ChevronLeft,
     User, MapPin, Hash, Bookmark, BookOpen,
-    Check, X, Globe, Plus, Settings, Trash2, Loader2
+    Check, X, Globe, Plus, Settings, Trash2, Loader2, HelpCircle,
+    LayoutDashboard
 } from 'lucide-react';
 import styles from './LeftSidebar.module.css';
+import GuidedTourModal from './GuidedTourModal';
 import { usePhase } from '@/context/PhaseContext';
 import { useWorkspace, Workspace, Book } from '@/context/WorkspaceContext';
+import { getGradientForString, getInitials } from '@/lib/colorUtils';
 
 const getPhases = (isNonFic: boolean) => [
     { id: '1', icon: Lightbulb, label: isNonFic ? 'Topic & Thesis' : 'Concept & Ideation' },
@@ -31,7 +34,7 @@ export default function LeftSidebar() {
     const { activePhase, setActivePhase } = usePhase();
     const {
         activeWorkspace, isLeftSidebarOpen, setIsLeftSidebarOpen, isFocusMode, setActiveWorkspace,
-        books, setBooks, activeBook, setActiveBook, selectedLoreId, setSelectedLoreId
+        books, setBooks, activeBook, setActiveBook, selectedLoreId, setSelectedLoreId, setNeedsOnboarding
     } = useWorkspace();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [lore, setLore] = useState<any[]>([]);
@@ -39,12 +42,14 @@ export default function LeftSidebar() {
     const [isEditingProject, setIsEditingProject] = useState(false);
     const [editName, setEditName] = useState('');
     const [editGenre, setEditGenre] = useState('');
+    const [editInstructions, setEditInstructions] = useState('');
     const [isSavingProject, setIsSavingProject] = useState(false);
 
     const [isEditingBook, setIsEditingBook] = useState(false);
     const [editBookTitle, setEditBookTitle] = useState('');
     const [isSavingBook, setIsSavingBook] = useState(false);
     const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+    const [isTourOpen, setIsTourOpen] = useState(false);
 
     // Modal state
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -52,9 +57,13 @@ export default function LeftSidebar() {
     const [modalInputValue, setModalInputValue] = useState('');
     const [modalGenreValue, setModalGenreValue] = useState('');
     const [modalProjectType, setModalProjectType] = useState<'fiction' | 'non-fiction'>('fiction');
-    const [bookCreationType, setBookCreationType] = useState<'blank' | 'scaffold' | 'generate'>('blank');
+    const [bookCreationType, setBookCreationType] = useState<'blank' | 'scaffold' | 'generate' | 'import'>('blank');
     const [bookCreationPrompt, setBookCreationPrompt] = useState('');
     const [bookGenerationCount, setBookGenerationCount] = useState(5);
+    const [targetLength, setTargetLength] = useState('2000');
+    const [narrativeTone, setNarrativeTone] = useState('Cinematic & Epic');
+    const [storyArcFocus, setStoryArcFocus] = useState('Balanced (Plot & Character)');
+    const [importFileContent, setImportFileContent] = useState<string | null>(null);
     const [isSubmittingModal, setIsSubmittingModal] = useState(false);
     const [isGeneratingBook, setIsGeneratingBook] = useState(false);
 
@@ -80,12 +89,7 @@ export default function LeftSidebar() {
     }, []);
 
     const handleCreateProject = () => {
-        setModalType('workspace');
-        setModalInputValue('');
-        setModalGenreValue('');
-        setModalProjectType('fiction');
-        setModalError(null);
-        setIsModalOpen(true);
+        setNeedsOnboarding(true);
     };
 
     const handleCreateBook = () => {
@@ -94,6 +98,7 @@ export default function LeftSidebar() {
         setBookCreationType('blank');
         setBookCreationPrompt('');
         setBookGenerationCount(5);
+        setImportFileContent(null);
         setModalError(null);
         setIsModalOpen(true);
     };
@@ -126,23 +131,62 @@ export default function LeftSidebar() {
                 }
             } else if (modalType === 'book' && activeWorkspace) {
                 const isAI = bookCreationType === 'scaffold' || bookCreationType === 'generate';
-                if (isAI) setIsGeneratingBook(true);
+                if (isAI || bookCreationType === 'import') setIsGeneratingBook(true);
 
-                const res = await fetch('/api/books', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ workspaceId: activeWorkspace.id, title: value, type: bookCreationType, prompt: bookCreationPrompt, count: bookGenerationCount })
-                });
+                let res;
+                if (bookCreationType === 'import') {
+                    if (!importFileContent) {
+                        setModalError("Please select a file to import.");
+                        setIsSubmittingModal(false);
+                        setIsGeneratingBook(false);
+                        return;
+                    }
+                    res = await fetch('/api/books/import', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            workspaceId: activeWorkspace.id,
+                            title: value,
+                            rawText: importFileContent
+                        })
+                    });
+                } else {
+                    res = await fetch('/api/books', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            workspaceId: activeWorkspace.id, 
+                            title: value, 
+                            type: bookCreationType, 
+                            prompt: bookCreationPrompt, 
+                            count: bookGenerationCount,
+                            creativeParameters: bookCreationType === 'generate' ? {
+                                targetLength,
+                                narrativeTone,
+                                storyArcFocus
+                            } : undefined
+                        })
+                    });
+                }
 
-                if (isAI) setIsGeneratingBook(false);
+                if (isAI || bookCreationType === 'import') setIsGeneratingBook(true); // Keep overlay up during reload if needed, but we set it false below
+                setIsGeneratingBook(false);
 
                 if (res.ok) {
-                    const newBook = await res.json();
+                    const data = await res.json();
+                    const newBook = bookCreationType === 'import' ? data.book : data;
+                    
                     setBooks(prev => [...prev, newBook]);
                     setActiveBook(newBook);
                     setIsModalOpen(false);
+                    
+                    if (bookCreationType === 'import') {
+                        // Force a reload or chapter refresh because the new book has bunch of chapters
+                        window.location.reload();
+                    }
                 } else {
-                    setModalError("Failed to create book");
+                    const errorData = await res.json().catch(() => ({}));
+                    setModalError(errorData.error || "Failed to create book");
                 }
             }
         } catch (err: unknown) {
@@ -274,6 +318,7 @@ export default function LeftSidebar() {
         if (!activeWorkspace) return;
         setEditName(activeWorkspace.name);
         setEditGenre(activeWorkspace.genre || '');
+        setEditInstructions(activeWorkspace.custom_instructions || '');
         setIsEditingProject(true);
     };
 
@@ -284,7 +329,7 @@ export default function LeftSidebar() {
             const res = await fetch(`/api/workspaces/${activeWorkspace.id}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: editName, genre: editGenre })
+                body: JSON.stringify({ name: editName, genre: editGenre, custom_instructions: editInstructions })
             });
 
             if (res.ok) {
@@ -328,7 +373,6 @@ export default function LeftSidebar() {
         }
     };
 
-    if (isFocusMode) return null;
 
     return (
         <>
@@ -337,10 +381,10 @@ export default function LeftSidebar() {
                     <div className={styles.modalContent} style={{ textAlign: 'center', padding: '3rem 2rem', maxWidth: '400px' }}>
                         <Loader2 size={48} className={styles.spinner} style={{ color: 'var(--accent-blue)', margin: '0 auto 1.5rem auto' }} />
                         <h2 className={styles.modalTitle} style={{ marginBottom: '0.5rem' }}>
-                            {bookCreationType === 'generate' ? 'Writing Your Draft...' : 'Scaffolding Structure...'}
+                            {bookCreationType === 'import' ? 'Importing Manuscript...' : bookCreationType === 'generate' ? 'Writing Your Draft...' : 'Scaffolding Structure...'}
                         </h2>
                         <p className={styles.modalDesc}>
-                            This might take a minute depending on the complexity of your request and knowledge base. Please don&apos;t refresh the page.
+                            This might take a minute depending on the size of the operation. Please don&apos;t refresh the page.
                         </p>
                     </div>
                 </div>
@@ -415,6 +459,14 @@ export default function LeftSidebar() {
                                                 placeholder={isNonFicProject ? "e.g. Cooking, Business" : "Genre (e.g. Sci-Fi)"}
                                                 disabled={isSavingProject}
                                             />
+                                            <textarea
+                                                value={editInstructions}
+                                                onChange={(e) => setEditInstructions(e.target.value)}
+                                                className={styles.editInput}
+                                                placeholder="AI System Directives (e.g. 'Write in third-person limited...')"
+                                                disabled={isSavingProject}
+                                                style={{ minHeight: '80px', resize: 'vertical' }}
+                                            />
                                             <div className={styles.editActions}>
                                                 <button onClick={handleSaveProject} disabled={isSavingProject || !editName.trim()} className={styles.saveBtn}><Check size={14} /></button>
                                                 <button onClick={() => setIsEditingProject(false)} disabled={isSavingProject} className={styles.cancelBtn}><X size={14} /></button>
@@ -430,8 +482,8 @@ export default function LeftSidebar() {
                                                     onClick={() => setIsUniverseDropdownOpen(!isUniverseDropdownOpen)}
                                                 >
                                                     <div className={styles.projectSelectorInner}>
-                                                        <div className={styles.selectorImg}>
-                                                            <Globe size={14} className={styles.selectorIcon} />
+                                                        <div className={styles.selectorImg} style={{ background: getGradientForString(activeWorkspace.name), display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 600, fontSize: '0.6rem' }}>
+                                                            {getInitials(activeWorkspace.name)}
                                                         </div>
                                                         <span className={styles.projectName}>{activeWorkspace.name}</span>
                                                     </div>
@@ -454,8 +506,8 @@ export default function LeftSidebar() {
                                                                     {activeWorkspace.id === w.id && <Check size={14} color="var(--text-primary)" />}
                                                                 </div>
                                                                 {/* Placeholder generic image (could be randomly colored orb or icon) */}
-                                                                <div className={styles.dropdownItemImg}>
-                                                                    <Globe size={18} color="var(--text-secondary)" />
+                                                                <div className={styles.dropdownItemImg} style={{ background: getGradientForString(w.name), display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 600, fontSize: '0.7rem' }}>
+                                                                    {getInitials(w.name)}
                                                                 </div>
                                                                 <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                                                                     <span className={styles.dropdownItemTitle}>{w.name}</span>
@@ -518,8 +570,8 @@ export default function LeftSidebar() {
                                                 onClick={() => setIsBookDropdownOpen(!isBookDropdownOpen)}
                                             >
                                                 <div className={styles.projectSelectorInner}>
-                                                    <div className={styles.selectorImg}>
-                                                        <BookOpen size={14} className={styles.selectorIcon} />
+                                                    <div className={styles.selectorImg} style={{ background: getGradientForString(activeBook?.title || ''), display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 600, fontSize: '0.6rem', borderRadius: '4px' }}>
+                                                        {getInitials(activeBook?.title || '')}
                                                     </div>
                                                     <span className={styles.projectName}>{activeBook?.title || 'Select a Book'}</span>
                                                 </div>
@@ -541,8 +593,8 @@ export default function LeftSidebar() {
                                                             <div style={{ width: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                                                 {activeBook?.id === b.id && <Check size={14} color="var(--text-primary)" />}
                                                             </div>
-                                                            <div className={styles.dropdownItemImg}>
-                                                                <BookOpen size={18} color="var(--text-secondary)" />
+                                                            <div className={styles.dropdownItemImg} style={{ background: getGradientForString(b.title), display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 600, fontSize: '0.7rem', borderRadius: '4px' }}>
+                                                                {getInitials(b.title)}
                                                             </div>
                                                             <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                                                                 <span className={styles.dropdownItemTitle}>{b.title}</span>
@@ -575,6 +627,17 @@ export default function LeftSidebar() {
                     <div className={styles.section}>
                         <div className={styles.sectionHeader}>Guided Workflow</div>
                         <nav className={styles.nav}>
+                            <button
+                                onClick={() => setActivePhase('0')}
+                                className={`${styles.navItem} ${activePhase === '0' || activePhase === 'dashboard' ? styles.active : ''}`}
+                                title="Home Dashboard"
+                            >
+                                <LayoutDashboard size={16} className={styles.navIcon} />
+                                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+                                    <span>Dashboard View</span>
+                                    <span style={{ fontSize: '0.65rem', opacity: 0.5, border: '1px solid var(--border-light)', borderRadius: '4px', padding: '0 4px', background: 'var(--bg-secondary)' }}>⌘ 0</span>
+                                </div>
+                            </button>
                             {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                             {getPhases(isNonFicProject).map((phase: any) => (
                                 <button
@@ -584,10 +647,13 @@ export default function LeftSidebar() {
                                     title={phase.label}
                                 >
                                     <phase.icon size={16} className={styles.navIcon} />
-                                    <span>
-                                        <span style={{ opacity: 0.5, marginRight: '0.5rem', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Phase {phase.id}</span>
-                                        <span>{phase.label}</span>
-                                    </span>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+                                        <span>
+                                            <span style={{ opacity: 0.5, marginRight: '0.5rem', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Phase {phase.id}</span>
+                                            <span>{phase.label}</span>
+                                        </span>
+                                        <span style={{ fontSize: '0.65rem', opacity: 0.5, border: '1px solid var(--border-light)', borderRadius: '4px', padding: '0 4px', background: 'var(--bg-secondary)' }}>⌘ {phase.id}</span>
+                                    </div>
                                 </button>
                             ))}
                         </nav>
@@ -607,7 +673,7 @@ export default function LeftSidebar() {
                                 }}
                             >
                                 <LibraryBig size={16} className={styles.navIcon} />
-                                <span>{isNonFicProject ? 'Knowledge Base' : 'Lore Bible'}</span>
+                                <span>{isNonFicProject ? 'Knowledge Base' : 'Lore Bible'} Dashboard</span>
                             </button>
                         </nav>
 
@@ -647,11 +713,67 @@ export default function LeftSidebar() {
                                 </div>
                             ))}
                             {Object.keys(groupedLore).length === 0 && (
-                                <div style={{ padding: '0.5rem 1rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                                    No entries found.
+                                <div style={{
+                                    margin: '0.5rem',
+                                    padding: '1rem',
+                                    background: 'var(--bg-secondary)',
+                                    borderRadius: '8px',
+                                    border: '1px dashed var(--border-light)',
+                                    textAlign: 'center'
+                                }}>
+                                    <div style={{ color: 'var(--text-primary)', fontWeight: 500, marginBottom: '0.5rem', fontSize: '0.9rem' }}>
+                                        {isNonFicProject ? 'Empty Knowledge Base' : 'Empty Lore Bible'}
+                                    </div>
+                                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '1rem', lineHeight: 1.4 }}>
+                                        {isNonFicProject ? 'Add core concepts to generate outlines and drafts.' : 'Add characters and settings to guide the AI co-writer.'}
+                                    </p>
+                                    <button
+                                        onClick={() => setActivePhase('lore')}
+                                        style={{
+                                            background: 'var(--text-primary)',
+                                            color: 'var(--bg-primary)',
+                                            border: 'none',
+                                            padding: '0.5rem 1rem',
+                                            borderRadius: '6px',
+                                            fontSize: '0.8rem',
+                                            fontWeight: 500,
+                                            cursor: 'pointer',
+                                            width: '100%',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            gap: '0.4rem'
+                                        }}
+                                    >
+                                        <Plus size={14} /> {isNonFicProject ? 'Add Concept' : 'Add Character'}
+                                    </button>
                                 </div>
                             )}
                         </div>
+                    </div>
+
+                    <div className={styles.divider} />
+                    
+                    <div style={{ padding: '0 0.5rem 1rem 0.5rem' }}>
+                        <button 
+                            onClick={() => setIsTourOpen(true)}
+                            style={{
+                                background: 'transparent',
+                                border: '1px solid var(--border-light)',
+                                width: '100%',
+                                padding: '0.6rem',
+                                borderRadius: '6px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '0.5rem',
+                                color: 'var(--text-secondary)',
+                                fontSize: '0.85rem',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            <HelpCircle size={16} /> Workflow Guide
+                        </button>
                     </div>
                 </div>
 
@@ -668,37 +790,7 @@ export default function LeftSidebar() {
                                 </div>
                             )}
                             <form onSubmit={handleModalSubmit}>
-                                {modalType === 'workspace' && (
-                                    <>
-                                        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
-                                            <div
-                                                style={{
-                                                    flex: 1, padding: '1rem', border: '1px solid var(--border-light)', borderRadius: '8px',
-                                                    cursor: 'pointer', background: modalProjectType === 'fiction' ? 'var(--bg-secondary)' : 'transparent',
-                                                    borderColor: modalProjectType === 'fiction' ? 'var(--accent-blue)' : 'var(--border-light)'
-                                                }}
-                                                onClick={() => setModalProjectType('fiction')}
-                                            >
-                                                <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.25rem' }}>Fiction</div>
-                                                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Novels, World-Building, etc.</div>
-                                            </div>
-                                            <div
-                                                style={{
-                                                    flex: 1, padding: '1rem', border: '1px solid var(--border-light)', borderRadius: '8px',
-                                                    cursor: 'pointer', background: modalProjectType === 'non-fiction' ? 'var(--bg-secondary)' : 'transparent',
-                                                    borderColor: modalProjectType === 'non-fiction' ? 'var(--accent-blue)' : 'var(--border-light)'
-                                                }}
-                                                onClick={() => setModalProjectType('non-fiction')}
-                                            >
-                                                <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.25rem' }}>Non-Fiction</div>
-                                                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Cookbooks, Business, etc.</div>
-                                            </div>
-                                        </div>
-                                        <p className={styles.modalDesc} style={{ marginTop: '-0.5rem' }}>
-                                            A <strong>Project Hub</strong> acts as the central home for {modalProjectType === 'fiction' ? 'your world-building lore and stories' : 'all your knowledge bases and resources'}.
-                                        </p>
-                                    </>
-                                )}
+
 
                                 {modalType === 'book' && (
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem' }}>
@@ -739,7 +831,38 @@ export default function LeftSidebar() {
                                             <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Generate Entire Book</div>
                                             <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Let AI draft the complete {isNonFicProject ? 'manuscript' : 'story'} from your {isNonFicProject ? 'knowledge base' : 'lore'}.</div>
                                         </div>
+                                        <div
+                                            style={{
+                                                padding: '1rem', border: '1px solid var(--border-light)', borderRadius: '8px',
+                                                cursor: 'pointer', background: bookCreationType === 'import' ? 'var(--bg-secondary)' : 'transparent',
+                                                borderColor: bookCreationType === 'import' ? 'var(--accent-blue)' : 'var(--border-light)',
+                                                display: 'flex', flexDirection: 'column', gap: '0.25rem'
+                                            }}
+                                            onClick={() => setBookCreationType('import')}
+                                        >
+                                            <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Import Existing Manuscript</div>
+                                            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Upload a .txt file and automatically split it into Chapters.</div>
+                                        </div>
 
+                                        {bookCreationType === 'import' && (
+                                            <div style={{ marginTop: '0.5rem' }}>
+                                                <label className={styles.modalLabel}>Select Text File (.txt, .md)</label>
+                                                <input
+                                                    type="file"
+                                                    accept=".txt,.md"
+                                                    className={styles.modalInput}
+                                                    onChange={async (e) => {
+                                                        const file = e.target.files?.[0];
+                                                        if (file) {
+                                                            const text = await file.text();
+                                                            setImportFileContent(text);
+                                                        }
+                                                    }}
+                                                    disabled={isSubmittingModal}
+                                                    style={{ marginBottom: '1rem', padding: '0.5rem' }}
+                                                />
+                                            </div>
+                                        )}
                                         {(bookCreationType === 'scaffold' || bookCreationType === 'generate') && (
                                             <>
                                                 <div style={{ marginTop: '0.5rem' }}>
@@ -766,6 +889,41 @@ export default function LeftSidebar() {
                                                         disabled={isSubmittingModal}
                                                     />
                                                 </div>
+                                                {bookCreationType === 'generate' && (
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem', background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border-light)' }}>
+                                                        <div style={{ fontWeight: 600, color: 'var(--accent-blue)', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                                            <Settings size={14} /> Creative Tuning
+                                                        </div>
+                                                        <div>
+                                                            <label className={styles.modalLabel}>Target Chapter Length</label>
+                                                            <select className={styles.modalInput} value={targetLength} onChange={e => setTargetLength(e.target.value)} style={{ marginBottom: 0 }}>
+                                                                <option value="1000">Short (~1000 words)</option>
+                                                                <option value="2000">Standard (~2000 words)</option>
+                                                                <option value="3500">Epic (~3500 words)</option>
+                                                            </select>
+                                                        </div>
+                                                        <div>
+                                                            <label className={styles.modalLabel}>Narrative Tone & Voice</label>
+                                                            <select className={styles.modalInput} value={narrativeTone} onChange={e => setNarrativeTone(e.target.value)} style={{ marginBottom: 0 }}>
+                                                                <option>Cinematic & Epic</option>
+                                                                <option>Dark & Gritty</option>
+                                                                <option>Lighthearted & Humorous</option>
+                                                                <option>Philosophical & Reflective</option>
+                                                                <option>Fast-paced Action Thriller</option>
+                                                                <option>Romantic & Emotional</option>
+                                                            </select>
+                                                        </div>
+                                                        <div>
+                                                            <label className={styles.modalLabel}>Story Arc Focus</label>
+                                                            <select className={styles.modalInput} value={storyArcFocus} onChange={e => setStoryArcFocus(e.target.value)} style={{ marginBottom: 0 }}>
+                                                                <option>Balanced (Plot & Character)</option>
+                                                                <option>Deeply Character-Driven</option>
+                                                                <option>Heavy World-Building & Lore</option>
+                                                                <option>High-Octane Plot-Driven</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </>
                                         )}
                                     </div>
@@ -825,6 +983,12 @@ export default function LeftSidebar() {
                     </div>
                 )}
             </aside>
+
+            <GuidedTourModal 
+                isOpen={isTourOpen} 
+                onClose={() => setIsTourOpen(false)} 
+                isNonFic={isNonFicProject} 
+            />
         </>
     );
 }
